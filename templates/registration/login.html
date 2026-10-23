@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Sign in · FDR Portal{% endblock %}
+{% block content %}
+<section class="card narrow"><h1>Sign in</h1>
+<p>Use the institution or officer account created by the demo setup command.</p>
+<form method="post">{% csrf_token %}{{ form.as_p }}
+{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+<button>Sign in</button></form></section>
+{% endblock %}

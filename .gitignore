@@ -1,0 +1,23 @@
+.venv/
+.uv-cache/
+__pycache__/
+*.py[cod]
+.env
+data/
+*.sqlite3
+*.sqlite3-*
+.coverage
+.offline-wheels/
+dist/
+# Local secrets (keep the shareable example)
+.env.*
+!.env.example
+demo-credentials.txt
+authority-credentials.txt
+# Generated offline dependencies and archives
+wheelhouse/
+*.whl
+*.zip
+*.zip.sha256
+# Local logs
+*.log

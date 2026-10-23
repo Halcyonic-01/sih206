@@ -1,0 +1,347 @@
+{
+  "timestamp_utc": "2026-10-22T23:46:38.302533+00:00",
+  "dataset_sha256": "30897f7f0f5dabd07d51d521047d0dba60670326544ba95e3b38d0988b81521a",
+  "checks_version": "technical-v2",
+  "scope": "Synthetic boundary evaluation of two metadata rules and upload envelope policy; not real-world document validation.",
+  "ground_truth": "Explicit expected labels manually reviewed against the two-rule contract: an FDR-kind row is required; another same-institution bank/reference pair matches after Unicode casefold and surrounding whitespace removal. Labels do not come from run_checks. No regulatory or authenticity labels.",
+  "extraction": {
+    "implemented": false,
+    "precision": null,
+    "recall": null
+  },
+  "rules": {
+    "FDR_DOCUMENT_REQUIRED": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "tn": 19,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    "POSSIBLE_DUPLICATE": {
+      "tp": 13,
+      "fp": 0,
+      "fn": 0,
+      "tn": 11,
+      "precision": 1.0,
+      "recall": 1.0
+    }
+  },
+  "cases": [
+    {
+      "id": "missing",
+      "expected": [
+        "FDR_DOCUMENT_REQUIRED"
+      ],
+      "actual": [
+        "FDR_DOCUMENT_REQUIRED"
+      ],
+      "pass": true,
+      "milliseconds": 0.9703
+    },
+    {
+      "id": "fdr",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "milliseconds": 0.7437
+    },
+    {
+      "id": "release-only",
+      "expected": [
+        "FDR_DOCUMENT_REQUIRED"
+      ],
+      "actual": [
+        "FDR_DOCUMENT_REQUIRED"
+      ],
+      "pass": true,
+      "milliseconds": 0.7077
+    },
+    {
+      "id": "exact",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.6933
+    },
+    {
+      "id": "both",
+      "expected": [
+        "FDR_DOCUMENT_REQUIRED",
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "FDR_DOCUMENT_REQUIRED",
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.7243
+    },
+    {
+      "id": "ascii-lower",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 1.1187
+    },
+    {
+      "id": "spaces",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.6572
+    },
+    {
+      "id": "bank-different",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "milliseconds": 0.6408
+    },
+    {
+      "id": "reference-different",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "milliseconds": 0.6918
+    },
+    {
+      "id": "institution-different",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "milliseconds": 0.6526
+    },
+    {
+      "id": "self-only",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "milliseconds": 0.6415
+    },
+    {
+      "id": "unicode-uppercase-other",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.6705
+    },
+    {
+      "id": "unicode-lowercase-other",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.6429
+    },
+    {
+      "id": "tab-trim",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.6408
+    },
+    {
+      "id": "nbsp-trim",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.9431
+    },
+    {
+      "id": "casefold",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.9331
+    },
+    {
+      "id": "internal-space-distinct",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "milliseconds": 0.6739
+    },
+    {
+      "id": "punctuation-distinct",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "milliseconds": 0.6452
+    },
+    {
+      "id": "release-plus-duplicate",
+      "expected": [
+        "FDR_DOCUMENT_REQUIRED",
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "FDR_DOCUMENT_REQUIRED",
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.6539
+    },
+    {
+      "id": "missing-other-institution",
+      "expected": [
+        "FDR_DOCUMENT_REQUIRED"
+      ],
+      "actual": [
+        "FDR_DOCUMENT_REQUIRED"
+      ],
+      "pass": true,
+      "milliseconds": 0.7244
+    },
+    {
+      "id": "private-draft-duplicate",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.6955
+    },
+    {
+      "id": "submitted-duplicate",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.6555
+    },
+    {
+      "id": "correction-duplicate",
+      "expected": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "actual": [
+        "POSSIBLE_DUPLICATE"
+      ],
+      "pass": true,
+      "milliseconds": 0.646
+    },
+    {
+      "id": "declared-no-text-check",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "milliseconds": 0.6642
+    }
+  ],
+  "uploads": [
+    {
+      "id": "generated-pdf",
+      "accepted": true,
+      "expected_envelope_accept": true,
+      "readable_by_construction": true,
+      "pass": true
+    },
+    {
+      "id": "generic-mime",
+      "accepted": true,
+      "expected_envelope_accept": true,
+      "readable_by_construction": true,
+      "pass": true
+    },
+    {
+      "id": "uppercase-extension",
+      "accepted": true,
+      "expected_envelope_accept": true,
+      "readable_by_construction": true,
+      "pass": true
+    },
+    {
+      "id": "wrong-extension",
+      "accepted": false,
+      "expected_envelope_accept": false,
+      "readable_by_construction": true,
+      "pass": true
+    },
+    {
+      "id": "wrong-mime",
+      "accepted": false,
+      "expected_envelope_accept": false,
+      "readable_by_construction": true,
+      "pass": true
+    },
+    {
+      "id": "empty",
+      "accepted": false,
+      "expected_envelope_accept": false,
+      "readable_by_construction": false,
+      "pass": true
+    },
+    {
+      "id": "not-pdf",
+      "accepted": false,
+      "expected_envelope_accept": false,
+      "readable_by_construction": false,
+      "pass": true
+    },
+    {
+      "id": "truncated",
+      "accepted": false,
+      "expected_envelope_accept": false,
+      "readable_by_construction": false,
+      "pass": true
+    },
+    {
+      "id": "oversize",
+      "accepted": false,
+      "expected_envelope_accept": false,
+      "readable_by_construction": true,
+      "pass": true
+    },
+    {
+      "id": "unreadable-envelope",
+      "accepted": true,
+      "expected_envelope_accept": true,
+      "readable_by_construction": false,
+      "pass": true
+    }
+  ],
+  "timing_ms": {
+    "n": 24,
+    "median": 0.6722,
+    "min": 0.6408,
+    "max": 1.1187
+  },
+  "all_contract_cases_pass": true
+}

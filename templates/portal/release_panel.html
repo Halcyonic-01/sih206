@@ -1,0 +1,16 @@
+<section class="card"><h2>Release requests and completion</h2>
+<p>Authority authorization and evidence-backed completion are separate actions. Maturity monitoring continues until completion is recorded. This portal does not transfer funds or independently authenticate evidence.</p>
+{% if active_release %}<p class="notice">A pending or authorized release request blocks new renewal proposals.</p>{% endif %}
+{% for row in release_rows %}{% with release=row.release %}<article class="event" id="release-{{ release.pk }}" data-release-id="{{ release.pk }}" data-release-status="{{ release.status }}">
+<h3>Request #{{ release.pk }} · {{ release.get_status_display }}</h3>
+<p class="reason">{{ release.reason }}</p><p class="muted">Requested by {{ release.requested_by.username }} · {{ release.created_at|date:'d M Y H:i' }}</p>
+{% if release.decided_at %}<p><strong>Authority decision</strong> by {{ release.decided_by.username }} · {{ release.decided_at|date:'d M Y H:i' }}</p><p class="reason">{{ release.decision_reason }}</p>{% endif %}
+{% if row.can_decide %}<form method="post" action="{% url 'release_decision' instrument.pk release.pk %}">{% csrf_token %}{{ row.decision_form.as_p }}<button>Record authority decision</button></form>{% endif %}
+{% if release.status == 'APPROVED' %}<p class="notice"><strong>Release authorized; completion pending.</strong> The instrument remains monitored. No payment or discharge is implied by this authorization.</p>{% endif %}
+{% if row.can_complete %}<h3>Record completion with evidence</h3><form method="post" enctype="multipart/form-data" action="{% url 'release_completion' instrument.pk release.pk %}">{% csrf_token %}{{ row.completion_form.as_p }}<button>Record release completion</button></form>{% endif %}
+{% if release.completed_at %}<p><strong>Completion recorded</strong> by {{ release.completed_by.username }} · {{ release.completed_at|date:'d M Y H:i' }}</p><p class="reason">{{ release.completion_notes }}</p>
+<p><a data-release-evidence="{{ release.pk }}" href="{% url 'document_download' release.completion_evidence_id %}">Download completion evidence: {{ release.completion_evidence.original_name }}</a></p>{% endif %}
+</article>{% endwith %}{% empty %}<p>No release requests recorded.</p>{% endfor %}
+{% if can_request_release %}<h3>Request release</h3><p>Explain the request for human assessment under applicable authorized procedures. Submitting a request does not establish eligibility.</p>
+<form method="post" action="{% url 'release_request' instrument.pk %}">{% csrf_token %}{{ release_request_form.as_p }}<button>Submit release request</button></form>{% endif %}
+</section>

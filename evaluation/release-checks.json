@@ -1,0 +1,39 @@
+{
+  "audit_date_local": "2026-10-23",
+  "source_test_count": 159,
+  "source_test_seconds": 53.632,
+  "baseline_test_count": 143,
+  "source_verify_demo_exit_code": 0,
+  "packaged_verify_demo_exit_code": 0,
+  "fresh_http_journeys": "5/5 passed",
+  "fresh_seeded_http_role_category_comparisons": 24,
+  "fresh_seeded_document_downloads": 18,
+  "original_saved_http_journeys": "5/5 passed after restart",
+  "restored_saved_http_journeys": "5/5 passed after restore",
+  "restored_csv_role_category_comparisons": 24,
+  "dependencies_tool": "pip-audit 2.10.1",
+  "dependencies_app_plus_bootstrap_known_advisories": 0,
+  "demo_deployment_check_warning_count": 6,
+  "visual_browser_qa": "NOT VERIFIED: browser tool kernel initialization failed",
+  "physically_disconnected_rehearsal": "NOT VERIFIED",
+  "public_deployment": "NOT ATTEMPTED / NO-GO",
+  "recovery": {
+    "stopped_backup": true,
+    "sqlite_integrity": "ok",
+    "all_copied_hashes_match": true,
+    "document_hashes_match": 37,
+    "counts": {
+      "portal_instrument": 33,
+      "portal_document": 37,
+      "portal_reviewobservation": 2,
+      "portal_releaserequest": 6,
+      "portal_auditevent": 120
+    },
+    "restored_portal_rows_equal": true,
+    "restored_credentials_and_manifest_equal": true,
+    "http_workflows_after_restore": "PASS: all five saved journeys",
+    "restored_csv_role_category_comparisons": 24,
+    "packaged_verify_demo_exit_code": 0,
+    "post_restore_document_hashes_match": 37
+  }
+}

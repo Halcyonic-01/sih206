@@ -1,0 +1,3 @@
+<p><strong>{% if demo_date %}Demo evaluation date{% else %}Current business date{% endif %}: {{ as_of|date:'Y-m-d' }}</strong> · {{ business_timezone }}</p>
+{% if demo_date %}<p class="notice">This is an explicitly dated demonstration report. It does not change the application clock. Instrument detail pages show the actual business date.</p>{% endif %}
+<p class="muted">Demo reminder thresholds: {{ reminder_days|join:', ' }} days. Maturity categories include only accepted current records; superseded and completed-release instruments remain historical. A maturity date is not a determination of regulatory noncompliance.</p>

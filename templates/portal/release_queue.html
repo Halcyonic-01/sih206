@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Release requests · FDR Portal{% endblock %}
+{% block content %}<h1>Release requests</h1>
+<p>{% if role == 'institution' %}Your institution's requests and recorded outcomes.{% elif role == 'authority' %}Assess requests, authorize or reject with reasons, and separately record completion evidence.{% else %}Read-only visibility into release requests. Authority accounts make decisions and record completion.{% endif %}</p>
+<p>Authorization is not completed release or a payment. Records stay monitored until evidence-backed completion.</p>
+<form method="get" class="card"><label for="release-status">Status</label><select id="release-status" name="status">
+{% for key, label in statuses.items %}<option value="{{ key }}" {% if key == selected_status %}selected{% endif %}>{{ label }}</option>{% endfor %}</select><button>Apply filter</button></form>
+<section class="card table-wrap"><table><thead><tr><th>Instrument</th><th>Institution</th><th>Request status</th><th>Requested</th></tr></thead><tbody>
+{% for release in releases %}<tr data-release-id="{{ release.pk }}"><td><a href="{% url 'instrument_detail' release.instrument_id %}#release-{{ release.pk }}">{{ release.instrument.reference }} · Request #{{ release.pk }}</a></td>
+<td>{{ release.instrument.institution.name }}</td><td>{{ release.get_status_display }}</td><td>{{ release.requested_by.username }}<br>{{ release.created_at|date:'d M Y H:i' }}</td></tr>
+{% empty %}<tr><td colspan="4">No requests in this view.</td></tr>{% endfor %}</tbody></table></section>{% endblock %}

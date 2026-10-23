@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Maturity dashboard · FDR Portal{% endblock %}
+{% block content %}
+<h1>Maturity dashboard</h1>
+<p>{% if role == 'institution' %}Your institution's records and upcoming actions.{% else %}Records visible to your officer account; unsubmitted drafts remain private.{% endif %}</p>
+{% include 'portal/report_context.html' %}
+{% if allow_demo_date %}<form class="card date-filter" method="get">
+<label for="dashboard-as-of">Optional demo evaluation date</label><input type="date" id="dashboard-as-of" name="as_of" {% if demo_date %}value="{{ as_of|date:'Y-m-d' }}"{% endif %}>
+<button>View report</button> <a href="{% url 'dashboard' %}">Use current date</a></form>{% endif %}
+<div class="metric-grid">{% for card in cards %}<a class="card metric" href="{{ card.url }}" data-category="{{ card.category }}" data-count="{{ card.count }}">
+<span>{{ card.label }}</span><strong>{{ card.count }}</strong><span>View records →</span></a>{% endfor %}</div>
+<section class="card"><h2>How to read these counts</h2>
+<p>Accepted current records include accepted instruments that have not been superseded or completed release, including those already matured. Release authorization alone keeps them monitored. Approaching maturity, matures today, and matured are separate subsets of that total; do not add all dashboard cards together.</p>
+<p>Pending review contains submitted records. Drafts and records awaiting correction do not enter maturity action lists until accepted. No emails or notifications are sent by this dashboard.</p></section>
+{% endblock %}

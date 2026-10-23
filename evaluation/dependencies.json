@@ -1,0 +1,1 @@
+{"dependencies": [{"name": "asgiref", "version": "3.12.1", "vulns": []}, {"name": "django", "version": "5.2.18", "vulns": []}, {"name": "sqlparse", "version": "0.6.0", "vulns": []}, {"name": "tzdata", "version": "2026.5", "vulns": []}], "fixes": []}

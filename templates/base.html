@@ -1,0 +1,26 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}FDR Portal{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<header><div class="shell nav">
+  <a class="brand" href="{% url 'instrument_list' %}">FDR Portal <small>Milestone 6</small></a>
+  {% if user.is_authenticated %}<div class="account">{{ user.username }}
+    <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+    <a class="nav-link" href="{% url 'instrument_list' %}">Records</a>
+    <a class="nav-link" href="{% url 'release_queue' %}">Release requests</a>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary">Sign out</button></form>
+  </div>{% endif %}
+</div></header>
+<main class="shell">
+  <p class="demo">Synthetic demonstration · No bank connection · No regulatory compliance claim</p>
+  {% for message in messages %}<p class="notice" role="status">{{ message }}</p>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

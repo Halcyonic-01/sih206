@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<a href="{% url 'instrument_list' %}">← Records / review queue</a>
+<div class="heading"><div><h1>{{ instrument.reference }}</h1><p>{{ instrument.institution.name }}</p></div><span class="badge">{{ instrument.get_status_display }}</span></div>
+{% if instrument.is_superseded %}<p class="notice"><strong>Superseded</strong> at {{ instrument.superseded_at|date:'d M Y H:i' }}. Preserved for history; excluded from current maturity monitoring.</p>{% endif %}
+{% if instrument.is_released %}<p class="notice"><strong>Release completion recorded</strong> at {{ instrument.released_at|date:'d M Y H:i' }}. Preserved for history; excluded from current monitoring. The portal did not execute a payment.</p>{% endif %}
+{% if action_error %}<p class="error" role="alert">{{ action_error }}</p>{% endif %}
+{% if predecessor or successor or can_renew %}<section class="card"><h2>Renewal lineage</h2>
+{% if predecessor %}<p>Predecessor: <a data-lineage="predecessor" href="{% url 'instrument_detail' predecessor.pk %}">{{ predecessor.reference }}</a></p>{% endif %}
+{% if successor %}<p>Successor: <a data-lineage="successor" href="{% url 'instrument_detail' successor.pk %}">{{ successor.reference }}</a> · {{ successor.get_status_display }}</p>
+{% if not instrument.is_superseded %}<p>The predecessor remains current until the successor is accepted.</p>{% endif %}{% endif %}
+{% if can_renew %}<a class="button secondary" href="{% url 'instrument_renew' instrument.pk %}">Create renewal draft</a>{% endif %}
+</section>{% endif %}
+<section class="card"><h2>Declared details</h2>
+<dl><dt>Bank</dt><dd>{{ instrument.bank }}</dd><dt>Amount</dt><dd>INR {{ instrument.amount|floatformat:2 }}</dd>
+<dt>Issue date</dt><dd>{{ instrument.issue_date|date:'d M Y' }}</dd><dt>Maturity date</dt><dd>{{ instrument.maturity_date|date:'d M Y' }}</dd></dl>
+<p><strong>{{ maturity.label }}</strong>{% if maturity.reminder_band %} · within {{ maturity.reminder_band }} days{% endif %}<br>
+<span class="muted">Current business date: {{ maturity_as_of|date:'Y-m-d' }} · {{ business_timezone }}. {% if maturity_monitored %}Included in accepted maturity monitoring.{% elif instrument.is_superseded or instrument.is_released %}Historical instrument; not in current maturity monitoring.{% else %}Not yet in accepted maturity monitoring.{% endif %}</span></p>
+<p class="muted">Acceptance records an officer's administrative review. It does not establish bank authenticity.</p>
+<p><strong>Not independently bank-verified</strong> · No authorized bank connection is configured.</p>
+{% if editable %}<div class="actions"><a class="button secondary" href="{% url 'instrument_edit' instrument.pk %}">Edit / add PDF</a>
+<form method="post" action="{% url 'instrument_submit' instrument.pk %}">{% csrf_token %}{{ submit_form }}<button>Submit for review</button></form></div>{% endif %}
+</section>
+<section class="card"><h2>Technical checks on declared data</h2>
+<p>Checks version: {{ checks_version }}. These checks do not read or compare PDF contents. Basic input errors are rejected by the entry form.</p>
+{% for finding in findings %}<article class="event"><strong>{{ finding.code }}</strong> <span class="badge">{{ finding.severity }}</span>
+<p>{{ finding.explanation }}</p><dl>{% for field, value in finding.values.items %}<dt>{{ field }}</dt><dd>{{ value }}</dd>{% endfor %}</dl></article>
+{% empty %}<p>No flags from the configured technical checks. Manual document review is still required.</p>{% endfor %}
+</section>
+<section class="card"><h2>Supporting documents</h2>
+<p>Newest first. Earlier uploads remain available. Download and inspect the original before recording a decision.</p>
+{% for doc in documents %}<div class="document"><a href="{% url 'document_download' doc.pk %}">{{ doc.original_name }}</a>
+<p>{{ doc.get_kind_display }} · {{ doc.created_at|date:'d M Y H:i' }} · {{ doc.uploaded_by.username }} · {{ doc.size_bytes }} bytes</p>
+<details><summary>File integrity hash</summary><code>{{ doc.sha256 }}</code></details></div>
+{% empty %}<p>No PDF uploaded. Add a PDF before submission.</p>{% endfor %}
+</section>
+<section class="card"><h2>Manual document observations</h2>
+<p>Recorded by an officer after inspecting a document. Page references are entered manually, counted from page 1; they are not automatically verified.</p>
+{% for row in observation_rows %}{% with observation=row.observation %}<article class="event">
+<strong>Observation #{{ observation.pk }}</strong> <span class="badge">{{ observation.get_severity_display }}</span>
+<p><a href="{% url 'document_download' observation.document_id %}">{{ observation.document.original_name }}</a> · Document #{{ observation.document_id }} · {% if observation.page_number %}Page {{ observation.page_number }}{% else %}No page specified{% endif %}</p>
+<p class="reason">{{ observation.comment }}</p><p class="muted">Recorded by {{ observation.reviewer.username }} · {{ observation.created_at|date:'d M Y H:i' }}</p>
+{% if observation.is_resolved %}<p><strong>Resolved</strong> by {{ observation.resolved_by.username }} · {{ observation.resolved_at|date:'d M Y H:i' }}</p><p class="reason">{{ observation.resolution }}</p>
+{% else %}<p><strong>Unresolved</strong>{% if observation.severity == 'BLOCKING' %} — blocks acceptance{% endif %}</p>
+{% if can_observe %}<form method="post" action="{% url 'observation_resolve' instrument.pk observation.pk %}">{% csrf_token %}{{ row.resolution_form.as_p }}<button>Resolve observation</button></form>{% endif %}
+{% endif %}</article>{% endwith %}{% empty %}<p>No manual observations recorded.</p>{% endfor %}
+{% if can_observe %}<h3>Add an observation</h3><form method="post" action="{% url 'observation_add' instrument.pk %}">{% csrf_token %}{{ observation_form.as_p }}<button>Record observation</button></form>{% endif %}
+</section>
+{% if reviewable %}<section class="card"><h2>Officer decision</h2>
+<p>Check the declared details against the attached PDF. Resolve blocking observations before acceptance. Record a reason for either decision.</p>
+<form method="post" action="{% url 'instrument_review' instrument.pk %}">{% csrf_token %}{{ review_form.as_p }}<button>Record decision</button></form></section>{% endif %}
+{% include 'portal/release_panel.html' %}
+<section class="card"><h2>History</h2>
+{% for event in events %}<article class="event"><strong>{{ event.action }}</strong> · {{ event.actor.username }} · {{ event.created_at|date:'d M Y H:i' }}
+{% if event.reason %}<p class="reason">{{ event.reason }}</p>{% endif %}
+<details><summary>Preserved record values</summary><h3>Before</h3><pre>{{ event.before }}</pre><h3>After</h3><pre>{{ event.after }}</pre></details>
+</article>{% empty %}<p>No actions yet.</p>{% endfor %}
+</section>
+{% endblock %}

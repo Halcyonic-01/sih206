@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<a href="{% url 'instrument_list' %}">← Records</a>
+<section class="card"><h1>{% if predecessor %}Create linked renewal draft{% elif instrument %}Edit FDR{% else %}Create FDR draft{% endif %}</h1>
+{% if predecessor %}<p>Predecessor: <a href="{% url 'instrument_detail' predecessor.pk %}">{{ predecessor.reference }}</a>. It stays current and monitored while this proposal is reviewed.</p>
+<p>Enter the successor's own reference, dates and supporting PDF. Bank and amount are prefilled for convenience; no original document is copied.</p>{% endif %}
+<p>{{ institution.name }} · All amounts are in INR.</p>
+<p>Upload a PDF up to the configured limit (10 MB by default). Additional uploads preserve earlier files. A PDF is required before submission.</p>
+<form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button>Save draft</button></form>
+</section>
+{% endblock %}

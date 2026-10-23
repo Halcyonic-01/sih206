@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="heading"><div><h1>{{ category_label }}</h1>
+<p>{% if role == 'officer' %}Review submitted records or filter accepted instruments by maturity.{% else %}Create a draft, attach the FDR, and submit it for review.{% endif %}</p></div>
+{% if role == 'institution' %}<a class="button" href="{% url 'instrument_create' %}">New FDR</a>{% endif %}</div>
+{% include 'portal/report_context.html' %}
+<form class="card report-filters" method="get"><div><label for="category">Records</label>
+<select id="category" name="category">{% for key, label in categories.items %}<option value="{{ key }}" {% if key == category %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+{% if allow_demo_date %}<div><label for="list-as-of">Optional demo evaluation date</label><input type="date" id="list-as-of" name="as_of" {% if demo_date %}value="{{ as_of|date:'Y-m-d' }}"{% endif %}></div>{% endif %}
+<button>Apply filters</button></form>
+<p>{{ record_count }} record{{ record_count|pluralize }} in this view.</p>
+<p><a href="{% url 'instrument_export' %}?{{ export_query }}">Export this view as CSV</a></p>
+<section class="card table-wrap"><table><thead><tr><th>Reference</th><th>Institution / bank</th><th>Amount (INR)</th><th>Maturity</th><th>Review status</th></tr></thead>
+<tbody>{% for row in instrument_rows %}{% with instrument=row.instrument %}<tr data-instrument-id="{{ instrument.pk }}">
+<td><a href="{% url 'instrument_detail' instrument.pk %}">{{ instrument.reference }}</a></td>
+<td>{{ instrument.institution.name }}<br><span class="muted">{{ instrument.bank }}</span></td>
+<td>{{ instrument.amount|floatformat:2 }}</td><td>{{ instrument.maturity_date|date:'d M Y' }}<br><span class="muted">{{ row.maturity.label }}{% if row.maturity.reminder_band %} · within {{ row.maturity.reminder_band }} days{% endif %}{% if instrument.is_superseded or instrument.is_released %} · historical; not monitored{% elif not row.is_monitored %} · not yet in accepted monitoring{% endif %}</span></td>
+<td><span class="badge">{{ instrument.get_status_display }}</span>{% if instrument.is_superseded %}<br><span class="badge">Superseded</span>{% endif %}{% if instrument.is_released %}<br><span class="badge">Release completion recorded</span>{% endif %}</td>
+</tr>{% endwith %}{% empty %}<tr><td colspan="5">No records in this list.</td></tr>{% endfor %}</tbody></table></section>
+{% endblock %}
