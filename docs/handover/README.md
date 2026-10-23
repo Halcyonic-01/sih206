@@ -11,6 +11,8 @@ This folder is the replacement for needing to read the previous developer's chat
 5. Follow the [beginner testing walkthrough](testing/README.md). Record observations in a copy of the [test record](testing/test-record-template.md).
 6. Review [next steps](next-steps.md) with the team before choosing work. The [improvement backlog](improvements.md) is a menu, not a request to implement everything.
 7. Follow the [transfer checklist](transfer-checklist.md) to confirm that the handover is independent of the outgoing developer's machine.
+8. Read the team's two planning PDFs, `gap-analysis-and-implementation-plan.pdf` (three-stage priority plan, problem-statement traceability, AICTE APH deposit rules, React + Django API architecture) and `team-task-allocation.pdf` (who builds what, deadlines, dependencies). **They are shared privately and are not in this repository.** Save them in the git-ignored `planning/` folder at the repository root. Everything they mark PROPOSED is not implemented.
+9. AI coding agents working for Yash and Saksham must follow [AGENTS.md](../../AGENTS.md).
 
 ## What the teammate inherits
 
