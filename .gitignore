@@ -21,3 +21,6 @@ wheelhouse/
 *.zip.sha256
 # Local logs
 *.log
+# Team planning documents shared privately (keep local; never commit or push)
+planning/
+docs/**/*.pdf
