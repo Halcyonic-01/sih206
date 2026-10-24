@@ -1,5 +1,10 @@
 # S5 release preparation only
 
+The later authorized [pure prerequisite evaluator](EVALUATOR.md) now executes
+the labels without applying any action. Its [verification](EVALUATOR_VERIFICATION.md)
+records actual results. The sections below describe the original documentation-
+only checkpoint `7e05644`; its no-evaluator statements are historical.
+
 - [Release-path specification](RELEASE_PATH_SPEC.md): scope, path/mode matrix,
   human gates, legacy compatibility, evidence, independence, letter/completion
   boundaries and unresolved team/policy decisions.
