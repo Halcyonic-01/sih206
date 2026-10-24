@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     'rest_framework', 'drf_spectacular', 'drf_spectacular_sidecar', 'axes',
-    'portal', 'obligations',
+    'portal', 'obligations', 'access',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'axes.middleware.AxesMiddleware',
+    'access.middleware.AccessLogMiddleware',
     'portal.middleware.SecurityHeadersMiddleware',
     'portal.middleware.OperationalSafetyMiddleware',
 ]

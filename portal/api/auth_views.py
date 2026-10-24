@@ -1,6 +1,7 @@
 """/api/auth/*: CSRF bootstrap, sign-in with lockout, sign-out and the current user."""
 from axes.handlers.proxy import AxesProxyHandler
 from django.contrib.auth import authenticate, login, logout
+from django.core.exceptions import PermissionDenied
 from django.db import connection
 from django.http import Http404
 from django.middleware.csrf import get_token
@@ -15,7 +16,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from portal.models import UserProfile
-from portal.permissions import role
+from portal.permissions import clearance_unit, role
 
 from .authentication import ApiSessionAuthentication
 from .exceptions import envelope
@@ -31,8 +32,9 @@ class CurrentUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     username = serializers.CharField()
     display_name = serializers.CharField()
-    role = serializers.CharField(allow_null=True, help_text='institution, officer, authority or null when no role is assigned')
+    role = serializers.CharField(allow_null=True, help_text='institution, officer, authority, clearance, auditor or null when no role is assigned')
     institution = InstitutionSerializer(allow_null=True)
+    unit = serializers.CharField(allow_null=True, help_text='PGRC, VIGILANCE or GRANTS for a clearance-unit account')
 
 
 class LoginSerializer(serializers.Serializer):
@@ -46,9 +48,14 @@ def current_user_payload(user):
     if profile:
         institution = {'id': profile.institution_id, 'code': profile.institution.code,
                        'name': profile.institution.name}
+    current_role = role(user)
+    try:
+        unit = clearance_unit(user) if current_role == 'clearance' else None
+    except PermissionDenied:
+        unit = None
     return {'id': user.pk, 'username': user.get_username(),
             'display_name': user.get_full_name() or user.get_username(),
-            'role': role(user), 'institution': institution}
+            'role': current_role, 'institution': institution, 'unit': unit}
 
 
 class CsrfView(APIView):
@@ -95,7 +102,8 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     permission_classes = [AllowAny]
-    authentication_classes = []
+    # Session authentication keeps request.user intact so the sign-out is attributed to the right person.
+    authentication_classes = [ApiSessionAuthentication]
 
     @extend_schema(request=None, responses={204: None})
     def post(self, request):

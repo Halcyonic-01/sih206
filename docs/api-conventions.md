@@ -56,3 +56,38 @@ fails to import raises, so a typo is never hidden.
 * **Request IDs:** every response carries `X-Request-ID` (also available as `request.request_id`).
 * **Browser rules:** the CSP allows scripts from our own origin only. No inline scripts, no CDN assets,
   no `dangerouslySetInnerHTML`.
+
+## Roles and access (K4)
+
+| Role | Group | Sees | May change |
+|---|---|---|---|
+| Institution | `Institution` | its own records (incl. drafts) | its own drafts, submissions, renewals, release requests |
+| Officer | `Officer` | all submitted records | review, observations |
+| Authority | `Authority` | all submitted records | release decision and completion |
+| Clearance unit | `Clearance` + `access.UnitAssignment` (PGRC, VIGILANCE, GRANTS) | instruments that have a release case | its own clearance tasks (S5) |
+| Auditor | `Auditor` | all submitted history, audit events, access log | nothing |
+
+Use the scoped helpers in `portal/permissions.py` and never filter by IDs from the request body:
+`scoped_instruments`, `scoped_documents`, `scoped_release_requests`, `scoped_audit_events`,
+`scoped_access_logs` (auditor only), `clearance_unit(user)`, `require_clearance(user, unit)`,
+`require_officer`, `require_authority`, `require_auditor`. Unknown or ambiguous role membership fails closed.
+Test groups with `Group.objects.get_or_create(name=...)`: migrations do not create groups.
+
+### Access log
+
+Every endpoint that serves a **document, export, report, NOC or staff search** must call
+
+```python
+from access.logging import log_access
+from access.models import AccessLog
+log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document, detail='instrument=%d' % document.instrument_id)
+```
+
+before it sends the file (also accepts a DRF request; actions are free strings: `EXPORT`, `REPORT`,
+`NOC_VIEW`, `SEARCH`, ...). If a view forgets, `AccessLogMiddleware` still records any successful GET whose
+path contains `download`, `export` or `report`, or ends in `.csv`/`.xlsx`/`.pdf`, as `DOWNLOAD`. Sign-in,
+sign-out and failed sign-in are logged automatically (the attempted username only, never the password).
+`AccessLog` rows are append-only (`AppendOnlyError` on update or delete).
+
+Demo accounts: `python manage.py seed_staff --generate-password` creates `clearance_pgrc`,
+`clearance_vigilance`, `clearance_grants` and `auditor` and writes `data/staff-credentials.txt` (git-ignored).
