@@ -24,3 +24,7 @@ wheelhouse/
 # Team planning documents shared privately (keep local; never commit or push)
 planning/
 docs/**/*.pdf
+# Build outputs (React build, collected static files)
+node_modules/
+frontend/dist/
+staticfiles/

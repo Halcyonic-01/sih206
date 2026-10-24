@@ -174,7 +174,7 @@ class RenewalTests(PortalTestCase):
         page = self.client.get(reverse('instrument_detail', args=[parent.pk]))
         self.assertIsNone(page.context['successor'])
         self.assertNotContains(page, child.reference)
-        self.assertNotContains(page, f'href="/instruments/{child.pk}/"')
+        self.assertNotContains(page, f'href="/legacy/instruments/{child.pk}/"')
         self.assertEqual(self.client.get(reverse('instrument_detail', args=[child.pk])).status_code, 404)
         self.assertEqual(self.client.get(reverse('document_download', args=[child.documents.get().pk])).status_code, 404)
 
@@ -186,10 +186,10 @@ class RenewalTests(PortalTestCase):
             self.client.force_login(user)
             page = self.client.get(reverse('instrument_detail', args=[parent.pk]))
             self.assertEqual(page.context['successor'].pk, child.pk)
-            self.assertContains(page, f'data-lineage="successor" href="/instruments/{child.pk}/"')
+            self.assertContains(page, f'data-lineage="successor" href="/legacy/instruments/{child.pk}/"')
             page = self.client.get(reverse('instrument_detail', args=[child.pk]))
             self.assertEqual(page.context['predecessor'].pk, parent.pk)
-            self.assertContains(page, f'data-lineage="predecessor" href="/instruments/{parent.pk}/"')
+            self.assertContains(page, f'data-lineage="predecessor" href="/legacy/instruments/{parent.pk}/"')
 
     def test_competing_proposal_and_replay_are_rejected(self):
         parent = self.accepted()

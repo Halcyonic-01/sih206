@@ -1,29 +1,55 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.core.exceptions import ImproperlyConfigured
 
+from .envfile import load_env_file
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Optional local .env (git-ignored). Variables already set in the real environment take precedence.
+load_env_file(BASE_DIR / '.env')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
 if not SECRET_KEY:
     if not DEBUG:
         raise RuntimeError('Set DJANGO_SECRET_KEY when DJANGO_DEBUG=false.')
     SECRET_KEY = 'local-synthetic-demo-only-do-not-deploy'
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+                 if host.strip()]
+
+
+def env_bool(name, default):
+    return os.environ.get(name, str(default)).strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def env_int(name, default, minimum=0):
+    try:
+        value = int(os.environ.get(name, default))
+    except ValueError:
+        raise ImproperlyConfigured(f'{name} must be an integer.') from None
+    if value < minimum:
+        raise ImproperlyConfigured(f'{name} must be at least {minimum}.')
+    return value
+
 INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
+    'rest_framework', 'drf_spectacular', 'drf_spectacular_sidecar', 'axes',
     'portal', 'obligations',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'portal.middleware.RequestIdMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
+    'portal.middleware.SecurityHeadersMiddleware',
     'portal.middleware.OperationalSafetyMiddleware',
 ]
 ROOT_URLCONF = 'config.urls'
@@ -74,12 +100,90 @@ if MAX_UPLOAD_BYTES <= 0:
     raise ImproperlyConfigured('MAX_UPLOAD_MB must be a positive integer.')
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
+# The legacy Django-template UI lives under /legacy/ until 28 Oct 2026; the React app owns /.
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'instrument_list'
 LOGOUT_REDIRECT_URL = 'login'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 7200
-SESSION_COOKIE_SECURE = os.environ.get('DJANGO_SECURE_COOKIES', 'false').lower() == 'true'
+SESSION_COOKIE_SECURE = env_bool('DJANGO_SECURE_COOKIES', False)
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+# React reads the CSRF cookie and sends it back in X-CSRFToken, so this cookie must not be HttpOnly.
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+                        if origin.strip()]
+
+# Transport and browser hardening. Production switches these on with environment variables;
+# local HTTP demos keep working with the defaults.
+SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', False)
+SECURE_HSTS_SECONDS = env_int('DJANGO_HSTS_SECONDS', 0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
+SECURE_HSTS_PRELOAD = False
+if env_bool('DJANGO_BEHIND_TLS_PROXY', False):
+    # Only enable behind a proxy that overwrites X-Forwarded-Proto.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'same-origin'
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+# The PDF viewer in the React app embeds our own documents, so framing is allowed for the same origin only.
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+USE_X_FORWARDED_HOST = False
+
+# Lockout after repeated failed sign-ins (PS scenario 8: "login locks after 5 failures").
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+AXES_ENABLED = env_bool('AXES_ENABLED', True)
+AXES_FAILURE_LIMIT = env_int('AXES_FAILURE_LIMIT', 5, minimum=1)
+AXES_COOLOFF_TIME = timedelta(minutes=env_int('AXES_COOLOFF_MINUTES', 15, minimum=1))
+AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']]
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_CALLABLE = 'portal.api.lockout.lockout_response'
+AXES_USERNAME_FORM_FIELD = 'username'
+AXES_IPWARE_PROXY_COUNT = env_int('AXES_PROXY_COUNT', 0) or None
+AXES_IPWARE_META_PRECEDENCE_ORDER = (
+    ('HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR') if AXES_IPWARE_PROXY_COUNT else ('REMOTE_ADDR',))
+
+# React build served by Django on one port (no separate web server needed for the review).
+FRONTEND_DIST = BASE_DIR / 'frontend' / 'dist'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+WHITENOISE_ROOT = FRONTEND_DIST if FRONTEND_DIST.is_dir() else None
+WHITENOISE_USE_FINDERS = DEBUG
+WHITENOISE_AUTOREFRESH = DEBUG
+WHITENOISE_ADD_HEADERS_FUNCTION = 'portal.spa.static_headers'
+WHITENOISE_IMMUTABLE_FILE_TEST = 'portal.spa.immutable_assets'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ['portal.api.authentication.ApiSessionAuthentication'],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
+    'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
+    'DEFAULT_PARSER_CLASSES': ['rest_framework.parsers.JSONParser', 'rest_framework.parsers.MultiPartParser',
+                               'rest_framework.parsers.FormParser'],
+    'EXCEPTION_HANDLER': 'portal.api.exceptions.exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'portal.api.pagination.StandardPagination',
+    'PAGE_SIZE': 25,
+    'DEFAULT_THROTTLE_RATES': {'login': os.environ.get('API_LOGIN_THROTTLE', '30/min')},
+    'UNAUTHENTICATED_USER': 'django.contrib.auth.models.AnonymousUser',
+}
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'AICTE Security Deposit / FDR Portal API',
+    'DESCRIPTION': 'Session-authenticated JSON API for the React app. Writes need the X-CSRFToken header '
+                   'and the record `version` (stale versions return 409). SIH problem statement 26265.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': r'/api',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SWAGGER_UI_DIST': 'SIDECAR',
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+}
+# /api/docs/ is open in local DEBUG mode; otherwise only signed-in users can read it.
+API_DOCS_PUBLIC = env_bool('API_DOCS_PUBLIC', DEBUG)
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Deliberate: same-origin framing is required by the in-app PDF viewer; HSTS preload is an explicit opt-in
+# that cannot be undone quickly, so it stays off until AICTE decides on it.
+SILENCED_SYSTEM_CHECKS = ['security.W019', 'security.W021']
