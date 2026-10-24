@@ -9,7 +9,7 @@ import shutil
 from zipfile import ZipFile, ZIP_DEFLATED
 
 ROOT = Path(__file__).resolve().parents[1]
-FOLDERS = ('config', 'portal', 'templates', 'static', 'fixtures', 'scripts', 'docs', 'evaluation')
+FOLDERS = ('config', 'portal', 'obligations', 'templates', 'static', 'fixtures', 'scripts', 'docs', 'evaluation')
 FILES = ('manage.py', 'requirements.txt', 'requirements.in', 'README.md', '.env.example',
          '.gitignore', 'Setup-Offline.ps1', 'Start-Demo.ps1', 'Verify-Demo.ps1')
 PIP_VERSION = '26.2.1'
