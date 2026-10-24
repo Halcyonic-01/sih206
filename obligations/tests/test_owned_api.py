@@ -133,7 +133,7 @@ class OwnedApiTests(PortalTestCase):
         self.assertEqual(self.send('post', 'calculator', payload).status_code, 404)
 
     def test_auth_csrf_ambiguous_roles_and_no_store(self):
-        self.assertEqual(Client().get('/api/institutions').status_code, 403)
+        self.assertEqual(Client().get('/api/institutions').status_code, 401)
         client = Client(enforce_csrf_checks=True)
         client.force_login(self.officer)
         self.assertEqual(client.post('/api/calculator', '{}', content_type='application/json').status_code, 403)

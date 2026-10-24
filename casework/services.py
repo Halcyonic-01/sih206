@@ -1,5 +1,4 @@
 """Audited owned release workflow; missing trusted integration ports fail closed."""
-from copy import deepcopy
 import hashlib
 import secrets
 from urllib.parse import urlparse
@@ -14,7 +13,8 @@ from django.utils import timezone
 
 from portal import releases as legacy
 from portal.models import Instrument
-from portal.permissions import institution_for, require_authority, require_officer, role, scoped_instruments
+from portal.permissions import (clearance_unit, institution_for, require_authority,
+                                require_clearance, require_officer, role, scoped_instruments)
 from portal.services import WorkflowError
 from portal.services import _compare_and_update, event, snapshot as instrument_snapshot
 from obligations.calculations import penalty_proposal
@@ -23,12 +23,22 @@ from obligations.release_prerequisites import evaluate_prerequisites, Prerequisi
 from obligations.rules import rule_snapshot
 from obligations.services import DependencyUnavailable, expected_version, reason_text
 from .letters import render_letter
+from .facts import assemble as assemble_facts
 
 PATHS = {'TERM_COMPLETE', 'PROGRESSIVE_CLOSURE', 'MERGER', 'CONVERSION_TO_UNIVERSITY', 'CLOSURE_BY_AICTE'}
 
 
 def scoped_cases(actor):
-    return ReleaseCase.objects.filter(release__instrument__in=scoped_instruments(actor))
+    """Cases visible through the platform's published scope rules.
+
+    A clearance account is deliberately narrower than the generic instrument
+    scope: it may see only cases with a task for its assigned unit.  This keeps
+    a direct case URL from becoming a cross-unit evidence browser.
+    """
+    cases = ReleaseCase.objects.filter(release__instrument__in=scoped_instruments(actor))
+    if role(actor) == 'clearance':
+        return cases.filter(clearances__unit=clearance_unit(actor)).distinct()
+    return cases
 
 
 def get_case(actor, pk):
@@ -39,13 +49,29 @@ def record(case, actor, action, reason):
     MasterAudit.objects.create(institution_id=case.institution_id, actor=actor,
         entity='releasecase', entity_id=case.pk, action=action, reason=reason,
         before=getattr(case, '_audit_before', {}), after=case_snapshot(case))
-    # TODO(K5): configured adapter MUST enqueue in the same DB transaction,
-    # never send external mail inline. Missing hook is not simulated delivery.
-    enqueue = getattr(settings, 'SAKSHAM_NOTIFY', None)
-    if callable(enqueue):
-        enqueue(recipients=[case.release.requested_by_id], template=action,
-            context={'case_id': case.pk, 'version': case.version},
-            key=f'S5:{case.pk}:{case.version}:{action}')
+    # K5's public notify() is a transactional outbox.  It may create an
+    # in-app row and a pending email delivery attempt, but this service never
+    # claims that an email was delivered.
+    from notifications import recipients
+    from notifications.service import notify
+
+    reference = case.release.instrument.reference
+    context = {'reference': reference, 'url': f'/releases/{case.pk}'}
+    if action == 'RELEASE_CASE_REQUESTED':
+        notify(recipients.officers(), 'release_requested', context,
+               f's5:{case.pk}:release-requested:{case.version}')
+    elif action.startswith('CLEARANCE_'):
+        notify(recipients.institution_users(case.institution), 'release_requested', context,
+               f's5:{case.pk}:{action.lower()}:{case.version}')
+    elif action == 'PENALTY_REVIEW':
+        notify(recipients.officers(), 'penalty_proposed', context,
+               f's5:{case.pk}:penalty-review:{case.version}')
+    elif action in {'CASE_APPROVE', 'CASE_REJECT'}:
+        notify(recipients.institution_users(case.institution), 'release_decided', context,
+               f's5:{case.pk}:decision:{case.version}')
+    elif action == 'LETTER_ISSUED':
+        notify(recipients.institution_users(case.institution), 'noc_issued', context,
+               f's5:{case.pk}:letter-issued:{case.version}')
 
 
 def case_snapshot(case):
@@ -73,18 +99,8 @@ def bump(case, version):
 
 
 def source(actor, instrument, obligation, path, declarations):
-    # TODO(Y1/Y2/Y3/S5-D04): callable must build facts from scoped server data and
-    # the canonical questionnaire. Never install a provider returning fixture data.
-    provider = getattr(settings, 'SAKSHAM_RELEASE_FACTS', None)
-    if not callable(provider):
-        raise DependencyUnavailable('Trusted document/questionnaire adapter unavailable.')
-    facts = deepcopy(provider(actor=actor, instrument=instrument, obligation=obligation,
-                              path=path, declarations=deepcopy(declarations)))
-    if type(facts) is not dict:
-        raise DependencyUnavailable('Invalid trusted release context.')
-    if set(facts) != TOP or any(type(facts.get(section)) is not dict for section in SECTIONS):
-        raise DependencyUnavailable('Invalid trusted release context sections.')
-    return facts
+    return assemble_facts(actor=actor, instrument=instrument, obligation=obligation,
+                          path=path, declarations=declarations)
 
 
 def assessment(actor, case, operation='ASSESS', *, reason=None, completion=None):
@@ -97,9 +113,18 @@ def assessment(actor, case, operation='ASSESS', *, reason=None, completion=None)
         raise WorkflowError('Stored rule content changed; human reassessment is required.')
     # Authoritative identities/status overwrite provider data; provider still owns
     # validated source facts, applicable additional units and child/evidence scope.
-    from obligations.services import scoped_institutions
-    facts['actor'] = {'id': actor.pk, 'role_label': (role(actor) or '').upper(),
-                     'scope_institution_ids': list(scoped_institutions(actor).values_list('pk', flat=True))}
+    current_role = role(actor)
+    # The case was retrieved through scoped_cases() before assessment.  The
+    # S2 institution listing intentionally denies clearance accounts, whereas
+    # an assigned clearance user may assess the one case/task it is deciding.
+    # Do not broaden its scope by reusing S2's cross-institution listing.
+    if current_role == 'clearance':
+        scope_ids = [case.institution_id]
+    else:
+        from obligations.services import scoped_institutions
+        scope_ids = list(scoped_institutions(actor).values_list('pk', flat=True))
+    facts['actor'] = {'id': actor.pk, 'role_label': (current_role or '').upper(),
+                     'scope_institution_ids': scope_ids}
     facts['case'] = {'id': case.pk, 'institution_id': case.institution_id, 'instrument_id': instrument.pk,
         'requester_id': case.release.requested_by_id, 'version': case.version,
         'expected_version': case.version, 'assessment_version': case.version,
@@ -185,13 +210,25 @@ def request_case(actor, *, instrument_id, obligation_id, instrument_version, pat
     result = assessment(actor, case, 'REQUEST', reason=reason)
     require_gate(result, 'REQUEST_PREREQUISITES_MET_IN_DEMO')
     record(case, actor, 'RELEASE_CASE_REQUESTED', reason)
+    # One immutable task per required unit already exists at this point.  K5's
+    # recipient helper resolves only active users assigned to that unit; no
+    # outside address or guessed clearance membership is used.
+    from notifications import recipients
+    from notifications.service import notify
+    for task in case.clearances.order_by('pk'):
+        notify(recipients.clearance_users(task.unit), 'clearance_assigned', {
+            'reference': instrument.reference, 'unit': task.unit,
+            'url': f'/clearance-tasks?case={case.pk}',
+        }, f's5:{case.pk}:clearance-assigned:{task.pk}')
     return case
 
 
 def clearance_allowed(actor, task):
-    # TODO(K4): use the agreed real membership/scope helper; deny by default.
-    permission = getattr(settings, 'SAKSHAM_CLEARANCE_PERMISSION', None)
-    return bool(actor.is_authenticated and actor.is_active and callable(permission) and permission(actor, task) is True)
+    try:
+        require_clearance(actor, task.unit)
+    except PermissionDenied:
+        return False
+    return True
 
 
 @transaction.atomic

@@ -1,4 +1,4 @@
-"""Owned S2 audited services. K1/K4 adapters remain explicit integration points."""
+"""Owned audited master services; actual holding/proof sources remain separate."""
 import json
 from datetime import date
 
@@ -25,7 +25,9 @@ class DependencyUnavailable(WorkflowError):
 
 
 def scoped_institutions(actor):
-    # TODO(K4): replace existing staff scope with K4's reviewed bureau/region scope.
+    # K4 has no geographic master helper. Preserve conservative existing access:
+    # own institution; officer/authority reads; clearance/auditor denied. Instrument
+    # history access does not grant access to unsubmitted institution master data.
     current = role(actor)
     if current == 'institution':
         return Institution.objects.filter(pk=institution_for(actor).pk)
@@ -196,15 +198,9 @@ def save_child(actor, model, institution_id, values, reason, identity=None, vers
 
 
 def holding_snapshot(actor, obligation):
-    """TODO(Y1): consume Yash's FK, never manufacture an empty linked ledger."""
-    if 'obligation' not in {f.name for f in Instrument._meta.fields}:
-        raise DependencyUnavailable('Y1_OBLIGATION_LINK_UNAVAILABLE')
-    from portal.permissions import scoped_instruments
-    return tuple(HoldingInput(id=h.pk, institution_id=h.institution_id,
-        obligation_id=h.obligation_id, amount_paise=h.amount_paise,
-        issue_date=h.issue_date, maturity_date=h.maturity_date, status=h.status,
-        superseded=h.superseded_at is not None, released=h.released_at is not None)
-        for h in scoped_instruments(actor).filter(obligation_id=obligation.pk))
+    """Actual scoped Y1 snapshot; retained boundary for callers/tests."""
+    from .sources import linked_holdings
+    return linked_holdings(actor, obligation)
 
 
 def obligation_detail(actor, identity, *, as_of=None):
@@ -222,16 +218,28 @@ def obligation_detail(actor, identity, *, as_of=None):
         return data
     try:
         holdings = holding_snapshot(actor, record)
-        receipts = {}
+        # Holdings and receipt timing are independent sources. Incomplete proof
+        # context must not discard otherwise valid coverage or invent overdue proof.
+        findings = obligation_findings(ob, record.rule_version, as_of=when, holdings=holdings)
+        from .sources import proof_evidence
+        documents = proof_evidence(actor, record)
+        proof_status, proof_reason = 'UNAVAILABLE', 'REVIEWED_RECEIPT_DATE_CONTRACT_UNAVAILABLE'
         provider = getattr(settings, 'SAKSHAM_PROOF_RECEIPTS', None)
         if callable(provider):
-            receipts = provider(actor, record)
-            if type(receipts) is not dict or set(receipts) != {'payment_proof_on','affidavit_on'} or any(
-                    value is not None and type(value) is not date for value in receipts.values()):
-                raise DependencyUnavailable('Invalid scoped proof receipt context.')
-        findings = obligation_findings(ob, record.rule_version, as_of=when, holdings=holdings,
-            intimation_date=record.intimation_date if callable(provider) else None, **receipts)
-        # TODO(Y2/Y3): never infer receipt dates from an arbitrary PDF upload.
+            try:
+                receipts = provider(actor, record)
+                if type(receipts) is not dict or set(receipts) != {'payment_proof_on','affidavit_on'} or any(
+                        value is not None and type(value) is not date for value in receipts.values()):
+                    raise DependencyUnavailable('Invalid scoped proof receipt context.')
+                checked = obligation_findings(ob, record.rule_version, as_of=when, holdings=holdings,
+                    intimation_date=record.intimation_date, **receipts)
+                findings = checked
+                if record.intimation_date:
+                    proof_status, proof_reason = 'AVAILABLE', None
+                else:
+                    proof_reason = 'INTIMATION_DATE_UNAVAILABLE'
+            except (DependencyUnavailable, RuleInputError):
+                proof_reason = 'REVIEWED_RECEIPT_CONTEXT_UNAVAILABLE'
         data['assessment'] = {'status': 'AVAILABLE', 'as_of': when.isoformat(),
             'coverage': coverage(ob, when, holdings=holdings),
             'holdings': [{'id': h.id, 'amount_paise': h.amount_paise, 'issue_date': h.issue_date.isoformat(),
@@ -240,7 +248,8 @@ def obligation_detail(actor, identity, *, as_of=None):
             'open_actions': [{'description': f.explanation, 'responsible_party': 'Institution and reviewing officer',
                 'suggested_only': True} for f in findings],
             'findings': [f.as_dict() for f in findings],
-            'proof_assessment': 'AVAILABLE' if callable(provider) and record.intimation_date else 'UNAVAILABLE', 'simulation_label': 'SIMULATED',
+            'proof_assessment': proof_status, 'proof_reason': proof_reason,
+            'proof_evidence': documents, 'simulation_label': 'SIMULATED',
             'policy_label': 'DRAFT_DEMO_NOT_APPROVED'}
     except (DependencyUnavailable, RuleInputError) as exc:
         data['assessment']['reason'] = 'HOLDINGS_OR_RULE_CONTEXT_UNAVAILABLE'

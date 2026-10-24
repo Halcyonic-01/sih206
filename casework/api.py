@@ -2,14 +2,16 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
-from django.urls import reverse
 from rest_framework.response import Response
 
 from obligations.api.views import OwnedView, body, page, pagination
 from obligations.models import ClearanceTask, IssuedLetter, MasterAudit
 from obligations.services import DependencyUnavailable
 from portal.permissions import role
+from access.logging import log_access
+from access.models import AccessLog
 from . import services
+from . import ai_summary
 
 
 def case_json(actor, case):
@@ -32,7 +34,7 @@ def case_json(actor, case):
         'decision_reason': case.release.decision_reason, 'completion_notes': case.release.completion_notes,
         'documents': [{'id': d.pk, 'kind': d.kind, 'name': d.original_name,
             'page_count': getattr(d, 'page_count', None),
-            'download_path': reverse('document_download', args=[d.pk])}
+            'download_path': f'/api/documents/{d.pk}/download/'}
             for d in case.release.instrument.documents.order_by('pk')],
         'history': [{'action': h.action, 'reason': h.reason, 'at': h.created_at.isoformat()}
                     for h in history[:100]], 'history_has_more': history.count() > 100,
@@ -40,6 +42,7 @@ def case_json(actor, case):
         'simulation_label': 'SIMULATED', 'policy_label': 'DRAFT_DEMO_NOT_APPROVED',
         'notification_status': 'ENQUEUE_ADAPTER_CONFIGURED_DELIVERY_UNVERIFIED' if callable(
             getattr(settings, 'SAKSHAM_NOTIFY', None)) else 'INTEGRATION_PENDING',
+        'ai_summary_enabled': bool(getattr(settings, 'AI_ENABLED', False)),
         'next_action': 'Separate evidence-backed completion' if case.release.status == 'APPROVED' else
                        'Review prerequisites' if case.release.status == 'PENDING' else 'Read recorded history',
         'responsible_party': 'Authority and institution' if case.release.status == 'APPROVED' else
@@ -54,6 +57,7 @@ def case_json(actor, case):
         'letter': None if letter is None else {'serial': letter.serial, 'kind': letter.kind,
             'revoked': letter.revoked_at is not None, 'unsigned_demo': True},
         'actions': {'can_approve': independent and ready, 'can_reject': independent and ready,
+            'can_ai_summary': role(actor) in {'clearance', 'authority'},
             'can_review_penalties': role(actor) == 'officer' and case.release.status == 'PENDING',
             'can_issue': independent and case.release.status == 'APPROVED' and letter is None,
             'can_complete': independent and case.release.status == 'APPROVED' and letter is not None and
@@ -80,7 +84,16 @@ class Cases(OwnedView):
 
 class CaseDetail(OwnedView):
     def get(self, request, pk):
-        return Response(case_json(request.user, services.get_case(request.user, pk)))
+        case = services.get_case(request.user, pk)
+        log_access(request, AccessLog.SEARCH, case, detail='Scoped release-case evidence read')
+        return Response(case_json(request.user, case))
+
+
+class AiSummary(OwnedView):
+    """Explicit advisory request; it never invokes a release workflow action."""
+    def post(self, request, pk):
+        data = body(request, {'version'})
+        return Response(ai_summary.summarize(request.user, pk, data.get('version')))
 
 
 class CaseAction(OwnedView):
@@ -126,10 +139,7 @@ class Clearance(OwnedView):
 
 class ClearanceQueue(OwnedView):
     def get(self, request):
-        if not callable(getattr(settings, 'SAKSHAM_CLEARANCE_PERMISSION', None)):
-            raise DependencyUnavailable('Clearance membership integration unavailable.')
         tasks = ClearanceTask.objects.filter(case__in=services.scoped_cases(request.user)).select_related('case__release')
-        # TODO(K4): replace per-task callback with a server-scoped query adapter.
         visible = [{'case_id': t.case_id, 'version': t.case.version,
             'unit': t.unit, 'status': t.status, 'due_date': t.due_date,
             'can_decide': t.status == 'OPEN' and t.case.release.status == 'PENDING'}
@@ -144,6 +154,7 @@ class LetterDownload(OwnedView):
     def get(self, request, pk):
         case = services.get_case(request.user, pk)
         letter = get_object_or_404(IssuedLetter, case=case)
+        log_access(request, AccessLog.NOC_VIEW, letter, detail='Scoped release letter download')
         response = HttpResponse(bytes(letter.pdf), content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="synthetic-release-letter.pdf"'
         response['X-Content-Type-Options'] = 'nosniff'
