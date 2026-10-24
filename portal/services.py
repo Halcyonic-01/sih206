@@ -7,7 +7,8 @@ from django.utils import timezone
 
 from .models import AuditEvent, Document, Instrument, ReleaseRequest, ReviewObservation
 from .permissions import institution_for, require_officer
-from .validation import checks_snapshot, run_checks
+from .validation import checks_snapshot, run_checks, check_document_present
+from .uploads import validate_pdf_upload
 
 
 class WorkflowError(Exception):
@@ -110,6 +111,11 @@ def save_draft(actor, cleaned, instrument_id=None, predecessor_id=None):
                 _compare_and_update(predecessor, cleaned['predecessor_version'])
             values = {key: cleaned[key] for key in ('reference', 'bank', 'issue_date', 'maturity_date')}
             values['amount_paise'] = int(cleaned['amount'] * 100)
+            for key in ('obligation', 'mode', 'ifsc', 'branch', 'holder_names', 'utr', 'lien_marked'):
+                if key in cleaned:
+                    values[key] = cleaned[key]
+            if instrument_id:
+                values['verification_level'] = Instrument.VerificationLevel.DECLARED
             if instrument_id:
                 instrument = Instrument.objects.get(pk=instrument_id, institution=institution)
                 if instrument.status not in (Instrument.Status.DRAFT, Instrument.Status.CHANGES_REQUESTED):
@@ -117,21 +123,30 @@ def save_draft(actor, cleaned, instrument_id=None, predecessor_id=None):
                 if instrument.predecessor_id:
                     _current_predecessor(instrument)
                 before = snapshot(instrument)
+                candidate = Instrument.objects.get(pk=instrument.pk)
+                for key, value in values.items():
+                    setattr(candidate, key, value)
+                candidate.full_clean()
                 _compare_and_update(instrument, cleaned['version'], **values)
                 action = 'DRAFT_UPDATED'
             else:
-                instrument = Instrument.objects.create(institution=institution, created_by=actor,
-                                                       predecessor=predecessor, **values)
+                instrument = Instrument(institution=institution, created_by=actor,
+                                        predecessor=predecessor, **values)
+                instrument.full_clean()
+                instrument.save()
                 before, action = {}, 'DRAFT_CREATED'
             upload = cleaned.get('document')
             if upload:
+                validate_pdf_upload(upload)
                 digest = hashlib.sha256()
                 for chunk in upload.chunks():
                     digest.update(chunk)
                 upload.seek(0)
                 document = Document(instrument=instrument, uploaded_by=actor,
                                     original_name=upload.name[:255], size_bytes=upload.size,
-                                    sha256=digest.hexdigest())
+                                    sha256=digest.hexdigest(), page_count=upload.validated_page_count,
+                                    kind={'FDR': Document.Kind.FDR, 'RTGS': Document.Kind.PAYMENT_PROOF,
+                                          'RPGF': Document.Kind.RPGF_PROOF}[instrument.mode])
                 document.file.save(upload.name, upload, save=False)
                 stored_file = document.file
                 document.save()
@@ -152,8 +167,9 @@ def submit(actor, instrument_id, expected_version):
     instrument = Instrument.objects.get(pk=instrument_id, institution=institution_for(actor))
     if instrument.status not in (Instrument.Status.DRAFT, Instrument.Status.CHANGES_REQUESTED):
         raise WorkflowError('Only a draft or corrected record can be submitted.')
-    if not instrument.documents.filter(kind=Document.Kind.FDR).exists():
-        raise WorkflowError('Upload an FDR PDF before submitting.')
+    if check_document_present(instrument):
+        raise WorkflowError('Upload an FDR PDF before submitting.' if instrument.mode == 'FDR'
+                            else 'Upload the deposit-mode supporting PDF before submitting.')
     if instrument.predecessor_id:
         _current_predecessor(instrument)
     before = snapshot(instrument)
@@ -187,6 +203,11 @@ def review(actor, instrument_id, expected_version, decision, reason):
     before = snapshot(instrument)
     status = Instrument.Status.ACCEPTED if decision == 'accept' else Instrument.Status.CHANGES_REQUESTED
     _compare_and_update(instrument, expected_version, status=status)
+    if decision == 'accept':
+        from django.apps import apps
+        if apps.is_installed('verification'):
+            from verification.services import record_review
+            record_review(actor, instrument, reason)
     if predecessor:
         _compare_and_update(predecessor, predecessor.version, superseded_at=timezone.now())
         event(predecessor, actor, 'SUPERSEDED', predecessor_before, reason,
@@ -215,6 +236,9 @@ def add_observation(actor, instrument_id, expected_version, document, page_numbe
         raise WorkflowError('A valid severity and comment are required.')
     if page_number is not None and page_number < 1:
         raise WorkflowError('Page references start at 1.')
+    document = instrument.documents.get(pk=document.pk)
+    if page_number is not None and document.page_count is not None and page_number > document.page_count:
+        raise WorkflowError('The page reference exceeds the document page count.')
     before = snapshot(instrument)
     _compare_and_update(instrument, expected_version)
     observation = ReviewObservation.objects.create(

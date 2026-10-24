@@ -1,0 +1,6 @@
+html, body { margin: 0; min-width: 320px; }
+*, *::before, *::after { box-sizing: border-box; }
+.ant-space-item { max-width: 100%; }
+canvas { display: block; }
+table { border-collapse: collapse; }
+th, td { text-align: left; padding: 6px; }

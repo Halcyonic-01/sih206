@@ -267,6 +267,9 @@ class ReviewObservation(models.Model):
         super().clean()
         if self.document_id and self.instrument_id and self.document.instrument_id != self.instrument_id:
             raise ValidationError({'document': 'Choose a document attached to this instrument.'})
+        if self.document_id and self.page_number and self.document.page_count is not None:
+            if self.page_number > self.document.page_count:
+                raise ValidationError({'page_number': 'The page reference exceeds the document page count.'})
 
     @property
     def is_resolved(self):

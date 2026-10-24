@@ -1,5 +1,16 @@
 # AICTE Security Deposit / FDR Portal
 
+## Yash's records workspace (Y1-Y8)
+
+The current branch adds deposit/document fields, PDF structure validation, REST
+records APIs, a React records/dashboard/verification workspace, synthetic statement
+reconciliation and optional AI extraction (off by default). Start with
+[the workspace setup, task status and integration boundaries](docs/yash-workspace.md).
+After building `frontend/`, open `http://127.0.0.1:8010/workspace/` and use the existing
+Django login. Bank confirmation, delivery workers and regulatory coverage calculations
+remain separate team integrations. The sections below document the preserved legacy
+MVP; their old feature/dependency counts are historical, not the full current branch.
+
 A localhost, synthetic-data MVP for **institution submission → protected PDFs → manual scrutiny/corrections → officer acceptance → maturity monitoring → linked renewal or authority-controlled release**.
 
 **New teammate: start here.** GitHub is the source of truth. Clone the repository to get editable source, tests, documentation, synthetic PDFs and evaluation data; install the pinned Python dependencies locally. You do not need the previous developer's database, passwords, virtual environment or conversation history.

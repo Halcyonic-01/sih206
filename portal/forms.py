@@ -53,7 +53,7 @@ class ReviewForm(SubmitForm):
 class ObservationForm(SubmitForm):
     document = forms.ModelChoiceField(queryset=Document.objects.none())
     page_number = forms.IntegerField(required=False, min_value=1, max_value=2147483647,
-                                    help_text='Optional, counted from page 1. Entered manually; page count is not verified.')
+                                    help_text='Optional, counted from page 1. Must not exceed a known document page count.')
     severity = forms.ChoiceField(choices=ReviewObservation.Severity.choices,
                                 initial=ReviewObservation.Severity.BLOCKING)
     comment = forms.CharField(max_length=2000, strip=True, widget=forms.Textarea(attrs={'rows': 4}))
@@ -61,6 +61,13 @@ class ObservationForm(SubmitForm):
     def __init__(self, *args, instrument, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['document'].queryset = instrument.documents.all()
+
+    def clean(self):
+        cleaned = super().clean()
+        document, page = cleaned.get('document'), cleaned.get('page_number')
+        if document and page and document.page_count is not None and page > document.page_count:
+            self.add_error('page_number', 'The page reference exceeds the document page count.')
+        return cleaned
 
 
 class ResolutionForm(SubmitForm):

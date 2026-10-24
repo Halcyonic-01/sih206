@@ -14,7 +14,7 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').sp
 INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
-    'portal', 'obligations',
+    'portal', 'obligations', 'rest_framework', 'verification', 'ai',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -64,6 +64,8 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+if (BASE_DIR / 'frontend' / 'dist').exists():
+    STATICFILES_DIRS.append(BASE_DIR / 'frontend' / 'dist')
 # No MEDIA_URL route: all document reads go through an ownership-checked view.
 MEDIA_ROOT = BASE_DIR / 'data' / 'documents'
 try:
@@ -83,3 +85,5 @@ SESSION_COOKIE_AGE = 7200
 SESSION_COOKIE_SECURE = os.environ.get('DJANGO_SECURE_COOKIES', 'false').lower() == 'true'
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AI_ENABLED = os.environ.get('AI_ENABLED', 'false').lower() == 'true'
+AI_MODEL = 'claude-opus-5-5'

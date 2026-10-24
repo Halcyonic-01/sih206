@@ -83,7 +83,8 @@ def complete_release(actor, instrument_id, release_id, expected_version, notes, 
             document.seek(0)
             evidence = Document(instrument=instrument, kind=Document.Kind.RELEASE_EVIDENCE,
                                 original_name=document.name[:255], size_bytes=document.size,
-                                sha256=digest.hexdigest(), uploaded_by=actor)
+                                sha256=digest.hexdigest(), uploaded_by=actor,
+                                page_count=document.validated_page_count)
             evidence.file.save(document.name, document, save=False)
             stored_file = evidence.file
             evidence.save()

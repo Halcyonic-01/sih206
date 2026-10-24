@@ -1,5 +1,11 @@
 # Five-minute SIH demonstration and fallback
 
+Yash workspace demonstration: `/workspace/` supports creation/submission, PDF-page
+review, discrepancy/correction/resubmission, acceptance, renewal, dashboard and
+synthetic statement preview/commit. See `yash-workspace.md` for setup, browser tests,
+optional AI-off fallback and honest pending K/S integrations. The legacy script
+below remains available unchanged as a fallback.
+
 Y1 developer note: `portal.0005_record_fields` adds optional deposit/obligation
 metadata and document categories/page counts (see `record-fields.md`). The current
 screens remain the FDR demo; no verification, PDF parsing or RTGS workflow is
