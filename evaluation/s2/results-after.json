@@ -1,0 +1,1866 @@
+{
+  "dataset_id": "s2-correctness-v1",
+  "dataset_sha256": "75dfa245a38d9319d2266cbe3f52bce24658025205406e86b940240eba543bd3",
+  "label_review_status": "AUTHOR_REVIEWED_NOT_SECOND_REVIEWER_ADJUDICATED",
+  "scope": "Regression and boundary set, not held-out regulatory accuracy or bank verification.",
+  "engine_sha256": {
+    "catalogue.py": "92c3e08f50dea2694fbc6c9f5b047f75563486aad843939eed9a0be7e8ebe889",
+    "rules.py": "a280421b4c93f0894a771ef088d2e29681d83c3dadf9f3fa2697ba3ebbd37760",
+    "calculations.py": "8f7feae33a58e69a71f4769e72725466b1852a05799bfea25b45b53b3e1c9907",
+    "checks.py": "1d4d54e6d11846f4af49c9bc3dc90c1d39569b6556ebad10e1e678247d920f76"
+  },
+  "case_count": 76,
+  "passed": 76,
+  "failed": 0,
+  "finding_cases": 10,
+  "finding_metrics": {
+    "AMOUNT_SHORTFALL": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "tn": 8,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    "TERM_GAP": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "tn": 7,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    "PROOF_OVERDUE": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "tn": 7,
+      "precision": 1.0,
+      "recall": 1.0
+    }
+  },
+  "total_case_seconds": 0.044776800175895914,
+  "timing_scope": "Local case calls including validation; excludes Django startup, DB, PDFs and human review.",
+  "cases": [
+    {
+      "id": "table-engineering_technology-diploma",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "DIPLOMA",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.01775850000558421
+    },
+    {
+      "id": "table-engineering_technology-ug",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 350000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 350000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "UG",
+            "base_paise": 350000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.00035909999860450625
+    },
+    {
+      "id": "table-engineering_technology-pg",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "PG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003288000007160008
+    },
+    {
+      "id": "table-planning-diploma",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "PLANNING",
+            "level": "DIPLOMA",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003124999930150807
+    },
+    {
+      "id": "table-planning-ug",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "PLANNING",
+            "level": "UG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0002966000174637884
+    },
+    {
+      "id": "table-planning-pg",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "PLANNING",
+            "level": "PG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0002933999930974096
+    },
+    {
+      "id": "table-applied_arts_crafts-diploma",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "APPLIED_ARTS_CRAFTS",
+            "level": "DIPLOMA",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.00029779999749735
+    },
+    {
+      "id": "table-applied_arts_crafts-ug",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "APPLIED_ARTS_CRAFTS",
+            "level": "UG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0002969000197481364
+    },
+    {
+      "id": "table-applied_arts_crafts-pg",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "APPLIED_ARTS_CRAFTS",
+            "level": "PG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.00031269999453797936
+    },
+    {
+      "id": "table-design-diploma",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "DESIGN",
+            "level": "DIPLOMA",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0005250000103842467
+    },
+    {
+      "id": "table-design-ug",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "DESIGN",
+            "level": "UG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.00045059999683871865
+    },
+    {
+      "id": "table-design-pg",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "DESIGN",
+            "level": "PG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003142000059597194
+    },
+    {
+      "id": "table-hmct-diploma",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "HMCT",
+            "level": "DIPLOMA",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003053999971598387
+    },
+    {
+      "id": "table-hmct-ug",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "HMCT",
+            "level": "UG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.00032339998870156705
+    },
+    {
+      "id": "table-hmct-pg",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "HMCT",
+            "level": "PG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.00032820002525113523
+    },
+    {
+      "id": "table-computer_applications-diploma",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Unsupported programme/level; no zero amount is inferred."
+      },
+      "elapsed_seconds": 0.00024080000002868474
+    },
+    {
+      "id": "table-computer_applications-ug",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 50000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 50000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "COMPUTER_APPLICATIONS",
+            "level": "UG",
+            "base_paise": 50000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.00031400000443682075
+    },
+    {
+      "id": "table-computer_applications-pg",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "COMPUTER_APPLICATIONS",
+            "level": "PG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003203999949619174
+    },
+    {
+      "id": "table-management-diploma",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Unsupported programme/level; no zero amount is inferred."
+      },
+      "elapsed_seconds": 0.0002463000128045678
+    },
+    {
+      "id": "table-management-ug",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 50000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 50000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "MANAGEMENT",
+            "level": "UG",
+            "base_paise": 50000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.00031919998582452536
+    },
+    {
+      "id": "table-management-pg",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "actual": {
+        "required_paise": 150000000,
+        "multiplier": 1,
+        "breakdown": [
+          {
+            "programme": "MANAGEMENT",
+            "level": "PG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003285999991931021
+    },
+    {
+      "id": "leased-two-programmes",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 1000000000,
+        "multiplier": 2
+      },
+      "actual": {
+        "required_paise": 1000000000,
+        "multiplier": 2,
+        "breakdown": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "UG",
+            "base_paise": 350000000
+          },
+          {
+            "programme": "MANAGEMENT",
+            "level": "PG",
+            "base_paise": 150000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003510999958962202
+    },
+    {
+      "id": "both-assets-leased",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "required_paise": 700000000,
+        "multiplier": 2
+      },
+      "actual": {
+        "required_paise": 700000000,
+        "multiplier": 2,
+        "breakdown": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "UG",
+            "base_paise": 350000000
+          }
+        ],
+        "as_of": "2026-04-20",
+        "exemption_assessed": false,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "Table 1.4; 1.12",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003167999966535717
+    },
+    {
+      "id": "unknown-programme",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Unsupported programme/level; no zero amount is inferred."
+      },
+      "elapsed_seconds": 0.00022600000374950469
+    },
+    {
+      "id": "missing-approvals",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "No programme approvals supplied; requirement is unknown, not zero."
+      },
+      "elapsed_seconds": 0.00019970000721514225
+    },
+    {
+      "id": "duplicate-approval",
+      "kind": "amount",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Duplicate programme/level; select the applicable approval once."
+      },
+      "elapsed_seconds": 0.0002214000269304961
+    },
+    {
+      "id": "term-anniversary",
+      "kind": "term",
+      "passed": true,
+      "expected": {
+        "term_end": "2036-10-24"
+      },
+      "actual": {
+        "term_end": "2036-10-24"
+      },
+      "elapsed_seconds": 0.0002277999883517623
+    },
+    {
+      "id": "leap-day-convention",
+      "kind": "term",
+      "passed": true,
+      "expected": {
+        "term_end": "2034-02-28"
+      },
+      "actual": {
+        "term_end": "2034-02-28"
+      },
+      "elapsed_seconds": 0.00022529999841935933
+    },
+    {
+      "id": "coverage-exact",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-24",
+        "term_gap_days": 0
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-24",
+        "term_gap_days": 0,
+        "first_uncovered_on": null,
+        "holding_ids": [
+          1
+        ]
+      },
+      "elapsed_seconds": 0.0004372999828774482
+    },
+    {
+      "id": "coverage-shortfall",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 60,
+        "shortfall_paise": 40,
+        "coverage_end": null,
+        "term_gap_days": 5
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 60,
+        "shortfall_paise": 40,
+        "coverage_end": null,
+        "term_gap_days": 5,
+        "first_uncovered_on": "2026-04-20",
+        "holding_ids": [
+          1
+        ]
+      },
+      "elapsed_seconds": 0.0002576000115368515
+    },
+    {
+      "id": "coverage-top-up",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "term_gap_days": 0
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-24",
+        "term_gap_days": 0,
+        "first_uncovered_on": null,
+        "holding_ids": [
+          1,
+          2
+        ]
+      },
+      "elapsed_seconds": 0.00030670000705868006
+    },
+    {
+      "id": "coverage-short-top-up",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-21",
+        "first_uncovered_on": "2026-04-22",
+        "term_gap_days": 3
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-21",
+        "term_gap_days": 3,
+        "first_uncovered_on": "2026-04-22",
+        "holding_ids": [
+          1,
+          2
+        ]
+      },
+      "elapsed_seconds": 0.0002486000012140721
+    },
+    {
+      "id": "coverage-redundant-short-holding",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 200,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-24",
+        "term_gap_days": 0
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 200,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-24",
+        "term_gap_days": 0,
+        "first_uncovered_on": null,
+        "holding_ids": [
+          1,
+          2
+        ]
+      },
+      "elapsed_seconds": 0.00024950000806711614
+    },
+    {
+      "id": "coverage-future-top-up",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 60,
+        "shortfall_paise": 40,
+        "coverage_end": null,
+        "first_uncovered_on": "2026-04-20",
+        "term_gap_days": 5
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 60,
+        "shortfall_paise": 40,
+        "coverage_end": null,
+        "term_gap_days": 5,
+        "first_uncovered_on": "2026-04-20",
+        "holding_ids": [
+          1
+        ]
+      },
+      "elapsed_seconds": 0.0002311999851372093
+    },
+    {
+      "id": "coverage-contiguous",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-24",
+        "term_gap_days": 0
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-24",
+        "term_gap_days": 0,
+        "first_uncovered_on": null,
+        "holding_ids": [
+          1
+        ]
+      },
+      "elapsed_seconds": 0.00022499999613501132
+    },
+    {
+      "id": "coverage-one-day-gap",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "coverage_end": "2026-04-21",
+        "first_uncovered_on": "2026-04-22",
+        "term_gap_days": 3
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-21",
+        "term_gap_days": 3,
+        "first_uncovered_on": "2026-04-22",
+        "holding_ids": [
+          1
+        ]
+      },
+      "elapsed_seconds": 0.0004935000033583492
+    },
+    {
+      "id": "coverage-maturity-inclusive",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-20",
+        "term_gap_days": 4
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-20",
+        "term_gap_days": 4,
+        "first_uncovered_on": "2026-04-21",
+        "holding_ids": [
+          1
+        ]
+      },
+      "elapsed_seconds": 0.0004867999814450741
+    },
+    {
+      "id": "coverage-expired",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "coverage_end": null,
+        "term_gap_days": 5,
+        "first_uncovered_on": "2026-04-20",
+        "holding_ids": []
+      },
+      "elapsed_seconds": 0.0005297000170685351
+    },
+    {
+      "id": "coverage-excludes-draft",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "coverage_end": null,
+        "term_gap_days": 5,
+        "first_uncovered_on": "2026-04-20",
+        "holding_ids": []
+      },
+      "elapsed_seconds": 0.0004861000052187592
+    },
+    {
+      "id": "coverage-excludes-pending",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "coverage_end": null,
+        "term_gap_days": 5,
+        "first_uncovered_on": "2026-04-20",
+        "holding_ids": []
+      },
+      "elapsed_seconds": 0.00043200000072829425
+    },
+    {
+      "id": "coverage-excludes-correction",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "coverage_end": null,
+        "term_gap_days": 5,
+        "first_uncovered_on": "2026-04-20",
+        "holding_ids": []
+      },
+      "elapsed_seconds": 0.0003935999993700534
+    },
+    {
+      "id": "coverage-excludes-superseded",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "coverage_end": null,
+        "term_gap_days": 5,
+        "first_uncovered_on": "2026-04-20",
+        "holding_ids": []
+      },
+      "elapsed_seconds": 0.0004036000173073262
+    },
+    {
+      "id": "coverage-excludes-released",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": 100,
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "coverage_end": null,
+        "term_gap_days": 5,
+        "first_uncovered_on": "2026-04-20",
+        "holding_ids": []
+      },
+      "elapsed_seconds": 0.0003671000013127923
+    },
+    {
+      "id": "coverage-unknown",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": null,
+        "term_gap_days": null
+      },
+      "actual": {
+        "obligation_id": 1,
+        "institution_id": 1,
+        "as_of": "2026-04-20",
+        "required_paise": null,
+        "held_paise": 0,
+        "shortfall_paise": null,
+        "coverage_end": null,
+        "term_gap_days": null,
+        "first_uncovered_on": null,
+        "holding_ids": []
+      },
+      "elapsed_seconds": 0.000378400000045076
+    },
+    {
+      "id": "coverage-rejects-other-institution",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Holding is outside the supplied institution/obligation."
+      },
+      "elapsed_seconds": 0.0003637999761849642
+    },
+    {
+      "id": "coverage-rejects-other-obligation",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Holding is outside the supplied institution/obligation."
+      },
+      "elapsed_seconds": 0.0004254000086802989
+    },
+    {
+      "id": "coverage-rejects-duplicates",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Duplicate holding identity would double-count coverage."
+      },
+      "elapsed_seconds": 0.0004059000057168305
+    },
+    {
+      "id": "coverage-rejects-missing-adapter",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "TODO(Y1): supply explicitly scoped holdings; no implicit ORM lookup."
+      },
+      "elapsed_seconds": 0.00039709999691694975
+    },
+    {
+      "id": "coverage-rejects-fractional-money",
+      "kind": "coverage",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "holding amount must be an integer >= 1."
+      },
+      "elapsed_seconds": 0.0003968999953940511
+    },
+    {
+      "id": "late-proof-may30",
+      "kind": "penalty",
+      "passed": true,
+      "expected": {
+        "rate_bps": 1000,
+        "amount_paise": 1000,
+        "status": "PROPOSED"
+      },
+      "actual": {
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "rate_bps": 1000,
+        "amount_paise": 1000,
+        "status": "PROPOSED",
+        "rounding": "HALF_UP_TO_PAISE_DEMO_CONVENTION",
+        "human_confirmation_required": true,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "2.25(f)",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0005510000046342611
+    },
+    {
+      "id": "late-proof-may31",
+      "kind": "penalty",
+      "passed": true,
+      "expected": {
+        "rate_bps": 1000,
+        "amount_paise": 1000,
+        "status": "PROPOSED"
+      },
+      "actual": {
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "rate_bps": 1000,
+        "amount_paise": 1000,
+        "status": "PROPOSED",
+        "rounding": "HALF_UP_TO_PAISE_DEMO_CONVENTION",
+        "human_confirmation_required": true,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "2.25(f)",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0005561000143643469
+    },
+    {
+      "id": "late-proof-june1",
+      "kind": "penalty",
+      "passed": true,
+      "expected": {
+        "rate_bps": 2000,
+        "amount_paise": 2000,
+        "status": "PROPOSED"
+      },
+      "actual": {
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "rate_bps": 2000,
+        "amount_paise": 2000,
+        "status": "PROPOSED",
+        "rounding": "HALF_UP_TO_PAISE_DEMO_CONVENTION",
+        "human_confirmation_required": true,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "2.25(f)",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003330000035930425
+    },
+    {
+      "id": "late-proof-july31",
+      "kind": "penalty",
+      "passed": true,
+      "expected": {
+        "rate_bps": 2000,
+        "amount_paise": 2000,
+        "status": "PROPOSED"
+      },
+      "actual": {
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "rate_bps": 2000,
+        "amount_paise": 2000,
+        "status": "PROPOSED",
+        "rounding": "HALF_UP_TO_PAISE_DEMO_CONVENTION",
+        "human_confirmation_required": true,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "2.25(f)",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003169999981764704
+    },
+    {
+      "id": "late-proof-august1",
+      "kind": "penalty",
+      "passed": true,
+      "expected": {
+        "rate_bps": null,
+        "amount_paise": null,
+        "status": "REQUIRES_AUTHORITY_REVIEW"
+      },
+      "actual": {
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "rate_bps": null,
+        "amount_paise": null,
+        "status": "REQUIRES_AUTHORITY_REVIEW",
+        "rounding": "HALF_UP_TO_PAISE_DEMO_CONVENTION",
+        "human_confirmation_required": true,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "2.25(f)",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.00032920000376179814
+    },
+    {
+      "id": "late-proof-on-grace-deadline",
+      "kind": "penalty",
+      "passed": true,
+      "expected": {
+        "rate_bps": 0,
+        "amount_paise": 0,
+        "status": "NOT_DUE"
+      },
+      "actual": {
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "rate_bps": 0,
+        "amount_paise": 0,
+        "status": "NOT_DUE",
+        "rounding": "HALF_UP_TO_PAISE_DEMO_CONVENTION",
+        "human_confirmation_required": true,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "2.25(f)",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0003890999942086637
+    },
+    {
+      "id": "penalty-rounding",
+      "kind": "penalty",
+      "passed": true,
+      "expected": {
+        "rate_bps": 1000,
+        "amount_paise": 1,
+        "status": "PROPOSED"
+      },
+      "actual": {
+        "kind": "premature_encashment",
+        "base_paise": 5,
+        "rate_bps": 1000,
+        "amount_paise": 1,
+        "status": "PROPOSED",
+        "rounding": "HALF_UP_TO_PAISE_DEMO_CONVENTION",
+        "human_confirmation_required": true,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "7.7",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0006271000020205975
+    },
+    {
+      "id": "closure-six-years",
+      "kind": "penalty",
+      "passed": true,
+      "expected": {
+        "rate_bps": 5000,
+        "amount_paise": 5003,
+        "status": "PROPOSED"
+      },
+      "actual": {
+        "kind": "closure_six_years",
+        "base_paise": 10005,
+        "rate_bps": 5000,
+        "amount_paise": 5003,
+        "status": "PROPOSED",
+        "rounding": "HALF_UP_TO_PAISE_DEMO_CONVENTION",
+        "human_confirmation_required": true,
+        "rule_code": "synthetic-s2-review",
+        "rule_version": 1,
+        "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+        "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+        "source_clause": "2.21(i)",
+        "policy_label": "DRAFT_DEMO_NOT_APPROVED"
+      },
+      "elapsed_seconds": 0.0004668000037781894
+    },
+    {
+      "id": "proof-date-overflow-penalty",
+      "kind": "penalty",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Computed deadline exceeds the supported date range; human review is required."
+      },
+      "elapsed_seconds": 0.00040469999657943845
+    },
+    {
+      "id": "cross-year-penalty",
+      "kind": "penalty",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Cross-year penalty interpretation requires human policy review."
+      },
+      "elapsed_seconds": 0.0003493000112939626
+    },
+    {
+      "id": "findings-none",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "codes": []
+      },
+      "actual": {
+        "codes": [],
+        "findings": []
+      },
+      "elapsed_seconds": 0.0002705999941099435
+    },
+    {
+      "id": "findings-shortfall-and-gap",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "codes": [
+          "AMOUNT_SHORTFALL",
+          "TERM_GAP"
+        ]
+      },
+      "actual": {
+        "codes": [
+          "AMOUNT_SHORTFALL",
+          "TERM_GAP"
+        ],
+        "findings": [
+          {
+            "code": "AMOUNT_SHORTFALL",
+            "severity": "warning",
+            "explanation": "Draft rule assessment: current eligible holdings are below the supplied requirement.",
+            "values": {
+              "checks_version": "obligations-v3-draft",
+              "as_of": "2026-04-20",
+              "obligation_id": 1,
+              "rule_code": "synthetic-s2-review",
+              "rule_version": 1,
+              "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+              "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+              "source_clause": "Table 1.4; 1.12",
+              "policy_label": "DRAFT_DEMO_NOT_APPROVED",
+              "required_paise": 100,
+              "held_paise": 60,
+              "shortfall_paise": 40,
+              "holding_ids": [
+                1
+              ]
+            }
+          },
+          {
+            "code": "TERM_GAP",
+            "severity": "warning",
+            "explanation": "Draft rule assessment: continuous coverage does not reach the supplied obligation term end.",
+            "values": {
+              "checks_version": "obligations-v3-draft",
+              "as_of": "2026-04-20",
+              "obligation_id": 1,
+              "rule_code": "synthetic-s2-review",
+              "rule_version": 1,
+              "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+              "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+              "source_clause": "1.12(iv); 2.25(g)",
+              "policy_label": "DRAFT_DEMO_NOT_APPROVED",
+              "coverage_end": null,
+              "term_gap_days": 5,
+              "first_uncovered_on": "2026-04-20",
+              "term_end": "2026-04-24",
+              "action_due_on": "2026-04-20"
+            }
+          }
+        ]
+      },
+      "elapsed_seconds": 0.0006254000181797892
+    },
+    {
+      "id": "findings-gap-only",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "codes": [
+          "TERM_GAP"
+        ]
+      },
+      "actual": {
+        "codes": [
+          "TERM_GAP"
+        ],
+        "findings": [
+          {
+            "code": "TERM_GAP",
+            "severity": "warning",
+            "explanation": "Draft rule assessment: continuous coverage does not reach the supplied obligation term end.",
+            "values": {
+              "checks_version": "obligations-v3-draft",
+              "as_of": "2026-04-20",
+              "obligation_id": 1,
+              "rule_code": "synthetic-s2-review",
+              "rule_version": 1,
+              "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+              "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+              "source_clause": "1.12(iv); 2.25(g)",
+              "policy_label": "DRAFT_DEMO_NOT_APPROVED",
+              "coverage_end": "2026-04-21",
+              "term_gap_days": 3,
+              "first_uncovered_on": "2026-04-22",
+              "term_end": "2026-04-24",
+              "action_due_on": "2026-04-21"
+            }
+          }
+        ]
+      },
+      "elapsed_seconds": 0.0004673000075854361
+    },
+    {
+      "id": "findings-proof-day-before",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "codes": []
+      },
+      "actual": {
+        "codes": [],
+        "findings": []
+      },
+      "elapsed_seconds": 0.0004896000027656555
+    },
+    {
+      "id": "findings-proof-deadline",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "codes": []
+      },
+      "actual": {
+        "codes": [],
+        "findings": []
+      },
+      "elapsed_seconds": 0.00037170000723563135
+    },
+    {
+      "id": "findings-proof-overdue",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "codes": [
+          "PROOF_OVERDUE"
+        ]
+      },
+      "actual": {
+        "codes": [
+          "PROOF_OVERDUE"
+        ],
+        "findings": [
+          {
+            "code": "PROOF_OVERDUE",
+            "severity": "warning",
+            "explanation": "Draft rule assessment: payment proof and Affidavit-3 are not both recorded by the deadline.",
+            "values": {
+              "checks_version": "obligations-v3-draft",
+              "as_of": "2026-04-20",
+              "obligation_id": 1,
+              "rule_code": "synthetic-s2-review",
+              "rule_version": 1,
+              "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+              "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+              "source_clause": "2.25(f)",
+              "policy_label": "DRAFT_DEMO_NOT_APPROVED",
+              "due_date": "2026-04-19",
+              "days_overdue": 1,
+              "missing_documents": [
+                "PAYMENT_PROOF",
+                "AFFIDAVIT_3"
+              ]
+            }
+          }
+        ]
+      },
+      "elapsed_seconds": 0.0006431000074371696
+    },
+    {
+      "id": "findings-one-proof-missing",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "codes": [
+          "PROOF_OVERDUE"
+        ]
+      },
+      "actual": {
+        "codes": [
+          "PROOF_OVERDUE"
+        ],
+        "findings": [
+          {
+            "code": "PROOF_OVERDUE",
+            "severity": "warning",
+            "explanation": "Draft rule assessment: payment proof and Affidavit-3 are not both recorded by the deadline.",
+            "values": {
+              "checks_version": "obligations-v3-draft",
+              "as_of": "2026-04-20",
+              "obligation_id": 1,
+              "rule_code": "synthetic-s2-review",
+              "rule_version": 1,
+              "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+              "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+              "source_clause": "2.25(f)",
+              "policy_label": "DRAFT_DEMO_NOT_APPROVED",
+              "due_date": "2026-04-19",
+              "days_overdue": 1,
+              "missing_documents": [
+                "AFFIDAVIT_3"
+              ]
+            }
+          }
+        ]
+      },
+      "elapsed_seconds": 0.0007916000031400472
+    },
+    {
+      "id": "findings-proof-complete",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "codes": []
+      },
+      "actual": {
+        "codes": [],
+        "findings": []
+      },
+      "elapsed_seconds": 0.0003281000244896859
+    },
+    {
+      "id": "findings-all-three",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "codes": [
+          "AMOUNT_SHORTFALL",
+          "PROOF_OVERDUE",
+          "TERM_GAP"
+        ]
+      },
+      "actual": {
+        "codes": [
+          "AMOUNT_SHORTFALL",
+          "PROOF_OVERDUE",
+          "TERM_GAP"
+        ],
+        "findings": [
+          {
+            "code": "AMOUNT_SHORTFALL",
+            "severity": "warning",
+            "explanation": "Draft rule assessment: current eligible holdings are below the supplied requirement.",
+            "values": {
+              "checks_version": "obligations-v3-draft",
+              "as_of": "2026-04-20",
+              "obligation_id": 1,
+              "rule_code": "synthetic-s2-review",
+              "rule_version": 1,
+              "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+              "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+              "source_clause": "Table 1.4; 1.12",
+              "policy_label": "DRAFT_DEMO_NOT_APPROVED",
+              "required_paise": 100,
+              "held_paise": 0,
+              "shortfall_paise": 100,
+              "holding_ids": []
+            }
+          },
+          {
+            "code": "TERM_GAP",
+            "severity": "warning",
+            "explanation": "Draft rule assessment: continuous coverage does not reach the supplied obligation term end.",
+            "values": {
+              "checks_version": "obligations-v3-draft",
+              "as_of": "2026-04-20",
+              "obligation_id": 1,
+              "rule_code": "synthetic-s2-review",
+              "rule_version": 1,
+              "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+              "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+              "source_clause": "1.12(iv); 2.25(g)",
+              "policy_label": "DRAFT_DEMO_NOT_APPROVED",
+              "coverage_end": null,
+              "term_gap_days": 5,
+              "first_uncovered_on": "2026-04-20",
+              "term_end": "2026-04-24",
+              "action_due_on": "2026-04-20"
+            }
+          },
+          {
+            "code": "PROOF_OVERDUE",
+            "severity": "warning",
+            "explanation": "Draft rule assessment: payment proof and Affidavit-3 are not both recorded by the deadline.",
+            "values": {
+              "checks_version": "obligations-v3-draft",
+              "as_of": "2026-04-20",
+              "obligation_id": 1,
+              "rule_code": "synthetic-s2-review",
+              "rule_version": 1,
+              "rule_sha256": "60ced995aa99ea3d1d5486b79d06380c76b4b6fce46e0e2182a9552b6aae42d6",
+              "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+              "source_clause": "2.25(f)",
+              "policy_label": "DRAFT_DEMO_NOT_APPROVED",
+              "due_date": "2026-04-19",
+              "days_overdue": 1,
+              "missing_documents": [
+                "PAYMENT_PROOF",
+                "AFFIDAVIT_3"
+              ]
+            }
+          }
+        ]
+      },
+      "elapsed_seconds": 0.0005923999997321516
+    },
+    {
+      "id": "findings-unknown",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "codes": []
+      },
+      "actual": {
+        "codes": [],
+        "findings": []
+      },
+      "elapsed_seconds": 0.00034580001374706626
+    },
+    {
+      "id": "proof-date-overflow-finding",
+      "kind": "findings",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Computed deadline exceeds the supported date range; human review is required."
+      },
+      "elapsed_seconds": 0.00034080000477842987
+    },
+    {
+      "id": "policy-rejects-missing-clearances",
+      "kind": "policy",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Incomplete or unsupported required clearance_units."
+      },
+      "elapsed_seconds": 0.00023479998344555497
+    },
+    {
+      "id": "policy-rejects-missing-release-documents",
+      "kind": "policy",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Incomplete or unsupported required common_documents."
+      },
+      "elapsed_seconds": 0.0002128999913111329
+    },
+    {
+      "id": "policy-rejects-unknown-document-kind",
+      "kind": "policy",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Unsupported release requirement mode_documents; revise the schema deliberately."
+      },
+      "elapsed_seconds": 0.00020860001677647233
+    },
+    {
+      "id": "policy-rejects-unknown-recipient",
+      "kind": "policy",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Unknown escalation trigger or recipient symbol."
+      },
+      "elapsed_seconds": 0.00017559999832883477
+    },
+    {
+      "id": "policy-rejects-duplicate-reminder",
+      "kind": "policy",
+      "passed": true,
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "actual": {
+        "error": "RuleInputError",
+        "message": "Reminder days must be distinct positive integers."
+      },
+      "elapsed_seconds": 0.00019760002032853663
+    },
+    {
+      "id": "policy-valid",
+      "kind": "policy",
+      "passed": true,
+      "expected": {
+        "valid": true
+      },
+      "actual": {
+        "valid": true
+      },
+      "elapsed_seconds": 0.00020129999029450119
+    }
+  ]
+}

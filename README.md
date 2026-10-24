@@ -12,7 +12,9 @@ This is a **synthetic localhost demonstration candidate**. Public/real-data depl
 
 This is an FDR lifecycle portal, not a general AICTE application-validation engine. There is **no OCR, AI model, automatic PDF extraction, bank connection, regulatory policy engine, notification delivery or payment execution**. Officers manually inspect documents. Acceptance means **accepted for tracking**, not bank-authenticated or legally compliant.
 
-S1 adds the [institution and obligation model foundation](obligations/README.md): four new tables, validation and migration tests. Calculations, policy publication, APIs and institution screens are still future tasks. Existing records receive no inferred requirements or exemptions. Run `manage.py test` to include the new app's tests alongside the original portal suite.
+S1 adds the [institution and obligation model foundation](obligations/README.md): four new tables, validation and migration tests. Existing records receive no inferred requirements or exemptions. Run `manage.py test` to include the new app's tests alongside the original portal suite.
+
+The [independent S2 backend portion](obligations/S2.md) now provides draft demo rule configuration, read-only amount/coverage calculations, evidence-linked obligation findings and penalty proposals. It is not connected to the current browser workflow. APIs and instrument adapters await teammate dependencies; policy publication and S3 screens are not implemented. Existing `technical-v2` checks and decisions are unchanged.
 
 ## 2. Read these documents in order
 
