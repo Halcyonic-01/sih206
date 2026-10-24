@@ -1,0 +1,1299 @@
+{
+  "schema_version": 1,
+  "dataset_id": "s2-correctness-v1",
+  "data_classification": "SYNTHETIC",
+  "label_method": "Literal expected values and written arithmetic/contract rationales authored separately from production functions. No outputs copied into labels.",
+  "review_status": "AUTHOR_REVIEWED_NOT_SECOND_REVIEWER_ADJUDICATED",
+  "scope": "Regression and boundary set, not held-out regulatory accuracy or bank verification.",
+  "source_document": "APH 2024-27 references already recorded in obligations/S2.md; applicability and current addenda not approved.",
+  "defaults": {
+    "as_of": "2026-04-20",
+    "rule_effective_from": "2024-01-01",
+    "rule_effective_to": null,
+    "approval": {
+      "programme": "ENGINEERING_TECHNOLOGY",
+      "level": "UG",
+      "land_tenure": "OWNED",
+      "building_tenure": "OWNED"
+    },
+    "obligation": {
+      "id": 1,
+      "institution_id": 1,
+      "required_paise": 100,
+      "term_start": "2026-04-20",
+      "term_end": "2026-04-24"
+    },
+    "holding": {
+      "id": 1,
+      "institution_id": 1,
+      "obligation_id": 1,
+      "amount_paise": 100,
+      "issue_date": "2026-04-20",
+      "maturity_date": "2026-04-24"
+    }
+  },
+  "cases": [
+    {
+      "id": "table-engineering_technology-diploma",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "DIPLOMA"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-engineering_technology-ug",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "UG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 350000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-engineering_technology-pg",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "PG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-planning-diploma",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "PLANNING",
+            "level": "DIPLOMA"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-planning-ug",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "PLANNING",
+            "level": "UG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-planning-pg",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "PLANNING",
+            "level": "PG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-applied_arts_crafts-diploma",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "APPLIED_ARTS_CRAFTS",
+            "level": "DIPLOMA"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-applied_arts_crafts-ug",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "APPLIED_ARTS_CRAFTS",
+            "level": "UG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-applied_arts_crafts-pg",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "APPLIED_ARTS_CRAFTS",
+            "level": "PG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-design-diploma",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "DESIGN",
+            "level": "DIPLOMA"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-design-ug",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "DESIGN",
+            "level": "UG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-design-pg",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "DESIGN",
+            "level": "PG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-hmct-diploma",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "HMCT",
+            "level": "DIPLOMA"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-hmct-ug",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "HMCT",
+            "level": "UG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-hmct-pg",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "HMCT",
+            "level": "PG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-computer_applications-diploma",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "COMPUTER_APPLICATIONS",
+            "level": "DIPLOMA"
+          }
+        ]
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Table 1.4: unsupported cell is not zero."
+    },
+    {
+      "id": "table-computer_applications-ug",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "COMPUTER_APPLICATIONS",
+            "level": "UG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 50000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-computer_applications-pg",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "COMPUTER_APPLICATIONS",
+            "level": "PG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-management-diploma",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "MANAGEMENT",
+            "level": "DIPLOMA"
+          }
+        ]
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Table 1.4: unsupported cell is not zero."
+    },
+    {
+      "id": "table-management-ug",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "MANAGEMENT",
+            "level": "UG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 50000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "table-management-pg",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "MANAGEMENT",
+            "level": "PG"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 150000000,
+        "multiplier": 1
+      },
+      "rationale": "Table 1.4 literal paise label; 1 lakh INR is 10000000 paise."
+    },
+    {
+      "id": "leased-two-programmes",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "land_tenure": "LEASED"
+          },
+          {
+            "programme": "MANAGEMENT",
+            "level": "PG",
+            "building_tenure": "LEASED"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 1000000000,
+        "multiplier": 2
+      },
+      "rationale": "(35 + 15) lakh, multiplied once by two, equals 100 lakh."
+    },
+    {
+      "id": "both-assets-leased",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "land_tenure": "LEASED",
+            "building_tenure": "LEASED"
+          }
+        ]
+      },
+      "expected": {
+        "required_paise": 700000000,
+        "multiplier": 2
+      },
+      "rationale": "35 lakh doubled once, not quadrupled."
+    },
+    {
+      "id": "unknown-programme",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {
+            "programme": "UNRECOGNISED"
+          }
+        ]
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Unknown programme cannot mean zero deposit."
+    },
+    {
+      "id": "missing-approvals",
+      "kind": "amount",
+      "input": {
+        "approvals": []
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "No approvals means unknown applicability, not zero."
+    },
+    {
+      "id": "duplicate-approval",
+      "kind": "amount",
+      "input": {
+        "approvals": [
+          {},
+          {}
+        ]
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "The same programme/level cannot be charged twice."
+    },
+    {
+      "id": "term-anniversary",
+      "kind": "term",
+      "input": {
+        "start": "2026-10-24"
+      },
+      "expected": {
+        "term_end": "2036-10-24"
+      },
+      "rationale": "Ten calendar years; no obligation is changed."
+    },
+    {
+      "id": "leap-day-convention",
+      "kind": "term",
+      "input": {
+        "start": "2024-02-29"
+      },
+      "expected": {
+        "term_end": "2034-02-28"
+      },
+      "rationale": "Explicit demo convention; requires policy sign-off."
+    },
+    {
+      "id": "coverage-exact",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {}
+        ]
+      },
+      "expected": {
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-24",
+        "term_gap_days": 0
+      },
+      "rationale": "100 paise covers all five inclusive dates, April 20 through 24."
+    },
+    {
+      "id": "coverage-shortfall",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "amount_paise": 60
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 60,
+        "shortfall_paise": 40,
+        "coverage_end": null,
+        "term_gap_days": 5
+      },
+      "rationale": "100 minus 60 is 40; all five remaining dates lack full coverage."
+    },
+    {
+      "id": "coverage-top-up",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "amount_paise": 60
+          },
+          {
+            "id": 2,
+            "amount_paise": 40
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "term_gap_days": 0
+      },
+      "rationale": "60 + 40 is exactly 100 through April 24."
+    },
+    {
+      "id": "coverage-short-top-up",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "amount_paise": 60
+          },
+          {
+            "id": 2,
+            "amount_paise": 40,
+            "maturity_date": "2026-04-21"
+          }
+        ]
+      },
+      "expected": {
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-21",
+        "first_uncovered_on": "2026-04-22",
+        "term_gap_days": 3
+      },
+      "rationale": "After the 40-paise holding expires, April 22, 23 and 24 are insufficient."
+    },
+    {
+      "id": "coverage-redundant-short-holding",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {},
+          {
+            "id": 2,
+            "maturity_date": "2026-04-20"
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 200,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-24",
+        "term_gap_days": 0
+      },
+      "rationale": "The independent long holding still supplies all 100 paise."
+    },
+    {
+      "id": "coverage-future-top-up",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "amount_paise": 60
+          },
+          {
+            "id": 2,
+            "amount_paise": 40,
+            "issue_date": "2026-04-22"
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 60,
+        "shortfall_paise": 40,
+        "coverage_end": null,
+        "first_uncovered_on": "2026-04-20",
+        "term_gap_days": 5
+      },
+      "rationale": "Later repair cannot conceal the first uncovered interval; gap_days is remaining term from first break."
+    },
+    {
+      "id": "coverage-contiguous",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "maturity_date": "2026-04-21"
+          },
+          {
+            "id": 2,
+            "issue_date": "2026-04-22"
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-24",
+        "term_gap_days": 0
+      },
+      "rationale": "Inclusive maturity on April 21 joins issue on April 22 without a gap."
+    },
+    {
+      "id": "coverage-one-day-gap",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "maturity_date": "2026-04-21"
+          },
+          {
+            "id": 2,
+            "issue_date": "2026-04-23"
+          }
+        ]
+      },
+      "expected": {
+        "coverage_end": "2026-04-21",
+        "first_uncovered_on": "2026-04-22",
+        "term_gap_days": 3
+      },
+      "rationale": "April 22 is uncovered; the reported remaining term starts there."
+    },
+    {
+      "id": "coverage-maturity-inclusive",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "maturity_date": "2026-04-20"
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 100,
+        "shortfall_paise": 0,
+        "coverage_end": "2026-04-20",
+        "term_gap_days": 4
+      },
+      "rationale": "April 20 counts; April 21 through 24 do not."
+    },
+    {
+      "id": "coverage-expired",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "issue_date": "2026-04-01",
+            "maturity_date": "2026-04-19"
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "rationale": "An expired holding contributes nothing on April 20."
+    },
+    {
+      "id": "coverage-excludes-draft",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "status": "DRAFT"
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "rationale": "Only accepted current holdings count in the supplied administrative snapshot."
+    },
+    {
+      "id": "coverage-excludes-pending",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "status": "SUBMITTED"
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "rationale": "Only accepted current holdings count in the supplied administrative snapshot."
+    },
+    {
+      "id": "coverage-excludes-correction",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "status": "CHANGES_REQUESTED"
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "rationale": "Only accepted current holdings count in the supplied administrative snapshot."
+    },
+    {
+      "id": "coverage-excludes-superseded",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "superseded": true
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "rationale": "Only accepted current holdings count in the supplied administrative snapshot."
+    },
+    {
+      "id": "coverage-excludes-released",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "released": true
+          }
+        ]
+      },
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": 100,
+        "term_gap_days": 5
+      },
+      "rationale": "Only accepted current holdings count in the supplied administrative snapshot."
+    },
+    {
+      "id": "coverage-unknown",
+      "kind": "coverage",
+      "input": {
+        "obligation": {
+          "required_paise": null,
+          "term_start": null,
+          "term_end": null
+        },
+        "holdings": []
+      },
+      "expected": {
+        "held_paise": 0,
+        "shortfall_paise": null,
+        "term_gap_days": null
+      },
+      "rationale": "Unknown requirement and dates must remain unknown."
+    },
+    {
+      "id": "coverage-rejects-other-institution",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "institution_id": 2
+          }
+        ]
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Reject invalid scope, duplicate identity, missing integration or non-integer money."
+    },
+    {
+      "id": "coverage-rejects-other-obligation",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "obligation_id": 2
+          }
+        ]
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Reject invalid scope, duplicate identity, missing integration or non-integer money."
+    },
+    {
+      "id": "coverage-rejects-duplicates",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {},
+          {}
+        ]
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Reject invalid scope, duplicate identity, missing integration or non-integer money."
+    },
+    {
+      "id": "coverage-rejects-missing-adapter",
+      "kind": "coverage",
+      "input": {
+        "holdings": null
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Reject invalid scope, duplicate identity, missing integration or non-integer money."
+    },
+    {
+      "id": "coverage-rejects-fractional-money",
+      "kind": "coverage",
+      "input": {
+        "holdings": [
+          {
+            "amount_paise": 1.5
+          }
+        ]
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Reject invalid scope, duplicate identity, missing integration or non-integer money."
+    },
+    {
+      "id": "late-proof-may30",
+      "kind": "penalty",
+      "input": {
+        "as_of": "2026-05-30",
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "intimation_date": "2026-04-01",
+        "cycle_year": 2026
+      },
+      "expected": {
+        "rate_bps": 1000,
+        "amount_paise": 1000,
+        "status": "PROPOSED"
+      },
+      "rationale": "2.25(f) draft interpretation: inclusive calendar cutoffs, never automatic withdrawal."
+    },
+    {
+      "id": "late-proof-may31",
+      "kind": "penalty",
+      "input": {
+        "as_of": "2026-05-31",
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "intimation_date": "2026-04-01",
+        "cycle_year": 2026
+      },
+      "expected": {
+        "rate_bps": 1000,
+        "amount_paise": 1000,
+        "status": "PROPOSED"
+      },
+      "rationale": "2.25(f) draft interpretation: inclusive calendar cutoffs, never automatic withdrawal."
+    },
+    {
+      "id": "late-proof-june1",
+      "kind": "penalty",
+      "input": {
+        "as_of": "2026-06-01",
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "intimation_date": "2026-04-01",
+        "cycle_year": 2026
+      },
+      "expected": {
+        "rate_bps": 2000,
+        "amount_paise": 2000,
+        "status": "PROPOSED"
+      },
+      "rationale": "2.25(f) draft interpretation: inclusive calendar cutoffs, never automatic withdrawal."
+    },
+    {
+      "id": "late-proof-july31",
+      "kind": "penalty",
+      "input": {
+        "as_of": "2026-07-31",
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "intimation_date": "2026-04-01",
+        "cycle_year": 2026
+      },
+      "expected": {
+        "rate_bps": 2000,
+        "amount_paise": 2000,
+        "status": "PROPOSED"
+      },
+      "rationale": "2.25(f) draft interpretation: inclusive calendar cutoffs, never automatic withdrawal."
+    },
+    {
+      "id": "late-proof-august1",
+      "kind": "penalty",
+      "input": {
+        "as_of": "2026-08-01",
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "intimation_date": "2026-04-01",
+        "cycle_year": 2026
+      },
+      "expected": {
+        "rate_bps": null,
+        "amount_paise": null,
+        "status": "REQUIRES_AUTHORITY_REVIEW"
+      },
+      "rationale": "2.25(f) draft interpretation: inclusive calendar cutoffs, never automatic withdrawal."
+    },
+    {
+      "id": "late-proof-on-grace-deadline",
+      "kind": "penalty",
+      "input": {
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "intimation_date": "2026-04-05",
+        "cycle_year": 2026
+      },
+      "expected": {
+        "rate_bps": 0,
+        "amount_paise": 0,
+        "status": "NOT_DUE"
+      },
+      "rationale": "April 5 plus 15 days is April 20; the deadline day is inclusive."
+    },
+    {
+      "id": "penalty-rounding",
+      "kind": "penalty",
+      "input": {
+        "kind": "premature_encashment",
+        "base_paise": 5
+      },
+      "expected": {
+        "rate_bps": 1000,
+        "amount_paise": 1,
+        "status": "PROPOSED"
+      },
+      "rationale": "10 percent of 5 paise is 0.5 paise; demo half-up rounding gives 1 paise."
+    },
+    {
+      "id": "closure-six-years",
+      "kind": "penalty",
+      "input": {
+        "kind": "closure_six_years",
+        "base_paise": 10005
+      },
+      "expected": {
+        "rate_bps": 5000,
+        "amount_paise": 5003,
+        "status": "PROPOSED"
+      },
+      "rationale": "50 percent of 10005 paise is 5002.5, rounded half-up to 5003."
+    },
+    {
+      "id": "proof-date-overflow-penalty",
+      "kind": "penalty",
+      "input": {
+        "as_of": "9999-12-31",
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "intimation_date": "9999-12-31",
+        "cycle_year": 9999
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "A deadline outside the date range must be a controlled input error."
+    },
+    {
+      "id": "cross-year-penalty",
+      "kind": "penalty",
+      "input": {
+        "kind": "late_proof",
+        "base_paise": 10000,
+        "intimation_date": "2025-12-01",
+        "cycle_year": 2026
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Cross-year interpretation is intentionally unsupported pending policy confirmation."
+    },
+    {
+      "id": "findings-none",
+      "kind": "findings",
+      "input": {
+        "holdings": [
+          {}
+        ]
+      },
+      "expected": {
+        "codes": []
+      },
+      "rationale": "Exact continuous coverage and no known proof deadline produce no asserted issue."
+    },
+    {
+      "id": "findings-shortfall-and-gap",
+      "kind": "findings",
+      "input": {
+        "holdings": [
+          {
+            "amount_paise": 60
+          }
+        ]
+      },
+      "expected": {
+        "codes": [
+          "AMOUNT_SHORTFALL",
+          "TERM_GAP"
+        ]
+      },
+      "rationale": "40-paise shortfall and insufficient duration are separately explained."
+    },
+    {
+      "id": "findings-gap-only",
+      "kind": "findings",
+      "input": {
+        "holdings": [
+          {
+            "maturity_date": "2026-04-21"
+          }
+        ]
+      },
+      "expected": {
+        "codes": [
+          "TERM_GAP"
+        ]
+      },
+      "rationale": "Sufficient amount today but it ends before April 24."
+    },
+    {
+      "id": "findings-proof-day-before",
+      "kind": "findings",
+      "input": {
+        "holdings": [
+          {}
+        ],
+        "intimation_date": "2026-04-06"
+      },
+      "expected": {
+        "codes": []
+      },
+      "rationale": "Deadline is April 21, one day after evaluation."
+    },
+    {
+      "id": "findings-proof-deadline",
+      "kind": "findings",
+      "input": {
+        "holdings": [
+          {}
+        ],
+        "intimation_date": "2026-04-05"
+      },
+      "expected": {
+        "codes": []
+      },
+      "rationale": "Deadline April 20 is inclusive."
+    },
+    {
+      "id": "findings-proof-overdue",
+      "kind": "findings",
+      "input": {
+        "holdings": [
+          {}
+        ],
+        "intimation_date": "2026-04-04"
+      },
+      "expected": {
+        "codes": [
+          "PROOF_OVERDUE"
+        ]
+      },
+      "rationale": "Deadline April 19; one day overdue with both receipts missing."
+    },
+    {
+      "id": "findings-one-proof-missing",
+      "kind": "findings",
+      "input": {
+        "holdings": [
+          {}
+        ],
+        "intimation_date": "2026-04-04",
+        "payment_proof_on": "2026-04-20"
+      },
+      "expected": {
+        "codes": [
+          "PROOF_OVERDUE"
+        ]
+      },
+      "rationale": "Payment proof alone cannot substitute for Affidavit-3."
+    },
+    {
+      "id": "findings-proof-complete",
+      "kind": "findings",
+      "input": {
+        "holdings": [
+          {}
+        ],
+        "intimation_date": "2026-04-04",
+        "payment_proof_on": "2026-04-20",
+        "affidavit_on": "2026-04-20"
+      },
+      "expected": {
+        "codes": []
+      },
+      "rationale": "Both receipts clear the outstanding flag; lateness is a separate penalty assessment."
+    },
+    {
+      "id": "findings-all-three",
+      "kind": "findings",
+      "input": {
+        "holdings": [],
+        "intimation_date": "2026-04-04"
+      },
+      "expected": {
+        "codes": [
+          "AMOUNT_SHORTFALL",
+          "PROOF_OVERDUE",
+          "TERM_GAP"
+        ]
+      },
+      "rationale": "Known empty ledger and missing overdue receipts produce all three independent flags."
+    },
+    {
+      "id": "findings-unknown",
+      "kind": "findings",
+      "input": {
+        "obligation": {
+          "required_paise": null,
+          "term_start": null,
+          "term_end": null
+        },
+        "holdings": []
+      },
+      "expected": {
+        "codes": []
+      },
+      "rationale": "Unknown data is not a clean compliance decision and does not justify invented findings."
+    },
+    {
+      "id": "proof-date-overflow-finding",
+      "kind": "findings",
+      "input": {
+        "as_of": "9999-12-31",
+        "obligation": {
+          "required_paise": null,
+          "term_start": null,
+          "term_end": null
+        },
+        "holdings": [],
+        "intimation_date": "9999-12-31"
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Unrepresentable deadline must not escape as a raw OverflowError."
+    },
+    {
+      "id": "policy-rejects-missing-clearances",
+      "kind": "policy",
+      "input": {
+        "payload_patch": {
+          "release": {
+            "clearance_units": [
+              "PGRC"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Schema v1 must reject incomplete or unrecognised operational requirements."
+    },
+    {
+      "id": "policy-rejects-missing-release-documents",
+      "kind": "policy",
+      "input": {
+        "payload_patch": {
+          "release": {
+            "common_documents": [
+              "REQUEST_LETTER"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Schema v1 must reject incomplete or unrecognised operational requirements."
+    },
+    {
+      "id": "policy-rejects-unknown-document-kind",
+      "kind": "policy",
+      "input": {
+        "payload_patch": {
+          "release": {
+            "mode_documents": {
+              "FDR": "TYPO"
+            }
+          }
+        }
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Schema v1 must reject incomplete or unrecognised operational requirements."
+    },
+    {
+      "id": "policy-rejects-unknown-recipient",
+      "kind": "policy",
+      "input": {
+        "payload_patch": {
+          "escalation": [
+            {
+              "trigger": "MATURITY",
+              "days": -30,
+              "recipients": [
+                "TYPO"
+              ],
+              "clock": "CALENDAR"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Schema v1 must reject incomplete or unrecognised operational requirements."
+    },
+    {
+      "id": "policy-rejects-duplicate-reminder",
+      "kind": "policy",
+      "input": {
+        "payload_patch": {
+          "reminders": {
+            "maturity_days": [
+              30,
+              30
+            ]
+          }
+        }
+      },
+      "expected": {
+        "error": "RuleInputError"
+      },
+      "rationale": "Schema v1 must reject incomplete or unrecognised operational requirements."
+    },
+    {
+      "id": "policy-valid",
+      "kind": "policy",
+      "input": {},
+      "expected": {
+        "valid": true
+      },
+      "rationale": "Unmodified draft configuration has the required typed structure."
+    }
+  ]
+}

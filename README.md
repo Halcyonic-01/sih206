@@ -34,7 +34,17 @@ This is a **synthetic localhost demonstration candidate**. Public/real-data depl
 
 This is an FDR lifecycle portal, not a general AICTE application-validation engine. There is **no OCR, AI model, automatic PDF extraction, bank connection, regulatory policy engine or payment execution**. In-app and e-mail notifications, daily deadline rules and a tamper-evident audit trail now exist (see the quick start); e-mail goes to the console unless SMTP is configured. Officers manually inspect documents. Acceptance means **accepted for tracking**, not bank-authenticated or legally compliant.
 
-S1 adds the [institution and obligation model foundation](obligations/README.md): four new tables, validation and migration tests. Calculations, policy publication, APIs and institution screens are still future tasks. Existing records receive no inferred requirements or exemptions. Run `manage.py test` to include the new app's tests alongside the original portal suite.
+S1 adds the [institution and obligation model foundation](obligations/README.md): four new tables, validation and migration tests. Existing records receive no inferred requirements or exemptions. Run `manage.py test` to include the new app's tests alongside the original portal suite.
+
+The [independent S2 backend portion](obligations/S2.md) now provides draft demo rule configuration, read-only amount/coverage calculations, evidence-linked obligation findings and penalty proposals. It is not connected to the current browser workflow. APIs and instrument adapters await teammate dependencies; policy publication and S3 screens are not implemented. Existing `technical-v2` checks and decisions are unchanged.
+
+The newer local [S1–S6 owned implementation](docs/owned/README.md) adds tested services,
+an opt-in DRF API harness, transactional imports, reports/KPIs, guarded release
+casework and isolated React components. These are built against provisional ports;
+they are not mounted in the default app or integrated with the teammates' stack.
+Read its contract and verification records before using it. Install
+`requirements-saksham.txt` to run the **full current test suite**; the original
+`requirements.txt` still supports the preserved legacy runtime. No S7 work is added.
 
 ## 2. Read these documents in order
 

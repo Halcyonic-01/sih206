@@ -1,0 +1,1028 @@
+{
+  "fixture_format": "s3-presentation-v1",
+  "status": "SPECIFICATION_ONLY_NOT_AN_API_CONTRACT",
+  "data_classification": "SYNTHETIC",
+  "simulation_label": "SIMULATED",
+  "assessment_date": "2026-04-20",
+  "source_s2_commit": "3888ec4",
+  "usage": "Alternative independent presentation states, not one seeded database or chronological history. Development examples only; never live fallback data.",
+  "entities": {
+    "inst-a": {
+      "institution": {
+        "id": 101,
+        "code": "SYNTH-UI-A",
+        "name": "Synthetic Aster Technical Institute"
+      },
+      "profile": {
+        "aicte_id": "SYNTHETIC-UI-A",
+        "trust_name": "Synthetic Aster Trust",
+        "institution_type": "PRIVATE",
+        "region": "DEMO_NORTH",
+        "state": "Synthetic State",
+        "contact_email": "aster@example.invalid",
+        "status": "ACTIVE"
+      },
+      "programme_approvals": [
+        {
+          "programme": "ENGINEERING_TECHNOLOGY",
+          "level": "UG",
+          "land_tenure": "LEASED",
+          "building_tenure": "OWNED",
+          "approved_on": "2026-04-20",
+          "loa_ref": "SYNTHETIC-LOA-A-1"
+        },
+        {
+          "programme": "MANAGEMENT",
+          "level": "PG",
+          "land_tenure": "LEASED",
+          "building_tenure": "OWNED",
+          "approved_on": "2026-04-20",
+          "loa_ref": "SYNTHETIC-LOA-A-2"
+        }
+      ]
+    },
+    "inst-b": {
+      "institution": {
+        "id": 202,
+        "code": "SYNTH-UI-B",
+        "name": "Synthetic Birch Institute"
+      },
+      "profile": {
+        "aicte_id": "SYNTHETIC-UI-B",
+        "trust_name": "Synthetic Birch Trust",
+        "institution_type": "PRIVATE",
+        "region": "DEMO_SOUTH",
+        "state": "Synthetic State",
+        "contact_email": "birch@example.invalid",
+        "status": "ACTIVE"
+      },
+      "programme_approvals": []
+    },
+    "inst-legacy": {
+      "institution": {
+        "id": 303,
+        "code": "SYNTH-UI-LEGACY",
+        "name": "Synthetic Legacy Institute"
+      },
+      "profile": null,
+      "programme_approvals": []
+    }
+  },
+  "rule": {
+    "id": 9001,
+    "code": "synthetic-s3-preview",
+    "version": 1,
+    "policy_label": "DRAFT_DEMO_NOT_APPROVED",
+    "source_clause": "Table 1.4; 1.12; 2.25(f)",
+    "effective_from": "2024-01-01",
+    "effective_to": null,
+    "publication_status": "UNAPPROVED",
+    "source_document": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+    "sha256": "4b26c3fdbc80c523072398fd4e9236cdeaa3b5b591e227bc23dd8a65d988f0a3"
+  },
+  "scenarios": [
+    {
+      "id": "list-staff",
+      "screen": "institution_list",
+      "state": "ready",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "officer",
+        "scope_institution_ids": [
+          101,
+          202
+        ]
+      },
+      "screen_data": {
+        "institution_refs": [
+          "inst-a",
+          "inst-b"
+        ],
+        "count": 2,
+        "page": 1,
+        "page_size": 20
+      },
+      "expected_display": {
+        "visible_institution_ids": [
+          101,
+          202
+        ],
+        "result_count": 2
+      },
+      "http_status_hint": 200
+    },
+    {
+      "id": "list-own",
+      "screen": "institution_list",
+      "state": "ready",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_refs": [
+          "inst-a"
+        ],
+        "count": 1,
+        "page": 1,
+        "page_size": 20
+      },
+      "expected_display": {
+        "visible_institution_ids": [
+          101
+        ],
+        "result_count": 1
+      },
+      "http_status_hint": 200
+    },
+    {
+      "id": "list-loading",
+      "screen": "institution_list",
+      "state": "loading",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": null,
+      "expected_display": {
+        "message": "Loading institutions",
+        "result_count": null,
+        "show_zero_count": false
+      }
+    },
+    {
+      "id": "list-empty",
+      "screen": "institution_list",
+      "state": "empty",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_refs": [],
+        "count": 0,
+        "page": 1,
+        "page_size": 20,
+        "query": "no synthetic match"
+      },
+      "expected_display": {
+        "message": "No institutions match this search in your scope",
+        "result_count": 0
+      },
+      "http_status_hint": 200
+    },
+    {
+      "id": "list-unavailable",
+      "screen": "institution_list",
+      "state": "error",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": null,
+      "expected_display": {
+        "message": "Institutions could not be loaded",
+        "show_retry": true,
+        "result_count": null
+      },
+      "http_status_hint": 503
+    },
+    {
+      "id": "detail-covered",
+      "screen": "institution_detail",
+      "state": "ready",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "selected_obligation": {
+          "id": 501,
+          "institution_id": 101,
+          "required_paise": 1000000000,
+          "term_start": "2026-04-20",
+          "term_end": "2036-04-20"
+        },
+        "recorded_administrative_status": "DUE",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "assessment_status": "AVAILABLE",
+        "holdings": [
+          {
+            "id": 701,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 600000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2036-04-20",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          },
+          {
+            "id": 702,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 400000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2036-04-20",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          }
+        ],
+        "coverage": {
+          "required_paise": 1000000000,
+          "held_paise": 1000000000,
+          "shortfall_paise": 0,
+          "coverage_end": "2036-04-20",
+          "first_uncovered_on": null,
+          "term_gap_days": 0
+        },
+        "finding_codes": [],
+        "next_action": {
+          "text": "Review supporting evidence with the dealing officer",
+          "responsible_party": "Institution and officer",
+          "due_date": null,
+          "delivery_status": "NOT_SENT_SIMULATED"
+        },
+        "presentation_actions": [
+          "PREVIEW_REQUIREMENT"
+        ]
+      },
+      "expected_display": {
+        "coverage_label": "Covered in this draft assessment",
+        "finding_codes": [],
+        "show_draft_label": true,
+        "show_bank_verified_badge": false,
+        "required_display": "INR 1,00,00,000.00",
+        "held_display": "INR 1,00,00,000.00",
+        "shortfall_display": "INR 0.00"
+      },
+      "s2_lineage": [
+        "coverage-top-up"
+      ],
+      "calculation_inputs": {
+        "obligation": {
+          "id": 501,
+          "institution_id": 101,
+          "required_paise": 1000000000,
+          "term_start": "2026-04-20",
+          "term_end": "2036-04-20"
+        },
+        "holdings": [
+          {
+            "id": 701,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 600000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2036-04-20",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          },
+          {
+            "id": 702,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 400000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2036-04-20",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          }
+        ],
+        "as_of": "2026-04-20",
+        "proof_context": {}
+      },
+      "http_status_hint": 200
+    },
+    {
+      "id": "detail-shortfall",
+      "screen": "institution_detail",
+      "state": "ready",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "selected_obligation": {
+          "id": 501,
+          "institution_id": 101,
+          "required_paise": 1000000000,
+          "term_start": "2026-04-20",
+          "term_end": "2036-04-20"
+        },
+        "recorded_administrative_status": "DUE",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "assessment_status": "AVAILABLE",
+        "holdings": [
+          {
+            "id": 701,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 600000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2036-04-20",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          }
+        ],
+        "coverage": {
+          "required_paise": 1000000000,
+          "held_paise": 600000000,
+          "shortfall_paise": 400000000,
+          "coverage_end": null,
+          "first_uncovered_on": "2026-04-20",
+          "term_gap_days": 3654
+        },
+        "finding_codes": [
+          "AMOUNT_SHORTFALL",
+          "TERM_GAP"
+        ],
+        "next_action": {
+          "text": "Review supporting evidence with the dealing officer",
+          "responsible_party": "Institution and officer",
+          "due_date": null,
+          "delivery_status": "NOT_SENT_SIMULATED"
+        },
+        "presentation_actions": [
+          "PREVIEW_REQUIREMENT"
+        ]
+      },
+      "expected_display": {
+        "coverage_label": "Review draft shortfall and term gap",
+        "finding_codes": [
+          "AMOUNT_SHORTFALL",
+          "TERM_GAP"
+        ],
+        "show_draft_label": true,
+        "show_bank_verified_badge": false,
+        "required_display": "INR 1,00,00,000.00",
+        "held_display": "INR 60,00,000.00",
+        "shortfall_display": "INR 40,00,000.00"
+      },
+      "s2_lineage": [
+        "coverage-shortfall",
+        "findings-shortfall-and-gap"
+      ],
+      "calculation_inputs": {
+        "obligation": {
+          "id": 501,
+          "institution_id": 101,
+          "required_paise": 1000000000,
+          "term_start": "2026-04-20",
+          "term_end": "2036-04-20"
+        },
+        "holdings": [
+          {
+            "id": 701,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 600000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2036-04-20",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          }
+        ],
+        "as_of": "2026-04-20",
+        "proof_context": {}
+      },
+      "http_status_hint": 200
+    },
+    {
+      "id": "detail-term-gap",
+      "screen": "institution_detail",
+      "state": "ready",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "selected_obligation": {
+          "id": 501,
+          "institution_id": 101,
+          "required_paise": 1000000000,
+          "term_start": "2026-04-20",
+          "term_end": "2036-04-20"
+        },
+        "recorded_administrative_status": "DUE",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "assessment_status": "AVAILABLE",
+        "holdings": [
+          {
+            "id": 701,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 600000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2036-04-20",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          },
+          {
+            "id": 702,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 400000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2027-04-19",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          }
+        ],
+        "coverage": {
+          "required_paise": 1000000000,
+          "held_paise": 1000000000,
+          "shortfall_paise": 0,
+          "coverage_end": "2027-04-19",
+          "first_uncovered_on": "2027-04-20",
+          "term_gap_days": 3289
+        },
+        "finding_codes": [
+          "TERM_GAP"
+        ],
+        "next_action": {
+          "text": "Review the draft coverage gap before the short holding matures",
+          "responsible_party": "Institution and officer",
+          "due_date": "2027-04-19",
+          "delivery_status": "NOT_SENT_SIMULATED"
+        },
+        "presentation_actions": [
+          "PREVIEW_REQUIREMENT"
+        ]
+      },
+      "expected_display": {
+        "coverage_label": "Amount sufficient today; coverage ends before term",
+        "finding_codes": [
+          "TERM_GAP"
+        ],
+        "show_draft_label": true,
+        "show_bank_verified_badge": false,
+        "required_display": "INR 1,00,00,000.00",
+        "held_display": "INR 1,00,00,000.00",
+        "shortfall_display": "INR 0.00"
+      },
+      "s2_lineage": [
+        "coverage-short-top-up",
+        "findings-gap-only"
+      ],
+      "calculation_inputs": {
+        "obligation": {
+          "id": 501,
+          "institution_id": 101,
+          "required_paise": 1000000000,
+          "term_start": "2026-04-20",
+          "term_end": "2036-04-20"
+        },
+        "holdings": [
+          {
+            "id": 701,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 600000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2036-04-20",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          },
+          {
+            "id": 702,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 400000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2027-04-19",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          }
+        ],
+        "as_of": "2026-04-20",
+        "proof_context": {}
+      },
+      "http_status_hint": 200
+    },
+    {
+      "id": "detail-unknown",
+      "screen": "institution_detail",
+      "state": "ready",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 303
+      },
+      "screen_data": {
+        "institution_ref": "inst-legacy",
+        "selected_obligation": {
+          "id": 503,
+          "institution_id": 303,
+          "required_paise": null,
+          "term_start": null,
+          "term_end": null
+        },
+        "recorded_administrative_status": "UNKNOWN",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "assessment_status": "AVAILABLE",
+        "holdings": [],
+        "coverage": {
+          "required_paise": null,
+          "held_paise": 0,
+          "shortfall_paise": null,
+          "coverage_end": null,
+          "first_uncovered_on": null,
+          "term_gap_days": null
+        },
+        "finding_codes": [],
+        "next_action": {
+          "text": "Establish profile, policy basis and obligation term",
+          "responsible_party": "Authorized officer",
+          "due_date": null,
+          "delivery_status": "NOT_SENT_SIMULATED"
+        },
+        "presentation_actions": []
+      },
+      "expected_display": {
+        "coverage_label": "Coverage unknown",
+        "finding_codes": [],
+        "show_draft_label": true,
+        "show_bank_verified_badge": false,
+        "required_display": "Unknown",
+        "held_display": "INR 0.00",
+        "shortfall_display": "Unknown"
+      },
+      "s2_lineage": [
+        "coverage-unknown",
+        "findings-unknown"
+      ],
+      "calculation_inputs": {
+        "obligation": {
+          "id": 503,
+          "institution_id": 303,
+          "required_paise": null,
+          "term_start": null,
+          "term_end": null
+        },
+        "holdings": [],
+        "as_of": "2026-04-20",
+        "proof_context": {}
+      },
+      "http_status_hint": 200
+    },
+    {
+      "id": "detail-adapter-unavailable",
+      "screen": "institution_detail",
+      "state": "ready",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "selected_obligation": {
+          "id": 501,
+          "institution_id": 101,
+          "required_paise": 1000000000,
+          "term_start": "2026-04-20",
+          "term_end": "2036-04-20"
+        },
+        "assessment_date": "2026-04-20",
+        "rule_ref": 9001,
+        "assessment_status": "UNAVAILABLE",
+        "holdings": null,
+        "coverage": {
+          "required_paise": 1000000000,
+          "held_paise": null,
+          "shortfall_paise": null,
+          "coverage_end": null,
+          "term_gap_days": null
+        },
+        "finding_codes": null,
+        "assessment_error": "LINKED_HOLDINGS_UNAVAILABLE",
+        "presentation_actions": [
+          "RETRY_ASSESSMENT"
+        ]
+      },
+      "expected_display": {
+        "coverage_label": "Assessment unavailable",
+        "required_display": "INR 1,00,00,000.00",
+        "held_display": "Unavailable",
+        "shortfall_display": "Unavailable",
+        "show_zero_ledger": false
+      },
+      "s2_lineage": [
+        "coverage-rejects-missing-adapter"
+      ],
+      "http_status_hint": 409
+    },
+    {
+      "id": "detail-proof-overdue",
+      "screen": "institution_detail",
+      "state": "ready",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "selected_obligation": {
+          "id": 501,
+          "institution_id": 101,
+          "required_paise": 1000000000,
+          "term_start": "2026-04-20",
+          "term_end": "2036-04-20"
+        },
+        "recorded_administrative_status": "DUE",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "assessment_status": "AVAILABLE",
+        "holdings": [
+          {
+            "id": 701,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 1000000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2036-04-20",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          }
+        ],
+        "coverage": {
+          "required_paise": 1000000000,
+          "held_paise": 1000000000,
+          "shortfall_paise": 0,
+          "coverage_end": "2036-04-20",
+          "first_uncovered_on": null,
+          "term_gap_days": 0
+        },
+        "finding_codes": [
+          "PROOF_OVERDUE"
+        ],
+        "next_action": {
+          "text": "Review missing payment proof and Affidavit-3",
+          "responsible_party": "Institution and officer",
+          "due_date": "2026-04-16",
+          "delivery_status": "NOT_SENT_SIMULATED"
+        },
+        "presentation_actions": [
+          "PREVIEW_REQUIREMENT"
+        ],
+        "proof_context": {
+          "intimation_date": "2026-04-01",
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "due_date": "2026-04-16",
+          "days_overdue": 4
+        }
+      },
+      "expected_display": {
+        "coverage_label": "Coverage sufficient; proof review still required",
+        "finding_codes": [
+          "PROOF_OVERDUE"
+        ],
+        "show_draft_label": true,
+        "show_bank_verified_badge": false,
+        "required_display": "INR 1,00,00,000.00",
+        "held_display": "INR 1,00,00,000.00",
+        "shortfall_display": "INR 0.00"
+      },
+      "s2_lineage": [
+        "findings-proof-overdue"
+      ],
+      "calculation_inputs": {
+        "obligation": {
+          "id": 501,
+          "institution_id": 101,
+          "required_paise": 1000000000,
+          "term_start": "2026-04-20",
+          "term_end": "2036-04-20"
+        },
+        "holdings": [
+          {
+            "id": 701,
+            "institution_id": 101,
+            "obligation_id": 501,
+            "amount_paise": 1000000000,
+            "issue_date": "2026-04-20",
+            "maturity_date": "2036-04-20",
+            "status": "ACCEPTED",
+            "superseded": false,
+            "released": false
+          }
+        ],
+        "as_of": "2026-04-20",
+        "proof_context": {
+          "intimation_date": "2026-04-01",
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "due_date": "2026-04-16",
+          "days_overdue": 4
+        }
+      },
+      "http_status_hint": 200
+    },
+    {
+      "id": "detail-not-found",
+      "screen": "institution_detail",
+      "state": "not_found",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": null,
+      "expected_display": {
+        "message": "Institution not available",
+        "show_protected_details": false
+      },
+      "http_status_hint": 404
+    },
+    {
+      "id": "detail-forbidden",
+      "screen": "institution_detail",
+      "state": "forbidden",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "none",
+        "institution_id": null
+      },
+      "screen_data": null,
+      "expected_display": {
+        "message": "You do not have access to this page",
+        "show_protected_details": false
+      },
+      "http_status_hint": 403
+    },
+    {
+      "id": "calculator-idle",
+      "screen": "calculator",
+      "state": "idle",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "draft_approvals": [],
+        "preview": null
+      },
+      "expected_display": {
+        "preview_visible": false,
+        "message": "Choose programmes and tenures to preview the draft requirement"
+      }
+    },
+    {
+      "id": "calculator-preview",
+      "screen": "calculator",
+      "state": "ready",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "draft_approvals": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "UG",
+            "land_tenure": "LEASED",
+            "building_tenure": "OWNED"
+          },
+          {
+            "programme": "MANAGEMENT",
+            "level": "PG",
+            "land_tenure": "LEASED",
+            "building_tenure": "OWNED"
+          }
+        ],
+        "preview": {
+          "required_paise": 1000000000,
+          "multiplier": 2,
+          "base_paise": [
+            350000000,
+            150000000
+          ],
+          "exemption_assessed": false
+        }
+      },
+      "expected_display": {
+        "preview_visible": true,
+        "total_display": "INR 1,00,00,000.00",
+        "multiplier_display": "2, applied once",
+        "show_draft_label": true,
+        "show_save_action": false
+      },
+      "s2_lineage": [
+        "leased-two-programmes"
+      ],
+      "calculation_inputs": {
+        "approvals": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "UG",
+            "land_tenure": "LEASED",
+            "building_tenure": "OWNED"
+          },
+          {
+            "programme": "MANAGEMENT",
+            "level": "PG",
+            "land_tenure": "LEASED",
+            "building_tenure": "OWNED"
+          }
+        ],
+        "institution_type": "PRIVATE",
+        "as_of": "2026-04-20"
+      },
+      "http_status_hint": 200
+    },
+    {
+      "id": "calculator-invalid",
+      "screen": "calculator",
+      "state": "validation_error",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "draft_approvals": [
+          {
+            "programme": "COMPUTER_APPLICATIONS",
+            "level": "DIPLOMA",
+            "land_tenure": "OWNED",
+            "building_tenure": "OWNED"
+          }
+        ],
+        "preview": null
+      },
+      "expected_display": {
+        "preview_visible": false,
+        "retain_inputs": true,
+        "focus_error_summary": true,
+        "field_errors": {
+          "approvals.0.level": "This programme and level combination is unsupported"
+        }
+      },
+      "s2_lineage": [
+        "table-computer_applications-diploma"
+      ],
+      "calculation_inputs": {
+        "approvals": [
+          {
+            "programme": "COMPUTER_APPLICATIONS",
+            "level": "DIPLOMA",
+            "land_tenure": "OWNED",
+            "building_tenure": "OWNED"
+          }
+        ],
+        "institution_type": "PRIVATE",
+        "as_of": "2026-04-20",
+        "expected_error": "RuleInputError"
+      },
+      "http_status_hint": 400
+    },
+    {
+      "id": "calculator-conflict",
+      "screen": "calculator",
+      "state": "conflict",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "draft_approvals": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "UG",
+            "land_tenure": "LEASED",
+            "building_tenure": "OWNED"
+          },
+          {
+            "programme": "MANAGEMENT",
+            "level": "PG",
+            "land_tenure": "LEASED",
+            "building_tenure": "OWNED"
+          }
+        ],
+        "preview": null
+      },
+      "expected_display": {
+        "preview_visible": false,
+        "retain_inputs": true,
+        "message": "Context changed; refresh and calculate again",
+        "show_refresh_context": true
+      },
+      "http_status_hint": 409
+    },
+    {
+      "id": "calculator-unavailable",
+      "screen": "calculator",
+      "state": "error",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "draft_approvals": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "UG",
+            "land_tenure": "LEASED",
+            "building_tenure": "OWNED"
+          },
+          {
+            "programme": "MANAGEMENT",
+            "level": "PG",
+            "land_tenure": "LEASED",
+            "building_tenure": "OWNED"
+          }
+        ],
+        "preview": null
+      },
+      "expected_display": {
+        "preview_visible": false,
+        "retain_inputs": true,
+        "message": "Preview could not be calculated",
+        "show_retry": true
+      },
+      "http_status_hint": 503
+    },
+    {
+      "id": "calculator-loading",
+      "screen": "calculator",
+      "state": "loading",
+      "simulation_label": "SIMULATED",
+      "actor": {
+        "role": "institution",
+        "institution_id": 101
+      },
+      "screen_data": {
+        "institution_ref": "inst-a",
+        "rule_ref": 9001,
+        "assessment_date": "2026-04-20",
+        "draft_approvals": [
+          {
+            "programme": "ENGINEERING_TECHNOLOGY",
+            "level": "UG",
+            "land_tenure": "LEASED",
+            "building_tenure": "OWNED"
+          },
+          {
+            "programme": "MANAGEMENT",
+            "level": "PG",
+            "land_tenure": "LEASED",
+            "building_tenure": "OWNED"
+          }
+        ],
+        "preview": null
+      },
+      "expected_display": {
+        "preview_visible": false,
+        "submit_enabled": false,
+        "message": "Calculating draft preview"
+      }
+    }
+  ]
+}

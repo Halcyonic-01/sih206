@@ -1,0 +1,4 @@
+aicte_id,institution_code,institution_name,trust_name,institution_type,region,state,contact_email,status,data_classification
+000123,synth-a,"Synthetic Aster, Institute",Synthetic Aster Trust,PRIVATE,DEMO_NORTH,Synthetic State,aster@example.invalid,ACTIVE,SIMULATED
+SYNTH-002,SYNTH-B,सिंथेटिक संस्थान,Synthetic Birch Trust,GOVERNMENT,DEMO_SOUTH,Synthetic State,birch@example.invalid,ACTIVE,SIMULATED
+SYNTH-003,SYNTH-C,Synthetic Cedar Institute,Synthetic Cedar Trust,UNIVERSITY,DEMO_EAST,Synthetic State,cedar@example.invalid,INACTIVE,SIMULATED

@@ -1,0 +1,4 @@
+aicte_id,institution_code,institution_name,trust_name,institution_type,region,state,contact_email,status,data_classification
+SYNTH-DUP,SYNTH-D1,Synthetic Duplicate First,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,SIMULATED
+ synth-dup ,SYNTH-D2,Synthetic Duplicate Second,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,SIMULATED
+SYNTH-D3, synth-d2 ,Synthetic Duplicate Third,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,SIMULATED
