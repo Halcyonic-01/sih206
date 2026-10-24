@@ -88,3 +88,6 @@ seeding, a running server, PDFs, an API key, K1 or Y1.
 Labels are hash-pinned by the regression test. A deliberate correction needs a
 documented reason, a new dataset version and refreshed evaluation records; a
 second reviewer has not yet signed off this version.
+
+The folder-local `.gitattributes` preserves JSON bytes across checkouts so line
+ending conversion cannot change the frozen dataset/report hashes.
