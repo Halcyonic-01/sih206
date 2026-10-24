@@ -5,6 +5,11 @@
     python scripts/run_portal.py --prod          # production-like settings: DEBUG off, collected static files
     python scripts/run_portal.py --smoke         # set up, start, check the key URLs, stop (used by CI)
 
+Everything the portal needs runs from this one command: .env is created on the first run, the database is
+migrated and seeded, the daily rules and e-mail retries run in the background (--no-scheduler to turn off) and,
+when .env points EMAIL_HOST at localhost:1025, the Mailpit mail catcher is started if it is installed
+(--no-mailpit to turn off), with its inbox at http://127.0.0.1:8025/.
+
 Standard library only; run it with any Python 3.12. It re-uses `.venv`, skips work that is already
 done (hash markers) and never resets existing data. Local synthetic data only.
 """
@@ -13,10 +18,12 @@ import hashlib
 import os
 import secrets
 import shutil
+import socket
 import subprocess
 import sys
 import time
 import json
+from datetime import datetime, timezone
 import urllib.error
 import urllib.request
 from http.cookiejar import CookieJar
@@ -30,6 +37,12 @@ VENV_PYTHON = VENV / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
 CREDENTIALS = ROOT / 'data' / 'demo-credentials.txt'
 STAFF_CREDENTIALS = ROOT / 'data' / 'staff-credentials.txt'
 REVIEW_MANIFEST = ROOT / 'data' / 'seed-review-v2.json'
+ENV_FILE = ROOT / '.env'
+ENV_EXAMPLE = ROOT / '.env.example'
+DATABASE = ROOT / 'data' / 'portal.sqlite3'
+MAILPIT_SMTP = 1025
+MAILPIT_UI = 8025
+SEND_EVERY_SECONDS = 300
 
 
 def say(message):
@@ -236,6 +249,97 @@ def smoke(base, prod=False):
     say('Smoke check passed')
 
 
+def ensure_env_file():
+    """Create .env from .env.example with fresh random keys, but only on a first run (no .env and no database yet).
+
+    An existing database was sealed with its own audit key, so a new key must never be generated for it.
+    """
+    if ENV_FILE.exists() or not ENV_EXAMPLE.exists():
+        return
+    if DATABASE.exists():
+        say('No .env found; using built-in local defaults (copy .env.example to .env to configure e-mail and HTTPS)')
+        return
+    text = ENV_EXAMPLE.read_text(encoding='utf-8')
+    lines = []
+    for line in text.splitlines():
+        if line.startswith('DJANGO_SECRET_KEY='):
+            line = 'DJANGO_SECRET_KEY=' + secrets.token_urlsafe(50)
+        elif line.startswith('AUDIT_CHAIN_KEY='):
+            line = 'AUDIT_CHAIN_KEY=' + secrets.token_hex(32)
+        lines.append(line)
+    ENV_FILE.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    try:
+        ENV_FILE.chmod(0o600)
+    except OSError:
+        pass
+    say('Created .env from .env.example with new random keys (git-ignored; see the comments inside for what to change)')
+
+
+def dotenv_settings():
+    """The .env file overlaid by real environment variables, the same precedence settings.py uses."""
+    sys.path.insert(0, str(ROOT))
+    try:
+        from config.envfile import parse_env_text
+    finally:
+        sys.path.pop(0)
+    values = parse_env_text(ENV_FILE.read_text(encoding='utf-8')) if ENV_FILE.is_file() else {}
+    values.update({key: value for key, value in os.environ.items() if key in values or key.startswith('EMAIL_')})
+    return values
+
+
+def port_open(host, port):
+    try:
+        with socket.create_connection((host, port), timeout=0.5):
+            return True
+    except OSError:
+        return False
+
+
+def start_mailpit(settings):
+    """Start the local mail catcher when .env sends mail to localhost:1025. Returns the process or None."""
+    host, port = settings.get('EMAIL_HOST', ''), settings.get('EMAIL_PORT', '')
+    if host not in ('localhost', '127.0.0.1') or port != str(MAILPIT_SMTP):
+        return None
+    if port_open('127.0.0.1', MAILPIT_SMTP):
+        say(f'A mail catcher is already running on port {MAILPIT_SMTP}; inbox at http://127.0.0.1:{MAILPIT_UI}/')
+        return None
+    binary = shutil.which('mailpit')
+    if not binary:
+        say('EMAIL_HOST points at localhost:1025 but Mailpit is not installed, so e-mails are kept and retried later. '
+            'Install it (macOS: brew install mailpit; others: https://mailpit.axllent.org/docs/install/) '
+            'and run this script again.')
+        return None
+    say(f'Starting Mailpit: inbox at http://127.0.0.1:{MAILPIT_UI}/')
+    return subprocess.Popen([binary, '--smtp', f'127.0.0.1:{MAILPIT_SMTP}', '--listen', f'127.0.0.1:{MAILPIT_UI}'],
+                            cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def background_command(name, env):
+    """Run a short management command for the scheduler; print only its last line (or the failure)."""
+    result = subprocess.run([str(VENV_PYTHON), 'manage.py', name], cwd=ROOT, env=env, text=True,
+                            capture_output=True, check=False)
+    tail = (result.stdout.strip().splitlines() or [''])[-1]
+    if result.returncode:
+        say(f'scheduler: {name} failed ({(result.stderr.strip().splitlines() or ["no output"])[-1]})')
+    elif tail:
+        say(f'scheduler: {name}: {tail}')
+    return result.returncode
+
+
+def scheduler_tick(env, state):
+    """Local stand-in for the Docker scheduler: e-mail retries every 5 minutes, due rules once per day."""
+    now = time.time()
+    if now >= state['next_send']:
+        state['next_send'] = now + SEND_EVERY_SECONDS
+        background_command('send_notifications', env)
+    stamp = ROOT / 'data' / f'.rules-ran-{datetime.now(timezone.utc):%Y-%m-%d}'
+    if not stamp.exists() and now >= state['next_rules']:
+        state['next_rules'] = now + SEND_EVERY_SECONDS  # a failed run is retried later, not in a tight loop
+        if background_command('run_due_rules', env) == 0:
+            stamp.parent.mkdir(exist_ok=True)
+            stamp.touch()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--host', default='127.0.0.1')
@@ -245,10 +349,14 @@ def main():
     parser.add_argument('--skip-build', action='store_true', help='reuse frontend/dist')
     parser.add_argument('--seed', action='store_true', help='(re)run the demo seed commands')
     parser.add_argument('--smoke', action='store_true', help='start, check key URLs, stop (CI)')
+    parser.add_argument('--no-scheduler', action='store_true', help='do not run send_notifications / run_due_rules')
+    parser.add_argument('--no-mailpit', action='store_true', help='do not start the Mailpit mail catcher')
     args = parser.parse_args()
     if args.dev and args.prod:
         parser.error('--dev and --prod cannot be combined')
 
+    if not args.smoke:
+        ensure_env_file()
     ensure_python_env()
     if not args.dev:
         build_frontend(args.skip_build)
@@ -263,6 +371,9 @@ def main():
     say(f'Starting Django at http://{address}/')
     server = subprocess.Popen([str(part) for part in command], cwd=ROOT, env=env)
     vite = None
+    mailpit = None
+    background = not (args.smoke or args.no_scheduler)
+    state = {'next_send': time.time() + 10, 'next_rules': time.time() + 20}
     try:
         if args.smoke:
             smoke(f'http://{address}', args.prod)
@@ -274,17 +385,23 @@ def main():
             say('Starting Vite at http://localhost:5173/ (use this URL while developing)')
             vite = subprocess.Popen([npm, 'run', 'dev'], cwd=FRONTEND,
                                     env={**env, 'DJANGO_URL': f'http://{address}'})
+        if not args.no_mailpit:
+            mailpit = start_mailpit(dotenv_settings())
         say(f'Ready: open http://{address}/  (sign-in accounts: {CREDENTIALS.relative_to(ROOT)} , '
             'data/authority-credentials.txt , data/staff-credentials.txt). Ctrl+C stops.')
+        if background:
+            say('Scheduler on: e-mail retries every 5 minutes, due rules once a day (--no-scheduler to turn off)')
         while server.poll() is None and (vite is None or vite.poll() is None):
+            if background:
+                scheduler_tick(env, state)
             time.sleep(0.5)
     except KeyboardInterrupt:
         pass
     finally:
-        for process in (vite, server):
+        for process in (vite, server, mailpit):
             if process and process.poll() is None:
                 process.terminate()
-        for process in (vite, server):
+        for process in (vite, server, mailpit):
             if process:
                 try:
                     process.wait(timeout=10)

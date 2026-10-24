@@ -12,7 +12,8 @@ The interface is now a React app (`frontend/`) served by Django together with th
 Django-template interface stays at `/legacy/` until 28 Oct 2026. Python 3.12 and Node.js 22+ are needed.
 
 ```bash
-./run.sh              # macOS / Linux          (first run installs, builds, migrates, seeds synthetic data)
+./run.sh              # macOS / Linux          (first run creates .env, installs, builds, migrates, seeds synthetic data;
+                      #                         then runs the daily rules + e-mail retries and, if installed, Mailpit)
 .\run.ps1             # Windows PowerShell
 docker compose up --build   # alternative, see docs/docker.md
 ```
@@ -20,7 +21,8 @@ docker compose up --build   # alternative, see docs/docker.md
 Open **http://127.0.0.1:8010/**. Generated sign-in passwords are in `data/demo-credentials.txt`,
 `data/authority-credentials.txt` and `data/staff-credentials.txt` (git-ignored, never printed). Useful variants:
 `./run.sh --dev` (hot reload, open http://localhost:5173/), `./run.sh --prod` (DEBUG off), `./run.sh --smoke`
-(start, probe, stop). API contract: `/api/docs/`. Details: [API conventions](docs/api-conventions.md),
+(start, probe, stop), `--no-scheduler` / `--no-mailpit` (leave those background parts out).
+API contract: `/api/docs/`. Details: [API conventions](docs/api-conventions.md),
 [scheduled rules](docs/scheduled-rules.md), [review build](docs/review-build.md), [frontend guide](frontend/README.md).
 Copy `.env.example` to `.env` to configure e-mail, HTTPS and the audit-chain key.
 
