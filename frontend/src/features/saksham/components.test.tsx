@@ -45,6 +45,23 @@ describe('Saksham components in the shared frontend runner', () => {
     expect(screen.queryByRole('button', { name: 'Record authority authorization' })).not.toBeInTheDocument();
   });
 
+  it('labels an AI release summary as advisory and sends the saved version', async () => {
+    const write = vi.fn(async () => ({status: 'success', cached: false, label: 'AI-generated: verify before use',
+      summary: 'Clearances remain open.', risk_flags: [{field: 'clearances[0].status', severity: 'warning', message: 'Open'}]}));
+    const client = transport(async () => ({...approvedCase, actions: {can_ai_summary: true}}), write);
+    render(<ReleaseCase client={client} identityKey="clearance" caseId={1} />);
+    await userEvent.setup().click(await screen.findByRole('button', {name: 'Generate AI summary'}));
+    expect(await screen.findByText('AI-generated: verify before use')).toBeInTheDocument();
+    expect(write).toHaveBeenCalledWith('/api/releases/1/ai-summary', {version: 1});
+  });
+
+  it('keeps manual review available when the AI summary feature is off', async () => {
+    const client = transport(async () => ({...approvedCase, ai_summary_enabled: false, actions: {can_ai_summary: true}}));
+    render(<ReleaseCase client={client} identityKey="clearance" caseId={1} />);
+    expect(await screen.findByText('AI summary is off. Continue manual release review.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Generate AI summary'})).not.toBeInTheDocument();
+  });
+
   it('shows a failed service without synthetic fallback', async () => {
     const client = transport(async () => { throw { status: 503 }; });
     const { container } = render(<ReleaseCase client={client} identityKey="officer" caseId={1} />);

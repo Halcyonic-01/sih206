@@ -15,6 +15,8 @@ from django.urls import resolve
 from django.utils import timezone
 
 from casework import services
+from casework import ai_summary
+from ai.models import AiRun
 from obligations.catalogue import draft_payload
 from obligations.models import DepositObligation, IssuedLetter, MasterAudit, ReleaseCase, RuleSet
 from obligations.services import DependencyUnavailable
@@ -225,6 +227,60 @@ class CaseworkTests(PortalTestCase):
         with override_settings(SAKSHAM_RELEASE_FACTS=None):
             response = self.client.get(f'/api/releases/{case.pk}')
         self.assertEqual(response.json()['readiness']['outcome'], 'CONTEXT_UNAVAILABLE')
+
+    @override_settings(AI_ENABLED=False)
+    def test_ai_summary_is_scoped_advisory_and_disabled_without_provider(self):
+        case = self.case()
+        with patch('casework.ai_summary.call_model') as provider:
+            result = ai_summary.summarize(self.clearance['PGRC'], case.pk, case.version)
+        self.assertEqual(result['status'], 'disabled')
+        self.assertTrue(result['advisory'])
+        self.assertEqual(result['label'], 'AI-generated: verify before use')
+        provider.assert_not_called()
+        self.assertEqual(AiRun.objects.get(operation='RELEASE_SUMMARY').status, 'DISABLED')
+        with self.assertRaises(Exception):
+            ai_summary.summarize(self.b, case.pk, case.version)
+
+    @override_settings(AI_ENABLED=True)
+    def test_ai_summary_caches_by_case_version_and_never_changes_case(self):
+        case = self.case()
+        before_status, before_version = case.release.status, case.version
+        output = {'summary': 'One clearance remains open.', 'risk_flags': [
+            {'field': 'clearances[0].status', 'severity': 'warning', 'message': 'Manual clearance is pending.'}]}
+        with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'synthetic-only'}), \
+                patch('casework.ai_summary.call_model', return_value=output) as provider:
+            first = ai_summary.summarize(self.clearance['PGRC'], case.pk, case.version)
+            second = ai_summary.summarize(self.clearance['PGRC'], case.pk, case.version)
+        self.assertEqual(first['status'], 'success')
+        self.assertFalse(first['cached'])
+        self.assertTrue(second['cached'])
+        self.assertEqual(len(first['risk_flags']), 1)
+        provider.assert_called_once()
+        case.refresh_from_db()
+        case.release.refresh_from_db()
+        self.assertEqual((case.release.status, case.version), (before_status, before_version))
+
+    @override_settings(AI_ENABLED=True)
+    def test_ai_summary_rejects_invalid_output_and_stale_version(self):
+        case = self.case()
+        with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'synthetic-only'}), \
+                patch('casework.ai_summary.call_model', return_value={'summary': 'Bad', 'risk_flags': [{}]}):
+            result = ai_summary.summarize(self.clearance['PGRC'], case.pk, case.version)
+        self.assertEqual(result['status'], 'unavailable')
+        self.assertEqual(AiRun.objects.get(operation='RELEASE_SUMMARY').status, 'FAILED')
+        with self.assertRaises(WorkflowError):
+            ai_summary.summarize(self.clearance['PGRC'], case.pk, case.version + 1)
+
+    def test_ai_summary_api_is_specific_route_and_requires_current_version(self):
+        case = self.case()
+        self.client.force_login(self.clearance['PGRC'])
+        response = self.client.post(f'/api/releases/{case.pk}/ai-summary', json.dumps({'version': case.version}),
+            content_type='application/json')
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()['status'], 'disabled')
+        response = self.client.post(f'/api/releases/{case.pk}/ai-summary', json.dumps({'version': case.version + 1}),
+            content_type='application/json')
+        self.assertEqual(response.status_code, 409, response.content)
 
     def test_full_owned_api_release_journey_and_public_disclosure(self):
         def post(path, data, status=200):

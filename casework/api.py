@@ -11,6 +11,7 @@ from portal.permissions import role
 from access.logging import log_access
 from access.models import AccessLog
 from . import services
+from . import ai_summary
 
 
 def case_json(actor, case):
@@ -41,6 +42,7 @@ def case_json(actor, case):
         'simulation_label': 'SIMULATED', 'policy_label': 'DRAFT_DEMO_NOT_APPROVED',
         'notification_status': 'ENQUEUE_ADAPTER_CONFIGURED_DELIVERY_UNVERIFIED' if callable(
             getattr(settings, 'SAKSHAM_NOTIFY', None)) else 'INTEGRATION_PENDING',
+        'ai_summary_enabled': bool(getattr(settings, 'AI_ENABLED', False)),
         'next_action': 'Separate evidence-backed completion' if case.release.status == 'APPROVED' else
                        'Review prerequisites' if case.release.status == 'PENDING' else 'Read recorded history',
         'responsible_party': 'Authority and institution' if case.release.status == 'APPROVED' else
@@ -55,6 +57,7 @@ def case_json(actor, case):
         'letter': None if letter is None else {'serial': letter.serial, 'kind': letter.kind,
             'revoked': letter.revoked_at is not None, 'unsigned_demo': True},
         'actions': {'can_approve': independent and ready, 'can_reject': independent and ready,
+            'can_ai_summary': role(actor) in {'clearance', 'authority'},
             'can_review_penalties': role(actor) == 'officer' and case.release.status == 'PENDING',
             'can_issue': independent and case.release.status == 'APPROVED' and letter is None,
             'can_complete': independent and case.release.status == 'APPROVED' and letter is not None and
@@ -84,6 +87,13 @@ class CaseDetail(OwnedView):
         case = services.get_case(request.user, pk)
         log_access(request, AccessLog.SEARCH, case, detail='Scoped release-case evidence read')
         return Response(case_json(request.user, case))
+
+
+class AiSummary(OwnedView):
+    """Explicit advisory request; it never invokes a release workflow action."""
+    def post(self, request, pk):
+        data = body(request, {'version'})
+        return Response(ai_summary.summarize(request.user, pk, data.get('version')))
 
 
 class CaseAction(OwnedView):

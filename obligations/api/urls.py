@@ -20,6 +20,7 @@ urlpatterns = [
     path('releases', case_api.Cases.as_view()),
     path('releases/<int:pk>', case_api.CaseDetail.as_view()),
     path('releases/<int:pk>/letter', case_api.LetterDownload.as_view()),
+    path('releases/<int:pk>/ai-summary', case_api.AiSummary.as_view()),
     path('releases/<int:pk>/clearances/<str:unit>', case_api.Clearance.as_view()),
     path('releases/<int:pk>/<str:action>', case_api.CaseAction.as_view()),
     path('clearance-tasks', case_api.ClearanceQueue.as_view()),

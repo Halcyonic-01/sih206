@@ -49,6 +49,7 @@ export interface ObligationDetail extends Obligation { assessment: { status: str
   open_actions: null | {description:string;responsible_party:string;suggested_only:boolean}[];
   findings: null | {code: string; explanation: string}[] } }
 export interface Case { id: number; version: number; instrument_version: number; status: string; path: string; mode: string;
+  ai_summary_enabled?: boolean;
   application_reason?:string;decision_reason?:string;completion_notes?:string;responsible_party?:string;
   documents?:{id:number;name:string;kind:string;page_count:number|null;download_path:string}[];
   history?:{action:string;reason:string;at:string}[];history_has_more?:boolean;

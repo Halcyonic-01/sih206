@@ -54,6 +54,7 @@ function CaseBody({client,identityKey,caseId}:{client:Transport;identityKey:stri
   const [busy,setBusy]=React.useState(false);const [error,setError]=React.useState<unknown>();
   const [reason,setReason]=React.useState('');const [file,setFile]=React.useState<File>();const [refund,setRefund]=React.useState('');
   const [penalty,setPenalty]=React.useState('premature_encashment');const [base,setBase]=React.useState('');
+  const [summary,setSummary]=React.useState<{status:string;cached:boolean;label:string;summary?:string;risk_flags?:{field:string;severity:string;message:string}[];detail?:string}>();
   async function mutate(action:string,extra:Record<string,unknown>={},multipart?:FormData){if(!remote.data||!reason.trim()||busy)return;
     setBusy(true);setError(undefined);const current=remote.data;
     try{const payload=multipart??{version:current.version,reason,
@@ -62,6 +63,7 @@ function CaseBody({client,identityKey,caseId}:{client:Transport;identityKey:stri
     catch(e){setError(e);}finally{remote.reload();setBusy(false);}}
   if(remote.error)return <ErrorBox error={remote.error}/>;if(!remote.data)return <Loading/>;
   const item=remote.data;
+  async function getSummary(){if(busy)return;setBusy(true);setError(undefined);try{setSummary(await client.post(api(`releases/${caseId}/ai-summary`),{version:item.version}));}catch(e){setError(e);}finally{setBusy(false);}}
   return <section><h1>Release case {item.id}</h1><Notice/><p>Saved status: {item.status}. {item.status==='APPROVED'?'Release authorized; completion pending.':''}</p>
     <p>Monitoring: {item.monitoring_active?'Active':'Ended by recorded completion'}</p><p role="status">Next action: {item.next_action}</p>
     <p>Responsible party: {item.responsible_party??'Unavailable'}</p><p>Application reason: {item.application_reason??'Unavailable'}</p>
@@ -69,6 +71,9 @@ function CaseBody({client,identityKey,caseId}:{client:Transport;identityKey:stri
     <h2>Protected documents</h2>{item.documents?<ul>{item.documents.map(d=><li key={d.id}>{d.name} · {d.kind} · {d.page_count==null?'Page count unavailable':`${d.page_count} pages`}
       {/^\/(?!\/)/.test(d.download_path)&&<button disabled={busy} onClick={()=>client.download(d.download_path).catch(setError)}>Download {d.name}</button>}</li>)}</ul>:<p>Document metadata unavailable.</p>}
     <Readiness value={item.readiness}/>{!!error&&<ErrorBox error={error}/>}
+    <h2>AI advisory summary</h2>{item.actions.can_ai_summary?<><p>This is advisory only and cannot approve, reject, or alter this case.</p>
+      {item.ai_summary_enabled===false?<p>AI summary is off. Continue manual release review.</p>:<button disabled={busy} onClick={()=>void getSummary()}>Generate AI summary</button>}</>:<p>Available to assigned clearance units and the independent authority.</p>}
+    {summary&&<div role="status"><p>{summary.label}</p>{summary.status==='success'?<><p>{summary.summary}</p>{summary.cached&&<p>Saved result for this case version.</p>}<ul>{summary.risk_flags?.map((flag,i)=><li key={i}><strong>{flag.severity}</strong> · {flag.field}: {flag.message}</li>)}</ul></>:<p>{summary.detail}</p>}</div>}
     <h2>Clearances</h2><ul>{item.clearances.map(t=><li key={t.unit}>{t.unit}: {t.status} {t.reason}</li>)}</ul>
     <h2>Penalties</h2><ul>{item.penalties.map(p=><li key={p.id}>{p.kind.replaceAll('_',' ')}: {money(p.amount_paise)} · {p.status} · clause {p.clause}
       {item.actions.can_review_penalties&&p.status==='PROPOSED'&&<button disabled={busy||!reason.trim()} onClick={()=>mutate('penalties',{confirm_id:p.id})}>Confirm reviewed proposal</button>}</li>)}</ul>
