@@ -1,0 +1,78 @@
+{
+  "dataset_id": "s4-kpi-synthetic-v1",
+  "data_classification": "SYNTHETIC",
+  "simulation_label": "SIMULATED",
+  "review_status": "AUTHOR_LABELLED_NOT_INDEPENDENTLY_ADJUDICATED",
+  "context": {"scope_institution_ids":[1], "window_start":"2026-04-01T00:00:00Z", "window_end":"2026-04-30T23:59:59Z", "as_of":"2026-05-01T00:00:00Z"},
+  "cases": [
+    {"id":"empty-known-population","rationale":"No observations means null distributions and rates, not success or failure.",
+     "processes":[],"renewals":[],
+     "expected":{"submission_to_acceptance":{"sample_count":0,"median_seconds":null,"p90_seconds":null},"declaration_to_confirmation":{"sample_count":0,"median_seconds":null,"p90_seconds":null},"correction_cycles":{"sample_count":0,"total":0,"mean_per_accepted_record":null},"confirmed_share":{"numerator":0,"denominator":0,"percentage_bps":null,"unknown_count":0},"renewed_on_time":{"numerator":0,"denominator":0,"percentage_bps":null}}},
+    {"id":"mixed-completed-cohort","rationale":"Accepted durations 1/2/3/4 hours; correction totals 0/1/2/0. One confirmed, one discrepancy, one unknown and one declared.",
+     "processes":[
+      {"instrument_id":1,"institution_id":1,"history_complete":true,"events":[
+       {"id":1,"sequence":1,"action":"DECLARED","at":"2026-04-01T00:00:00Z"},
+       {"id":2,"sequence":2,"action":"SUBMITTED","at":"2026-04-01T00:00:00Z"},
+       {"id":3,"sequence":3,"action":"ACCEPTED","at":"2026-04-01T01:00:00Z"},
+       {"id":4,"sequence":4,"action":"INDEPENDENTLY_CONFIRMED","at":"2026-04-01T02:00:00Z"}]},
+      {"instrument_id":2,"institution_id":1,"history_complete":true,"events":[
+       {"id":5,"sequence":1,"action":"DECLARED","at":"2026-04-02T00:00:00Z"},
+       {"id":6,"sequence":2,"action":"SUBMITTED","at":"2026-04-02T00:00:00Z"},
+       {"id":7,"sequence":3,"action":"CHANGES_REQUESTED","at":"2026-04-02T00:30:00Z"},
+       {"id":8,"sequence":4,"action":"SUBMITTED","at":"2026-04-02T01:00:00Z"},
+       {"id":9,"sequence":5,"action":"ACCEPTED","at":"2026-04-02T02:00:00Z"},
+       {"id":10,"sequence":6,"action":"INDEPENDENTLY_CONFIRMED","at":"2026-04-02T03:00:00Z"},
+       {"id":11,"sequence":7,"action":"DISCREPANCY","at":"2026-04-02T04:00:00Z"}]},
+      {"instrument_id":3,"institution_id":1,"history_complete":true,"events":[
+       {"id":12,"sequence":1,"action":"SUBMITTED","at":"2026-04-03T00:00:00Z"},
+       {"id":13,"sequence":2,"action":"CHANGES_REQUESTED","at":"2026-04-03T00:30:00Z"},
+       {"id":14,"sequence":3,"action":"SUBMITTED","at":"2026-04-03T01:00:00Z"},
+       {"id":15,"sequence":4,"action":"CHANGES_REQUESTED","at":"2026-04-03T01:30:00Z"},
+       {"id":16,"sequence":5,"action":"SUBMITTED","at":"2026-04-03T02:00:00Z"},
+       {"id":17,"sequence":6,"action":"ACCEPTED","at":"2026-04-03T03:00:00Z"}]},
+      {"instrument_id":4,"institution_id":1,"history_complete":true,"events":[
+       {"id":18,"sequence":1,"action":"DECLARED","at":"2026-04-04T00:00:00Z"},
+       {"id":19,"sequence":2,"action":"SUBMITTED","at":"2026-04-04T00:00:00Z"},
+       {"id":20,"sequence":3,"action":"ACCEPTED","at":"2026-04-04T04:00:00Z"}]}
+     ],"renewals":[],
+     "expected":{"submission_to_acceptance":{"sample_count":4,"median_seconds":"9000.000000","p90_seconds":"14400.000000"},"declaration_to_confirmation":{"sample_count":2,"median_seconds":"9000.000000","p90_seconds":"10800.000000"},"correction_cycles":{"sample_count":4,"total":3,"mean_per_accepted_record":"0.75"},"confirmed_share":{"numerator":1,"denominator":4,"percentage_bps":null,"unknown_count":1,"known_subset":{"numerator":1,"denominator":3,"percentage_bps":3333}}}},
+    {"id":"pending-incomplete-outside-and-future","rationale":"Incomplete history cannot invent a start. Future acceptance cannot complete a pending submission. Acceptance before the window is excluded.",
+     "processes":[
+      {"instrument_id":5,"institution_id":1,"history_complete":true,"events":[{"id":21,"sequence":1,"action":"SUBMITTED","at":"2026-04-05T00:00:00Z"},{"id":22,"sequence":2,"action":"CHANGES_REQUESTED","at":"2026-04-05T01:00:00Z"}]},
+      {"instrument_id":6,"institution_id":1,"history_complete":false,"events":[{"id":23,"sequence":1,"action":"ACCEPTED","at":"2026-04-06T00:00:00Z"}]},
+      {"instrument_id":7,"institution_id":1,"history_complete":true,"events":[{"id":24,"sequence":1,"action":"SUBMITTED","at":"2026-03-31T00:00:00Z"},{"id":25,"sequence":2,"action":"ACCEPTED","at":"2026-03-31T01:00:00Z"}]},
+      {"instrument_id":8,"institution_id":1,"history_complete":true,"events":[{"id":26,"sequence":1,"action":"SUBMITTED","at":"2026-04-29T00:00:00Z"},{"id":27,"sequence":2,"action":"ACCEPTED","at":"2026-05-02T00:00:00Z"}]}
+     ],"renewals":[],
+     "expected":{"submission_to_acceptance":{"sample_count":0,"median_seconds":null,"p90_seconds":null},"correction_cycles":{"sample_count":0,"total":0,"mean_per_accepted_record":null},"confirmed_share":{"denominator":0,"percentage_bps":null},"data_quality":{"process_snapshots":4,"renewal_snapshots":0,"incomplete_process_histories":1,"ignored_future_events":1,"open_submissions":2}}},
+    {"id":"renewal-ist-deadline-and-unknowns","rationale":"18:29:59 UTC is still maturity day in IST; 18:30 is the next day. Include missing/late renewals; do not guess unknown eligibility/history.",
+     "processes":[],"renewals":[
+      {"instrument_id":11,"institution_id":1,"maturity_date":"2026-04-10","eligible":true,"history_complete":true,"successor":{"instrument_id":201,"institution_id":1,"accepted_at":"2026-04-10T18:29:59Z"}},
+      {"instrument_id":12,"institution_id":1,"maturity_date":"2026-04-10","eligible":true,"history_complete":true,"successor":{"instrument_id":202,"institution_id":1,"accepted_at":"2026-04-10T18:30:00Z"}},
+      {"instrument_id":13,"institution_id":1,"maturity_date":"2026-04-11","eligible":true,"history_complete":true},
+      {"instrument_id":14,"institution_id":1,"maturity_date":"2026-04-12","eligible":null,"history_complete":true},
+      {"instrument_id":15,"institution_id":1,"maturity_date":"2026-04-12","eligible":false,"history_complete":true},
+      {"instrument_id":16,"institution_id":1,"maturity_date":"2026-04-12","eligible":true,"history_complete":false},
+      {"instrument_id":17,"institution_id":1,"maturity_date":"2026-05-02","eligible":true,"history_complete":true}],
+     "expected":{"renewed_on_time":{"numerator":1,"denominator":3,"percentage_bps":null,"known_subset":{"numerator":1,"denominator":3,"percentage_bps":3333},"excluded":{"outside_window":1,"not_matured":0,"eligibility_unknown":1,"not_required":1,"incomplete_history":1}}}},
+    {"id":"maturity-day-still-open","rationale":"Do not score a maturity day that has not ended in IST.",
+     "context":{"window_start":"2026-04-30T00:00:00Z","window_end":"2026-04-30T18:00:00Z","as_of":"2026-04-30T18:00:00Z"},
+     "processes":[],"renewals":[{"instrument_id":18,"institution_id":1,"maturity_date":"2026-04-30","eligible":true,"history_complete":true,"successor":{"instrument_id":203,"institution_id":1,"accepted_at":"2026-04-30T17:00:00Z"}}],
+     "expected":{"renewed_on_time":{"denominator":0,"percentage_bps":null,"excluded":{"not_matured":1}}}},
+    {"id":"microseconds-ties-and-observed-zero","rationale":"One and two microsecond durations yield a half-up two-microsecond median. Equal timestamps are ordered by sequence. Zero corrections is observed.",
+     "processes":[
+      {"instrument_id":21,"institution_id":1,"history_complete":true,"events":[{"id":31,"sequence":1,"action":"DECLARED","at":"2026-04-01T00:00:00Z"},{"id":32,"sequence":2,"action":"SUBMITTED","at":"2026-04-01T00:00:00Z"},{"id":33,"sequence":3,"action":"ACCEPTED","at":"2026-04-01T00:00:00.000001Z"},{"id":34,"sequence":4,"action":"INDEPENDENTLY_CONFIRMED","at":"2026-04-01T00:00:00.000001Z"}]},
+      {"instrument_id":22,"institution_id":1,"history_complete":true,"events":[{"id":35,"sequence":1,"action":"DECLARED","at":"2026-04-01T00:00:00Z"},{"id":36,"sequence":2,"action":"SUBMITTED","at":"2026-04-01T00:00:00Z"},{"id":37,"sequence":3,"action":"ACCEPTED","at":"2026-04-01T00:00:00.000002Z"}]}],"renewals":[],
+     "expected":{"submission_to_acceptance":{"sample_count":2,"median_seconds":"0.000002","p90_seconds":"0.000002"},"declaration_to_confirmation":{"sample_count":1,"median_seconds":"0.000001","p90_seconds":"0.000001"},"correction_cycles":{"sample_count":2,"total":0,"mean_per_accepted_record":"0.00"},"confirmed_share":{"numerator":1,"denominator":2,"percentage_bps":5000,"unknown_count":0}}},
+    {"id":"inclusive-window-and-zero-duration","rationale":"Completions exactly at both ends count, including a genuine zero elapsed time.",
+     "processes":[
+      {"instrument_id":23,"institution_id":1,"history_complete":true,"events":[{"id":41,"sequence":1,"action":"SUBMITTED","at":"2026-04-01T00:00:00Z"},{"id":42,"sequence":2,"action":"ACCEPTED","at":"2026-04-01T00:00:00Z"}]},
+      {"instrument_id":24,"institution_id":1,"history_complete":true,"events":[{"id":43,"sequence":1,"action":"SUBMITTED","at":"2026-04-30T23:59:58Z"},{"id":44,"sequence":2,"action":"ACCEPTED","at":"2026-04-30T23:59:59Z"}]}],"renewals":[],
+     "expected":{"submission_to_acceptance":{"sample_count":2,"median_seconds":"0.500000","p90_seconds":"1.000000"},"confirmed_share":{"denominator":2,"percentage_bps":null,"unknown_count":2,"known_subset":{"denominator":0,"percentage_bps":null}}}},
+    {"id":"reconfirmation-preserves-first-confirmation-time","rationale":"Later discrepancy/reconfirmation affects current state but never resets first-confirmation duration.",
+     "processes":[{"instrument_id":25,"institution_id":1,"history_complete":true,"events":[
+      {"id":51,"sequence":1,"action":"DECLARED","at":"2026-04-01T00:00:00Z"},{"id":52,"sequence":2,"action":"SUBMITTED","at":"2026-04-01T00:00:00Z"},{"id":53,"sequence":3,"action":"ACCEPTED","at":"2026-04-01T01:00:00Z"},{"id":54,"sequence":4,"action":"INDEPENDENTLY_CONFIRMED","at":"2026-04-01T02:00:00Z"},{"id":55,"sequence":5,"action":"DISCREPANCY","at":"2026-04-01T03:00:00Z"},{"id":56,"sequence":6,"action":"INDEPENDENTLY_CONFIRMED","at":"2026-04-01T04:00:00Z"}]}],"renewals":[],
+     "expected":{"submission_to_acceptance":{"sample_count":1,"median_seconds":"3600.000000"},"declaration_to_confirmation":{"sample_count":1,"median_seconds":"7200.000000","p90_seconds":"7200.000000"},"confirmed_share":{"numerator":1,"denominator":1,"percentage_bps":10000,"unknown_count":0}}},
+    {"id":"cross-institution-record-rejected","rationale":"Caller context must not widen scope.","processes":[{"instrument_id":30,"institution_id":2,"history_complete":true,"events":[]}],"renewals":[],"expected_error":"KpiInputError"},
+    {"id":"complete-history-missing-submission-rejected","rationale":"Do not invent a submission timestamp for an allegedly complete history.","processes":[{"instrument_id":31,"institution_id":1,"history_complete":true,"events":[{"id":61,"sequence":1,"action":"ACCEPTED","at":"2026-04-01T00:00:00Z"}]}],"renewals":[],"expected_error":"KpiInputError"}
+  ]
+}

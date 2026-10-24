@@ -1,5 +1,8 @@
 # S4: institution CSV preparation only
 
+The later [KPI definitions and pure calculation slice](KPI_GUIDE.md) is documented
+separately. This page continues to describe the preserved CSV slice.
+
 Start with the [CSV specification and acceptance cases](CSV_SPEC.md). The code is
 [the pure validator](../../obligations/csv_validation.py); the fictional inputs
 and literal labels are in [evaluation/s4](../../evaluation/s4/README.md).
