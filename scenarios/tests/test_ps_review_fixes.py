@@ -207,6 +207,59 @@ class ConfirmationAndCoverage(StaffTestCase):
         self.assertTrue(AccessLog.objects.filter(action=AccessLog.EXPORT, object_type='instrument_register').exists())
 
 
+@override_settings(ROOT_URLCONF='config.urls')
+class ProofReceiptReviews(StaffTestCase):
+    """S2 PROOF_OVERDUE: an officer records receipt dates; with no review, receipt timing stays unknown."""
+
+    def setUp(self):
+        super().setUp()
+        rule = RuleSet.objects.create(code='proof-draft', version=1, effective_from=date(2026, 1, 1), payload=draft_payload(),
+                                      source_document='Synthetic', source_clause='2.25(f)')
+        self.obligation = DepositObligation.objects.create(institution=self.institution_a, rule_version=rule,
+            required_paise=150000000, term_start=date(2026, 1, 1), term_end=date(2036, 1, 1),
+            intimation_date=timezone.localdate() - timedelta(days=40))
+
+    def detail(self, user):
+        self.client.force_login(user)
+        return self.client.get(f'/api/obligations/{self.obligation.pk}').json()
+
+    def record(self, user, **values):
+        self.client.force_login(user)
+        payload = {'version': self.obligation.version, 'payment_proof_on': None, 'affidavit_on': None,
+                   'reason': 'Receipt register checked'} | values
+        return self.client.post(f'/api/obligations/{self.obligation.pk}/proof-receipts', payload,
+                                content_type='application/json')
+
+    def test_review_makes_overdue_proof_visible_and_complete_proof_clears_it(self):
+        before = self.detail(self.officer)
+        self.assertEqual(before['assessment']['proof_assessment'], 'UNAVAILABLE')
+        self.assertTrue(before['actions']['can_record_proof_receipts'])
+        received = (timezone.localdate() - timedelta(days=30)).isoformat()
+        response = self.record(self.officer, payment_proof_on=received)
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual(body['assessment']['proof_assessment'], 'AVAILABLE')
+        overdue = next(f for f in body['assessment']['findings'] if f['code'] == 'PROOF_OVERDUE')
+        self.assertEqual(overdue['values']['missing_documents'], ['AFFIDAVIT_3'])
+        self.assertEqual(body['proof_review']['payment_proof_on'], received)
+        self.obligation.refresh_from_db()
+        response = self.record(self.officer, payment_proof_on=received, affidavit_on=received)
+        codes = [f['code'] for f in response.json()['assessment']['findings']]
+        self.assertNotIn('PROOF_OVERDUE', codes)
+        self.assertEqual(self.obligation.proof_reviews.count(), 2)  # history kept
+        self.assertFalse(self.detail(self.a)['actions']['can_record_proof_receipts'])
+
+    def test_denied_stale_and_invalid(self):
+        self.assertEqual(self.record(self.a).status_code, 403)
+        self.assertEqual(self.record(self.b).status_code, 403)
+        self.assertEqual(self.record(self.officer, version=99).status_code, 409)
+        future = (timezone.localdate() + timedelta(days=1)).isoformat()
+        for values in ({'payment_proof_on': future}, {'affidavit_on': '25-10-2026'}, {'reason': ''}, {'extra': 1}):
+            with self.subTest(values=values):
+                self.assertEqual(self.record(self.officer, **values).status_code, 400)
+        self.assertFalse(self.obligation.proof_reviews.exists())
+
+
 @override_settings(DEBUG=True)
 class SeedV2Scenarios(TestCase):
     """A fresh install's seed data shows PS 3 (shortfall), PS 7 (release-ready record) and PS 9 (KPI figures)."""
@@ -243,7 +296,7 @@ class SeedV2Scenarios(TestCase):
         self.assertTrue(ready['eligible'] and ready['documents_ready'] and ready['term_elapsed'])
 
         now = timezone.now()
-        result = kpi_report(officer, window_start=now - timedelta(days=400), window_end=now - timedelta(seconds=1))
+        result = kpi_report(officer, window_start=now - timedelta(days=400), window_end=now, as_of=now)
         self.assertGreaterEqual(result['submission_to_acceptance']['sample_count'], 4)
         # The M6 scenario records are accepted at install time; the dated history gives the upper percentile.
         self.assertGreater(float(result['submission_to_acceptance']['p90_seconds']), 86400)
@@ -253,6 +306,16 @@ class SeedV2Scenarios(TestCase):
         renewal = result['renewed_on_time']['known_subset']
         self.assertGreaterEqual(renewal['denominator'], 2)
         self.assertGreaterEqual(renewal['numerator'], 1)
+        confirmed = result['confirmed_share']
+        self.assertGreaterEqual(confirmed['numerator'], 1)  # the statement-confirmed RTGS deposit
+        self.assertIsNotNone(confirmed['percentage_bps'])
+        self.assertEqual(Instrument.objects.get(reference='PS6-RTGS-CONFIRMED').verification_level, 'CONFIRMED')
+
+        self.client.force_login(officer)
+        proof = DepositObligation.objects.get(basis_reference='PS3-DEMO-A')
+        assessment = self.client.get(f'/api/obligations/{proof.pk}').json()['assessment']
+        self.assertEqual(assessment['proof_assessment'], 'AVAILABLE')
+        self.assertIn('PROOF_OVERDUE', [f['code'] for f in assessment['findings']])
         self.assertEqual(verify_chain().status, 'ok')
 
         before = Instrument.objects.count()

@@ -23,3 +23,8 @@ def completion_validator(upload):
 def notify(recipients, template, context, key):
     from notifications.service import notify as implementation
     return implementation(recipients, template, context, key)
+
+
+def proof_receipts(actor, obligation):
+    from obligations.services import reviewed_proof_receipts as implementation
+    return implementation(actor, obligation)

@@ -178,6 +178,15 @@ class ObligationDetail(ChildDetail):
     model = DepositObligation
 
 
+class ProofReceipts(OwnedView):
+    """Officer records when deposit proof and Affidavit-3 were received (empty = reviewed, not received)."""
+    def post(self, request, pk):
+        data = body(request, {'version', 'payment_proof_on', 'affidavit_on', 'reason'})
+        services.record_proof_receipts(request.user, pk, data.get('version'), data.get('payment_proof_on'),
+                                       data.get('affidavit_on'), data.get('reason'))
+        return Response(services.obligation_detail(request.user, pk))
+
+
 @extend_schema_view(post=extend_schema(request=schemas.CalculatorRequest,
     responses=schemas.responses(schemas.CalculatorRead)))
 class Calculator(OwnedView):

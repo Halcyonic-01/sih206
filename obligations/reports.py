@@ -152,9 +152,11 @@ def kpi_report(actor, *, window_start, window_end, as_of=None):
         evidence = sorted((e for e in h.verification_evidence.all() if sources.independent(e)
             and e.instrument_version == h.version), key=lambda e: (e.created_at, e.pk))
         combined = [(e.created_at, e.pk, e.action) for e in review]
-        if complete and evidence and history[0].after.get('verification_level') == 'DECLARED':
-            combined.extend([(history[0].created_at, -1, 'DECLARED'),
-                             (evidence[0].created_at, -2, 'INDEPENDENTLY_CONFIRMED')])
+        # A complete history that starts DECLARED is known: confirmed if confirmation evidence exists, else not.
+        if complete and history[0].after.get('verification_level') == 'DECLARED':
+            combined.append((history[0].created_at, -1, 'DECLARED'))
+            if evidence:
+                combined.append((evidence[0].created_at, -2, 'INDEPENDENTLY_CONFIRMED'))
         combined.sort(key=lambda e: (e[0], 0 if e[2] == 'DECLARED' else
             2 if e[2] == 'INDEPENDENTLY_CONFIRMED' else 1, e[1]))
         # Local sequence identities are unique across process snapshots; source PKs
@@ -183,6 +185,7 @@ def kpi_report(actor, *, window_start, window_end, as_of=None):
         window_start=window_start, window_end=window_end, as_of=cutoff, simulation_label='SIMULATED')
     result['limitations'] = ['Renewal is counted as required when a holding matures before its linked obligation term ends; '
         'holdings without a linked obligation term are excluded as unknown.',
-        'Only current-version BANK_CONFIRMATION/CONFIRMED evidence counts; simulated matches never count.',
+        'Confirmed means current-version bank confirmation or statement reconciliation evidence; in this demo the '
+        'statement is SIMULATED. Simulated bank-link responses never count.',
         'Missing creation/declaration history remains unknown. No before/after improvement study is implied.']
     return result

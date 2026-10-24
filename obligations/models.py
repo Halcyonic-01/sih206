@@ -209,5 +209,32 @@ class CsvImport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+class ProofReceiptReview(models.Model):
+    """An officer's review of when AICTE received an obligation's deposit proof and Affidavit-3 (APH 2.25(f)).
+
+    Append-only: the newest row is the current review, older rows stay as history. A blank date means the officer
+    reviewed the file and the document has not been received, which is what lets PROOF_OVERDUE fire. With no review
+    at all, receipt timing stays unknown.
+    """
+    obligation = models.ForeignKey(DepositObligation, on_delete=models.PROTECT, related_name='proof_reviews')
+    payment_proof_on = models.DateField(null=True, blank=True)
+    affidavit_on = models.DateField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    reason = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-pk']
+        constraints = [models.CheckConstraint(condition=~Q(reason=''), name='proof_review_reason_required')]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValidationError('Proof receipt reviews are append-only.')
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError('Proof receipt reviews are append-only.')
+
+
 # Owned storage only: shared settings and portal migration numbering stay intact.
 from .case_models import ClearanceTask, IssuedLetter, PenaltyAssessment, ReleaseCase  # noqa: E402,F401

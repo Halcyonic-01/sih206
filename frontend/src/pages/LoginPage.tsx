@@ -1,12 +1,22 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Form, Input, Typography } from 'antd'
 import { useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { matchPath, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '@/api/client'
 import { applyFieldErrors } from '@/api/forms'
 import { useAuth } from '@/auth/AuthProvider'
+import { appRoutes } from '@/routes/registry'
 
 interface LoginValues { username: string; password: string }
+
+/** Return to the page that asked for sign-in only if the account now signing in may open it. After a sign-out the
+ * previous user's page is remembered too, and a different role would otherwise land on an access-denied screen. */
+export function allowedDestination(destination: string, role: string | null | undefined): string {
+  const pathname = destination.split(/[?#]/)[0] ?? '/'
+  const route = appRoutes.find((entry) => matchPath({ path: entry.path, end: true }, pathname))
+  if (!route?.roles) return destination
+  return role && route.roles.includes(role as never) ? destination : '/'
+}
 
 export default function LoginPage() {
   const { user, status, login } = useAuth()
@@ -17,14 +27,14 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false)
   const destination = (location.state as { from?: string } | null)?.from ?? '/'
 
-  if (status === 'authenticated' && user) return <Navigate to={destination} replace />
+  if (status === 'authenticated' && user) return <Navigate to={allowedDestination(destination, user.role)} replace />
 
   async function submit(values: LoginValues) {
     setBusy(true)
     setError(null)
     try {
-      await login(values.username.trim(), values.password)
-      navigate(destination, { replace: true })
+      const signedIn = await login(values.username.trim(), values.password)
+      navigate(allowedDestination(destination, signedIn.role), { replace: true })
     } catch (caught) {
       if (applyFieldErrors(form, caught)) return
       setError(caught instanceof ApiError ? caught.message : 'Cannot reach the server. Try again.')

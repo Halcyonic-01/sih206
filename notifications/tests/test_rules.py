@@ -222,6 +222,18 @@ class ProofDueTests(RulesTestCase):
         self.assertEqual(Notification.objects.count(), 0)
 
 
+    def test_reminders_stop_once_an_officer_records_both_receipts(self):
+        from obligations.models import ProofReceiptReview
+        ProofReceiptReview.objects.create(obligation=self.obligation, payment_proof_on=self.intimation,
+                                          affidavit_on=None, reviewed_by=self.officer, reason='Affidavit pending')
+        self.run_on(self.intimation + timedelta(days=7))
+        self.assertEqual(self.keys('proof_due_reminder'), [self.key(7)])
+        ProofReceiptReview.objects.create(obligation=self.obligation, payment_proof_on=self.intimation,
+                                          affidavit_on=self.intimation, reviewed_by=self.officer, reason='Both received')
+        self.run_on(self.intimation + timedelta(days=12))
+        self.assertEqual(self.keys('proof_due_reminder'), [self.key(7)])
+
+
 class SlaTests(RulesTestCase):
     def submitted(self, on, reference='SUB-1'):
         fdr = self.instrument(status=Instrument.Status.SUBMITTED, reference=reference)

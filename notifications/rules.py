@@ -160,12 +160,16 @@ def has_active_release(instrument):
 
 def proof_rules(as_of, config, result, dry_run, institution=None):
     thresholds = sorted(config['proof_reminder_days'])
-    open_states = [DepositObligation.Status.DUE, DepositObligation.Status.PARTIALLY_MET]
+    # UNKNOWN only means the requirement is not settled yet; an intimated deposit still needs its proof.
+    open_states = [DepositObligation.Status.UNKNOWN, DepositObligation.Status.DUE, DepositObligation.Status.PARTIALLY_MET]
     obligations = DepositObligation.objects.filter(status__in=open_states, intimation_date__isnull=False,
                                                    intimation_date__lte=as_of).select_related('institution')
     if institution:
         obligations = obligations.filter(institution=institution)
     for obligation in obligations:
+        review = obligation.proof_reviews.first()  # the officer's latest receipt review
+        if review and review.payment_proof_on and review.affidavit_on:
+            continue  # both documents recorded as received: nothing left to remind about
         day = (as_of - obligation.intimation_date).days
         crossed = [threshold for threshold in thresholds if day >= threshold]
         if not crossed:

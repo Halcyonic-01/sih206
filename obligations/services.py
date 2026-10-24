@@ -16,7 +16,8 @@ from portal.permissions import institution_for, require_officer, role
 from portal.services import WorkflowError
 from .calculations import ApprovalInput, HoldingInput, ObligationInput, coverage, required_amount
 from .checks import obligation_findings
-from .models import DepositObligation, InstitutionProfile, MasterAudit, ProgrammeApproval, RuleSet
+from .models import (DepositObligation, InstitutionProfile, MasterAudit, ProgrammeApproval, ProofReceiptReview,
+                     RuleSet)
 from .rules import RuleInputError
 
 
@@ -203,6 +204,55 @@ def holding_snapshot(actor, obligation):
     return linked_holdings(actor, obligation)
 
 
+def _receipt_date(value, field):
+    if value in (None, ''):
+        return None
+    try:
+        parsed = date.fromisoformat(value) if type(value) is str else None
+    except ValueError:
+        parsed = None
+    if parsed is None or parsed.isoformat() != value:
+        raise ValidationError({field: 'Use YYYY-MM-DD, or leave empty when the document has not been received.'})
+    if parsed > timezone.localdate():
+        raise ValidationError({field: 'A receipt date cannot be in the future.'})
+    return parsed
+
+
+@transaction.atomic
+def record_proof_receipts(actor, identity, version, payment_proof_on, affidavit_on, reason):
+    """Officer review of deposit-proof and Affidavit-3 receipt dates; empty means reviewed as not received."""
+    require_officer(actor)
+    record = get_object_or_404(scoped_obligations(actor), pk=identity)
+    reason = reason_text(reason)
+    values = {'payment_proof_on': _receipt_date(payment_proof_on, 'payment_proof_on'),
+              'affidavit_on': _receipt_date(affidavit_on, 'affidavit_on')}
+    before = snapshot(record)
+    revise(record, version, {})
+    review = ProofReceiptReview.objects.create(obligation=record, reviewed_by=actor, reason=reason, **values)
+    MasterAudit.objects.create(institution_id=record.institution_id, actor=actor, entity='depositobligation',
+        entity_id=record.pk, action='PROOF_RECEIPTS_REVIEWED', reason=reason, before=before,
+        after=snapshot(record) | {key: value.isoformat() if value else None for key, value in values.items()})
+    return review
+
+
+def reviewed_proof_receipts(actor, obligation):
+    """SAKSHAM_PROOF_RECEIPTS provider: the latest officer review, or unknown when nobody has reviewed yet."""
+    visible = scoped_obligations(actor).filter(pk=obligation.pk).exists()
+    review = ProofReceiptReview.objects.filter(obligation_id=obligation.pk).first() if visible else None
+    if review is None:
+        raise DependencyUnavailable('No officer review of proof receipt dates yet.')
+    return {'payment_proof_on': review.payment_proof_on, 'affidavit_on': review.affidavit_on}
+
+
+def proof_review_json(record):
+    review = record.proof_reviews.select_related('reviewed_by').first()
+    return None if review is None else {
+        'payment_proof_on': review.payment_proof_on.isoformat() if review.payment_proof_on else None,
+        'affidavit_on': review.affidavit_on.isoformat() if review.affidavit_on else None,
+        'reviewed_by': review.reviewed_by.get_username(), 'reviewed_at': review.created_at.isoformat(),
+        'reason': review.reason}
+
+
 def obligation_detail(actor, identity, *, as_of=None):
     record = get_object_or_404(scoped_obligations(actor).select_related('rule_version'), pk=identity)
     when = as_of or timezone.localdate()
@@ -210,7 +260,9 @@ def obligation_detail(actor, identity, *, as_of=None):
                          record.term_start, record.term_end)
     data = snapshot(record)
     data['actions'] = {'can_edit': role(actor) == 'officer' and record.status not in
-                       {'EXEMPT', 'RELEASED', 'FORFEITED', 'EXTENDED'}}
+                       {'EXEMPT', 'RELEASED', 'FORFEITED', 'EXTENDED'},
+                       'can_record_proof_receipts': role(actor) == 'officer'}
+    data['proof_review'] = proof_review_json(record)
     data['assessment'] = {'status': 'UNAVAILABLE', 'coverage': None, 'findings': None,
                           'holdings': None, 'open_actions': None,
                           'as_of': when.isoformat(), 'reason': 'RULE_CONTEXT_UNAVAILABLE'}

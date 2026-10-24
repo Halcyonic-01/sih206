@@ -1,4 +1,4 @@
-"""Read-only P5 adapters; simulated matches never establish bank confirmation."""
+"""Read-only P5 adapters. Statement matches confirm fields; no source here establishes bank authenticity."""
 from django.core.exceptions import PermissionDenied, ValidationError
 from portal.permissions import role, scoped_instruments
 
@@ -16,7 +16,10 @@ def records_for(actor):
 
 
 def independent(evidence):
-    return evidence.method == 'BANK_CONFIRMATION' and evidence.result == 'CONFIRMED'
+    # The evidence kinds that set verification level CONFIRMED (plan F3): a bank confirmation, or a statement
+    # reconciliation match. Simulated bank-link responses (SIMULATED_BANK) never confirm.
+    return ((evidence.method, evidence.result) in {('BANK_CONFIRMATION', 'CONFIRMED'),
+                                                   ('SIMULATED_STATEMENT', 'SIMULATED_MATCH')})
 
 
 def verified_current(item):
