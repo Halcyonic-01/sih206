@@ -1,9 +1,12 @@
 # S6 release UI preparation
 
 Start with [SCREEN_SPEC.md](SCREEN_SPEC.md), then [fixtures.json](fixtures.json).
-See [VERIFICATION.md](VERIFICATION.md) for actual checks and their limits.
+See [CONTRACT_REVIEW.md](CONTRACT_REVIEW.md) for screen-to-source gaps and
+[VALIDATOR_VERIFICATION.md](VALIDATOR_VERIFICATION.md) for current test results.
+[VERIFICATION.md](VERIFICATION.md) retains the original documentation-only record.
 
-This folder contains documentation and synthetic presentation fixtures only.
+This folder contains documentation, synthetic presentation fixtures and an offline
+preparation validator. The validator has negative tests in the existing test suite.
 No React setup, component, frontend route, API, database write, migration, document
 generation or token lookup was added. S1–S5 and the existing Django app are preserved.
 Full S6 is not implemented. Integration needs the actual S5 backend, K2 shell and
@@ -50,80 +53,36 @@ of amount remains unresolved; these examples omit it. No sample mints a token.
 ## Local checks (PowerShell, repository root)
 
 No dependency installation is needed beyond the existing project environment.
-This in-memory preparation check executes the existing S5 evaluator, validates
-literal expected labels, retained pre-action status and minimal public data. It
-does not add a runtime validator, seed records or test a UI:
+Run from the repository root:
 
 ```powershell
-@'
-import json
-from collections import Counter
-from pathlib import Path
-from evaluation.s5.run import context, merge
-from obligations.release_prerequisites import evaluate_prerequisites
-
-d = json.loads(Path('docs/s6/fixtures.json').read_text(encoding='utf-8'))
-s5 = json.loads(Path('docs/s5/scenarios.json').read_text(encoding='utf-8'))
-source = {s['id']: s for s in s5['scenarios']}
-rule, when = context(s5)
-private, public = d['private_scenarios'], d['public_scenarios']
-all_cases = private + public
-assert d['fixture_format'] == 's6-release-ui-spec-v1'
-assert d['artifact_status'] == 'SPECIFICATION_ONLY_NO_FRONTEND'
-assert d['simulation_label'] == 'SIMULATED'
-assert d['data_classification'] == 'SYNTHETIC'
-assert d['rule_status'] == 'DRAFT_DEMO_NOT_APPROVED'
-assert len(private) == 48 and len(public) == 5
-assert len({s['id'] for s in all_cases}) == 53
-assert Counter(s['screen'] for s in private) == {
-    'wizard': 13, 'case': 31, 'clearance_queue': 4}
-linked = 0
-for s in private:
-    assert s['expected']['checks'] and s['expected']['heading']
-    assert s['expected']['prohibited_controls']
-    if s['state'] in {'loading', 'service_unavailable', 'session_expired',
-                      'late_response', 'access_denied', 'conflict'}:
-        assert s['view_data'] == {}
-    ref = s['condition'].get('s5_ref')
-    if not ref:
-        continue
-    linked += 1
-    c = source[ref]
-    assert s['condition']['operation'] == c['operation']
-    snap = merge(s5['defaults'], c['input_patch'])
-    assert s['actor'] == snap['actor']
-    result = evaluate_prerequisites(snap, operation=c['operation'], rules=rule,
-                                    as_of=when, simulation_label='SIMULATED')
-    assert result['outcome'] == s['expected']['s5_outcome']
-    assert result['reason_codes'] == s['expected']['s5_reason_codes']
-    assert result['projection_only'] and not result['effects_applied']
-    if result['outcome'] == 'DENIED':
-        assert s['view_data'] == {}
-    else:
-        v = s['view_data']
-        assert v['persisted_case_status'] == snap['case']['status']
-        assert v['persisted_monitoring_active'] is snap['monitoring_active']
-        assert v['persisted_version'] == snap['case']['version']
-        assert v['path'] == snap['case']['path']
-        assert v['mode'] == snap['case']['mode']
-assert linked == 33
-allow = {'serial', 'issue_date', 'institution_name', 'kind', 'status'}
-assert set(d['public_record_allowlist']) == allow
-for s in public:
-    assert set(s) == {'id','screen','state','view_data','expected','s5_lineage_ref'}
-    assert s['screen'] == 'public_verify'
-    assert set(s['view_data']) <= allow
-    if s['state'] in {'ISSUED', 'REVOKED'}:
-        assert set(s['view_data']) == allow
-        assert s['view_data']['status'] == s['state']
-        assert s['view_data']['serial'].startswith('SYNTH-')
-    else:
-        assert s['view_data'] == {}
-    if s['s5_lineage_ref']:
-        assert source[s['s5_lineage_ref']]['expected']['outcome'] == 'PUBLIC_REVOKED_RECORD_ONLY'
-print('PASS: 53 fixtures; 33 S5 comparisons; pre-action state retained; public allowlist checked')
-'@ | .\.venv\Scripts\python.exe -
+.\.venv\Scripts\python.exe docs/s6/validate_fixtures.py
+.\.venv\Scripts\python.exe manage.py test obligations.tests.test_s6_fixtures
 ```
+
+Expected CLI result: `result: passed`, 53 scenarios, 48 private, five public,
+33 S5 comparisons and zero database queries; exit 0. The focused suite has 18 tests.
+Use `--fixtures path/to/candidate.json` to check a candidate without modifying
+source labels. Contract failures print a controlled diagnostic to stderr and exit 1;
+malformed JSON, duplicate keys, missing/unreadable files and oversized files also
+fail. Argument syntax errors use argparse's exit 2. Never count a failure as a pass.
+
+The validator checks the fixed v1 scenario IDs/screens/states, explicit synthetic
+and draft labels, actor/scope context, S5 lineage/operations/outcomes/reasons,
+pre-action saved status/version/monitoring, required prohibited controls, unknown
+versus false/zero, error/denial empty payloads and a separate minimal public shape.
+It rejects added permission grants and public fields. It uses unchanged local S5
+sources and pure functions, blocks queries on every configured Django connection,
+and reads no users/documents or application data. It writes no fixtures or database
+rows and needs no migrated database. CLI paths work from another working directory;
+checks remain active with optimized Python (`-O`).
+
+Presentation-only v1 payloads are deliberately fixed, so changing a scenario's
+meaning requires an explicit contract/label review and validator/test update, not
+an automatic regeneration of expected results. Reordering scenarios is allowed.
+Natural-language prose is checked for presence, not proven semantically correct;
+headings on public states are fixed to distinguish revoked, missing and failed.
+This is not API, role enforcement, PDF validity, accessibility or browser testing.
 
 Preserved checks, all read-only except isolated regression test databases/files:
 

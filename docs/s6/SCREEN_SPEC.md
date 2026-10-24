@@ -22,6 +22,9 @@ requests as if an APH checklist or parallel clearance had been performed.
 The [S5 evaluator](../s5/EVALUATOR.md) only evaluates supplied synthetic facts.
 Its outputs are not database state, authorization or public response objects.
 The fixture file is a reading/testing aid, never a production API fallback or seed.
+The [contract review](CONTRACT_REVIEW.md) maps each screen to actual source and
+unresolved dependencies. The [offline validator](validate_fixtures.py) checks
+preparation consistency, not a running UI; usage is in [README.md](README.md).
 
 ## Shared presentation and action rules
 
@@ -198,6 +201,12 @@ Specifically agree saved-case/readiness versions, scoped `actions`, mutation
 payloads, unit transitions, protected viewer transport, and public DTO before S6
 components consume them. Route names here are intentions, not existing endpoints.
 Do not integrate S5 pure projections directly as mutation success responses.
+Legacy release services take the instrument version; S5's illustrative case and
+assessment versions are not an agreed replacement. Also agree how clearance or
+document changes invalidate readiness across separate task/document revisions.
+A DENIED fixture suppresses its entire presentation payload conservatively;
+the real contract must distinguish a forbidden action on a readable case from
+foreign-scope or missing-object disclosure, without exposing unauthorized data.
 
 Completion of this preparation means reviewable docs/fixtures and preserved
 regressions. Full S6 completion still requires actual S5 services/APIs and K2 shell,
