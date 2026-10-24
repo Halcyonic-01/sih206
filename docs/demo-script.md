@@ -1,5 +1,10 @@
 # Five-minute SIH demonstration and fallback
 
+Y1 developer note: `portal.0005_record_fields` adds optional deposit/obligation
+metadata and document categories/page counts (see `record-fields.md`). The current
+screens remain the FDR demo; no verification, PDF parsing or RTGS workflow is
+claimed from the new storage fields alone.
+
 Use a **fresh extracted offline package**, not the development database or a previous rehearsal. Setup creates 17 instruments and 18 PDFs. Read local passwords privately from its two data/ credentials files. Four separate browser profiles avoid shared-login interference between roles. All documents and names are synthetic. Keep fixtures/release-evidence.pdf ready.
 
 Start from the extracted folder with `Start-Demo.ps1 -Port 8003`, then open http://127.0.0.1:8003/. If that port is occupied, select another free port and use it consistently. Use the optional dashboard evaluation date 2026-10-23. Do not change the system clock. Run Verify-Demo.ps1 before the presentation; the verification takes longer than the five-minute talk and is not part of it.

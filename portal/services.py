@@ -17,6 +17,11 @@ class WorkflowError(Exception):
 def snapshot(instrument):
     return {
         'reference': instrument.reference, 'bank': instrument.bank,
+        'obligation_id': instrument.obligation_id, 'mode': instrument.mode,
+        'ifsc': instrument.ifsc, 'branch': instrument.branch,
+        'holder_names': instrument.holder_names, 'utr': instrument.utr,
+        'lien_marked': instrument.lien_marked,
+        'verification_level': instrument.verification_level,
         'amount_paise': instrument.amount_paise,
         'issue_date': instrument.issue_date.isoformat(),
         'maturity_date': instrument.maturity_date.isoformat(),
