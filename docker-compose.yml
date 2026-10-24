@@ -32,6 +32,10 @@ services:
     depends_on:
       web:
         condition: service_healthy
+    healthcheck:   # the image's HTTP check belongs to the web service; this one only proves the loop's container is alive
+      test: ["CMD", "python", "-c", "import os,sys; sys.exit(0 if os.path.isdir('/app/data') else 1)"]
+      interval: 30s
+      retries: 3
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
