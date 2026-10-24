@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.core.exceptions import ImproperlyConfigured
 
 from .envfile import load_env_file
+from .staticrules import immutable_assets, static_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Optional local .env (git-ignored). Variables already set in the real environment take precedence.
@@ -153,8 +154,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 WHITENOISE_ROOT = FRONTEND_DIST if FRONTEND_DIST.is_dir() else None
 WHITENOISE_USE_FINDERS = DEBUG
 WHITENOISE_AUTOREFRESH = DEBUG
-WHITENOISE_ADD_HEADERS_FUNCTION = 'portal.spa.static_headers'
-WHITENOISE_IMMUTABLE_FILE_TEST = 'portal.spa.immutable_assets'
+WHITENOISE_ADD_HEADERS_FUNCTION = static_headers
+WHITENOISE_IMMUTABLE_FILE_TEST = immutable_assets
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['portal.api.authentication.ApiSessionAuthentication'],

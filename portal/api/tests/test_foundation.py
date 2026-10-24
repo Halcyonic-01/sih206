@@ -223,7 +223,9 @@ class PlatformTests(ApiTestCase):
         self.assertEqual(client.get('/legacy/accounts/login/').status_code, 200)
         client.force_login(self.inst_user)
         self.assertEqual(client.get('/legacy/instruments/new/').status_code, 200)
-        self.assertEqual(client.get('/instruments/new/').status_code, 503)  # old path now belongs to React
+        # The old path now belongs to the React router (here: no build present -> explanatory 503).
+        with tempfile.TemporaryDirectory() as empty, override_settings(FRONTEND_DIST=Path(empty)):
+            self.assertEqual(client.get('/instruments/new/').status_code, 503)
 
     def test_spa_fallback_serves_index_for_client_routes(self):
         with tempfile.TemporaryDirectory() as dist:
@@ -270,3 +272,15 @@ class EnvFileTests(TestCase):
     def test_missing_file_is_fine(self):
         from config.envfile import load_env_file
         self.assertEqual(load_env_file('/nonexistent/.env'), {})
+
+
+class StaticServingTests(TestCase):
+    def test_whitenoise_hooks_are_callables_and_serve_the_build(self):
+        from django.conf import settings
+        self.assertTrue(callable(settings.WHITENOISE_ADD_HEADERS_FUNCTION))
+        self.assertTrue(callable(settings.WHITENOISE_IMMUTABLE_FILE_TEST))
+        headers = {}
+        settings.WHITENOISE_ADD_HEADERS_FUNCTION(headers, 'index.html', '/index.html')
+        self.assertEqual(headers['Cache-Control'], 'no-store')
+        self.assertTrue(settings.WHITENOISE_IMMUTABLE_FILE_TEST('x', '/assets/index-abc.js'))
+        self.assertFalse(settings.WHITENOISE_IMMUTABLE_FILE_TEST('x', '/favicon.svg'))

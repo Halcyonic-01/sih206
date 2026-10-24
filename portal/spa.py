@@ -26,14 +26,3 @@ def spa(request, path=''):
     if not index.is_file():
         return HttpResponse(NOT_BUILT, status=503)
     return HttpResponse(index.read_bytes(), content_type='text/html; charset=utf-8')
-
-
-def static_headers(headers, path, url):
-    """WhiteNoise hook: the built index.html is served directly only under /index.html."""
-    if str(path).endswith('.html'):
-        headers['Cache-Control'] = 'no-store'
-
-
-def immutable_assets(path, url):
-    """Vite writes content-hashed files under /assets/, which can be cached for a year."""
-    return url.startswith('/assets/')
