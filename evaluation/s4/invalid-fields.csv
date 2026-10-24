@@ -1,0 +1,9 @@
+aicte_id,institution_code,institution_name,trust_name,institution_type,region,state,contact_email,status,data_classification
+SYNTH-E1,SYNTH-E1,Synthetic Email Case,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,not-an-email,ACTIVE,SIMULATED
+SYNTH-E2,SYNTH-E2,Synthetic Type Case,Synthetic Trust,private,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,SIMULATED
+SYNTH-E3,SYNTH-E3,Synthetic Missing Trust,,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,SIMULATED
+SYNTH-E4,SYNTH-E4,Synthetic Label Case,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,REAL
+SYNTH-E5,SYNTH-E5,=2+2,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,SIMULATED
+BAD ID,SYNTH-E6,Synthetic Identifier Case,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,SIMULATED
+SYNTH-E7,SYNTH-E7,Synthetic Status Case,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,PENDING,SIMULATED
+SYNTH-OK,SYNTH-OK,Synthetic Valid Companion,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,SIMULATED

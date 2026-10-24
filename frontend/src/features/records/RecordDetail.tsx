@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {Alert, Button, Descriptions, Empty, Form, Input, InputNumber, Modal, Select, Space, Spin, Table, Tabs, Tag, Timeline, Upload} from 'antd';
+import {Alert, Button, Descriptions, Empty, Form, Input, Modal, Select, Space, Spin, Table, Tabs, Tag, Timeline, Upload} from 'antd';
 import {PdfViewer} from './PdfViewer';
 import {RecordForm} from './RecordForm';
 import {VerificationTab} from './Verification';

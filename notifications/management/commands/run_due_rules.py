@@ -1,24 +1,36 @@
-from django.core.management.base import BaseCommand
-from django.contrib.auth import get_user_model
-from django.conf import settings
-from portal.deadlines import business_today
-from portal.models import Instrument
-from notifications.services import notify
+from django.core.management.base import BaseCommand, CommandError
+
+from notifications.rules import RULES, run_rules
+from portal.deadlines import parse_as_of
+from portal.models import Institution
 
 
 class Command(BaseCommand):
-    help = 'Enqueue configured maturity reminders once per record, threshold and date.'
+    help = ('Evaluate the daily deadline rules and queue notifications (maturity reminders, overdue renewals, '
+            'penalty review, proof-due reminders, SLA breaches). Idempotent: run it daily; --as-of replays a date.')
 
-    def handle(self, **options):
-        today = business_today()
-        count = 0
-        for item in Instrument.objects.filter(status='ACCEPTED', superseded_at__isnull=True, released_at__isnull=True):
-            days = (item.maturity_date-today).days
-            if days not in settings.REMINDER_DAYS:
-                continue
-            recipients = get_user_model().objects.filter(is_active=True, userprofile__institution_id=item.institution_id)
-            notify(recipients=list(recipients.values_list('pk', flat=True)), template='maturity_reminder',
-                   context={'instrument_id': item.pk, 'reference': item.reference},
-                   key=f'maturity:{item.pk}:{days}:{today}')
-            count += 1
-        self.stdout.write(f'Processed {count} maturity reminders; repeated runs are idempotent.')
+    def add_arguments(self, parser):
+        parser.add_argument('--as-of', help='Evaluation date YYYY-MM-DD (default: today in the business timezone).')
+        parser.add_argument('--dry-run', action='store_true', help='List what would be queued; write nothing.')
+        parser.add_argument('--institution', help='Limit to one institution code.')
+        parser.add_argument('--only', choices=RULES, action='append', help='Run only this rule group (repeatable).')
+
+    def handle(self, *args, **options):
+        try:
+            as_of = parse_as_of(options['as_of'])
+        except ValueError as exc:
+            raise CommandError(str(exc)) from None
+        institution = None
+        if options['institution']:
+            institution = Institution.objects.filter(code=options['institution']).first()
+            if institution is None:
+                raise CommandError('Unknown institution code.')
+        result = run_rules(as_of, dry_run=options['dry_run'], institution=institution, only=options['only'])
+        for line in result.lines:
+            self.stdout.write(line)
+        suffix = ' (dry run: nothing written)' if options['dry_run'] else ''
+        self.stdout.write(f'Queued {result.created} notification(s); {result.skipped} event(s) already sent{suffix}.')
+        if result.errors:
+            for error in result.errors:
+                self.stderr.write(f'ERROR {error}')
+            raise CommandError(f'{len(result.errors)} rule group(s) failed; the others completed.')

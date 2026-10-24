@@ -44,7 +44,8 @@ def setup():
     environment = os.environ.copy()
     environment['DJANGO_DEBUG'] = 'true'
     for args in [('migrate', '--noinput'), ('seed_demo', '--generate-password'),
-                 ('seed_demo', '--authority-only', '--generate-password'), ('seed_scenarios',), ('check',)]:
+                 ('seed_demo', '--authority-only', '--generate-password'), ('seed_staff', '--generate-password'),
+                 ('seed_scenarios',), ('seed_review',), ('check',)]:
         subprocess.run([str(python), 'manage.py', *args], check=True, cwd=ROOT, env=environment)
     print('Offline demo ready. Private credentials: data/demo-credentials.txt and data/authority-credentials.txt.')
     print('Run Start-Demo.ps1, then open http://127.0.0.1:8000/. Demo evaluation date: 2026-10-23.')

@@ -1,6 +1,6 @@
 # AGENTS.md: instructions for the AI coding agents of Yash and Saksham
 
-This file is for the AI coding agent working for **Yash** or **Saksham** on the Security Deposit / FDR portal (SIH problem statement 26265, AICTE Regulation Bureau). Read all of it before your first change, and again at the start of every new session.
+This file is for the AI coding agent working for **Yash** or **Saksham** on **Pramaan — Trust Backed by Evidence**, the Security Deposit / FDR portal (SIH problem statement 26265, AICTE Regulation Bureau). Read all of it before your first change, and again at the start of every new session.
 
 The third team member, **Kushagra**, owns the platform and DevOps work. Do not implement Kushagra's tasks unless your human explicitly tells you to.
 
@@ -53,6 +53,7 @@ Also read these repository documents before touching an area:
 - `docs/architecture.md`
 - `docs/handover/completed/code-map.md`
 - the feature docs (`docs/checks.md`, `docs/maturity.md`, `docs/renewals.md`, `docs/releases.md`)
+- the platform docs (`docs/api-conventions.md`, `frontend/README.md`, `docs/scheduled-rules.md`, `docs/review-build.md`)
 
 ---
 
@@ -131,6 +132,16 @@ Times are Saturday 24 / Sunday 25 Oct 2026, IST. The team rests from 02:00 to 06
 | K4 | Clearance and Auditor roles, scoped helpers, `AccessLog` | Sat 17:00 |
 | K5 | `notify(recipients, template, context, key)`: signature published 14:00, full feature 21:00 | Sat 21:00 |
 | K6 | `run_due_rules` scheduler command (uses Saksham's `RuleSet` and obligations) | Sun 01:30 |
+
+**Platform contracts that already exist (read [docs/api-conventions.md](docs/api-conventions.md) and [frontend/README.md](frontend/README.md) before writing endpoints or screens):**
+- **Routes without editing shared files:** backend endpoints go in `portal/api/instrument_urls.py` (Y3), `portal/api/dashboard_urls.py` (Y5), `verification/api_urls.py` (Y6), `obligations/api_urls.py` (S2, S4), `casework/api_urls.py` (S5), `ai/api_urls.py` (Y8, S7): each exposes `urlpatterns` relative to `/api/` and is picked up automatically. React screens go in `frontend/src/features/<area>/routes.tsx` (plus optional `HeaderSearch.tsx`).
+- **Errors:** raise `WorkflowError` (409), `PermissionDenied` (403) or `ObjectDoesNotExist` (404) from services; the API returns `{detail, code, errors?}`. Lists use `portal.api.pagination.StandardPagination`.
+- **Roles and scope:** use the helpers in `portal/permissions.py` (`scoped_instruments`, `scoped_documents`, `scoped_release_requests`, `clearance_unit`, `require_*`). The clearance unit lives in `access.UnitAssignment` (not `UserProfile`), so there is no extra `portal` migration.
+- **Access log:** every document download, export, report, NOC view and staff search must call `access.logging.log_access(...)` before responding.
+- **Notifications:** `notifications.service.notify(recipients, template, context, key)` with recipient helpers in `notifications/recipients.py`; templates are in `notifications/catalog.py`.
+- **Scheduler:** `run_due_rules` reads thresholds from a `RuleSet` with code `escalation-matrix` (shape in [docs/scheduled-rules.md](docs/scheduled-rules.md)); its clearance SLA adapter is marked `TODO(S5)`.
+- **Seed data for the review build:** ship idempotent management commands named `seed_review_<area>`; `seed_review` runs them (see [docs/review-build.md](docs/review-build.md)).
+- **Run everything:** `./run.sh` (macOS/Linux) or `.\run.ps1` (Windows); the old UI is at `/legacy/`. Audit events must go through `portal.services.event()` (sealed in the audit hash chain); never `bulk_create` them.
 
 If a dependency is not on `main` yet:
 1. Build the parts that don't need it (models, services, pure functions, tests).

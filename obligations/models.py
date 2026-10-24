@@ -35,6 +35,10 @@ class InstitutionProfile(models.Model):
     state = models.CharField(max_length=100)
     contact_email = models.EmailField()
     status = models.CharField(max_length=10, choices=Status, default=Status.ACTIVE)
+    version = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(version__gte=1), name='profile_version_positive')]
 
     def __str__(self):
         return f'{self.aicte_id}: {self.institution}'
@@ -58,11 +62,13 @@ class ProgrammeApproval(models.Model):
     loa_ref = models.CharField('LoA / EoA reference', max_length=150)
     land_tenure = models.CharField(max_length=10, choices=Tenure)
     building_tenure = models.CharField(max_length=10, choices=Tenure)
+    version = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
 
     class Meta:
         constraints = [models.UniqueConstraint(
             fields=['institution', 'programme', 'level', 'loa_ref'],
-            name='obligation_unique_approval')]
+            name='obligation_unique_approval'),
+            models.CheckConstraint(condition=Q(version__gte=1), name='approval_version_positive')]
 
     def __str__(self):
         return f'{self.institution}: {self.programme} {self.level} ({self.loa_ref})'
@@ -135,9 +141,11 @@ class DepositObligation(models.Model):
     exemption_approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
         related_name='deposit_exemptions')
+    version = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
 
     class Meta:
         constraints = [
+            models.CheckConstraint(condition=Q(version__gte=1), name='ledger_version_positive'),
             models.CheckConstraint(
                 condition=Q(term_start__isnull=True, term_end__isnull=True) |
                           Q(term_start__isnull=False, term_end__isnull=False, term_end__gte=F('term_start')),
@@ -170,3 +178,36 @@ class DepositObligation(models.Model):
 
     def __str__(self):
         return f'{self.institution}: obligation #{self.pk or "unsaved"} ({self.status})'
+
+
+class MasterAudit(models.Model):
+    """Entity audit for owned masters; never fabricate an Instrument audit link."""
+    institution = models.ForeignKey('portal.Institution', on_delete=models.PROTECT)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    entity = models.CharField(max_length=40)
+    entity_id = models.PositiveBigIntegerField()
+    action = models.CharField(max_length=50)
+    reason = models.TextField(max_length=2000)
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['pk']
+
+
+class CsvImport(models.Model):
+    """Private SIMULATED preview, consumed once by its creating officer."""
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    source = models.BinaryField()
+    source_sha256 = models.CharField(max_length=64)
+    identity_sha256 = models.CharField(max_length=64)
+    expires_at = models.DateTimeField()
+    committed_at = models.DateTimeField(null=True, blank=True)
+    created_ids = models.JSONField(default=list)
+    version = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+# Owned storage only: shared settings and portal migration numbering stay intact.
+from .case_models import ClearanceTask, IssuedLetter, PenaltyAssessment, ReleaseCase  # noqa: E402,F401

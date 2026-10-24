@@ -35,7 +35,7 @@ class LocalOcrTests(PortalTestCase):
         self.client.force_login(self.b)
         self.assertEqual(self.client.post(path).status_code, 404)
         self.client.logout()
-        self.assertEqual(self.client.post(path).status_code, 403)
+        self.assertEqual(self.client.post(path).status_code, 401)
 
     def test_timeout_missing_engine_and_tampering_fall_back_without_mutation(self):
         item = self.draft()

@@ -3,7 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, Validat
 from django.db import DatabaseError, transaction
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
-from rest_framework.authentication import SessionAuthentication
+from portal.api.authentication import ApiSessionAuthentication
 from rest_framework.exceptions import ValidationError as ApiValidationError
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
@@ -21,7 +21,7 @@ from .records_serializers import ActionInput, RecordWrite, UploadInput
 
 
 class RecordEndpoint(APIView):
-    authentication_classes = [SessionAuthentication]
+    authentication_classes = [ApiSessionAuthentication]
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
@@ -144,12 +144,12 @@ class RecordAction(RecordEndpoint):
         queued = None
         if action == 'submit':
             item = services.submit(request.user, pk, version)
-            queued = notify_record(item, 'record_submitted')
+            queued = getattr(item, '_notification_queued', False)
         elif action == 'review':
             if not {'decision', 'reason'} <= set(values):
                 raise ApiValidationError('Decision and reason are required.')
             item = services.review(request.user, pk, version, values['decision'], values['reason'])
-            queued = notify_record(item, 'record_reviewed')
+            queued = getattr(item, '_notification_queued', False)
         elif action == 'observe':
             if not {'document', 'severity', 'comment'} <= set(values):
                 raise ApiValidationError('Document, severity and comment are required.')

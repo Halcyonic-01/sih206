@@ -18,6 +18,8 @@ from .models import Document, Instrument, ReleaseRequest
 from .permissions import institution_for, require_authority, require_officer, role, scoped_instruments
 from .validation import CHECKS_VERSION, run_checks
 from .exports import register_csv
+from access.logging import log_access
+from access.models import AccessLog
 
 
 def reporting_context(request):
@@ -65,6 +67,8 @@ def instrument_export(request):
         records, context, _, _ = filtered_register(request)
     except ValueError as exc:
         return render(request, 'portal/report_error.html', {'error': str(exc)}, status=400)
+    log_access(request, AccessLog.EXPORT, object_type='instrument_register',
+               detail=f'rows={records.count()} query={request.GET.urlencode()[:200]}')
     return register_csv(records, context['as_of'])
 
 
@@ -310,6 +314,7 @@ def observation_resolve(request, pk, observation_pk):
 def document_download(request, pk):
     document = get_object_or_404(Document.objects.filter(
         instrument__in=scoped_instruments(request.user)), pk=pk)
+    log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document, detail=f'instrument={document.instrument_id}')
     try:
         response = FileResponse(document.file.open('rb'), as_attachment=True,
                                 filename=document.original_name, content_type='application/pdf')

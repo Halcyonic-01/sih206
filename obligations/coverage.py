@@ -10,21 +10,17 @@ def coverage(obligation, as_of):
     holdings = list(obligation.instruments.filter(status='ACCEPTED', superseded_at__isnull=True,
         released_at__isnull=True, issue_date__lte=as_of, maturity_date__gte=as_of)
         .order_by('-maturity_date', 'pk'))
-    held = sum(item.amount_paise for item in holdings)
+    from .calculations import coverage as calculate, HoldingInput, ObligationInput
     required = obligation.required_paise if known else None
-    shortfall = max(0, required-held) if required is not None else None
-    end, accumulated = None, 0
-    if required and shortfall == 0:
-        for item in holdings:
-            accumulated += item.amount_paise
-            if accumulated >= required:
-                end = item.maturity_date
-                break
+    ledger = calculate(ObligationInput(obligation.pk, obligation.institution_id, required,
+        obligation.term_start, obligation.term_end), as_of, holdings=tuple(HoldingInput(
+        item.pk, item.institution_id, item.obligation_id, item.amount_paise, item.issue_date,
+        item.maturity_date, item.status, False, False) for item in holdings))
+    held, shortfall, end = ledger['held_paise'], ledger['shortfall_paise'], ledger['coverage_end']
     return {'obligation_id': obligation.pk, 'institution_id': obligation.institution_id,
         'institution': obligation.institution.name, 'known': known, 'required_paise': required,
         'held_paise': held, 'shortfall_paise': shortfall, 'coverage_end': end,
-        'term_end': obligation.term_end, 'term_gap': bool(known and required and obligation.term_end and
-            (end is None or end < obligation.term_end)), 'exempt': exempt,
+        'term_end': obligation.term_end, 'term_gap': bool(known and ledger['term_gap_days']), 'exempt': exempt,
         'holdings': [item.pk for item in holdings],
         'notice': 'Accepted holdings are tracked amounts, not independently bank-confirmed funds.'}
 

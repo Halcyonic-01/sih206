@@ -32,6 +32,7 @@ class CoverageTests(PortalTestCase):
         item.save()
         self.assertEqual(coverage(obligation, date(2026, 10, 24))['held_paise'], 0)
         self.client.force_login(self.b)
-        self.assertEqual(self.client.get('/api/obligations/').json(), [])
+        path = f'/api/institutions/{self.institution_a.pk}/obligations'
+        self.assertEqual(self.client.get(path).status_code, 404)
         self.client.force_login(self.a)
-        self.assertEqual(len(self.client.get('/api/obligations/').json()), 1)
+        self.assertEqual(len(self.client.get(path).json()['results']), 1)

@@ -4,17 +4,17 @@ from datetime import datetime, timezone
 from email.parser import BytesParser
 import hashlib
 import json
+import re
 from pathlib import Path
 import shutil
 from zipfile import ZipFile, ZIP_DEFLATED
 
 ROOT = Path(__file__).resolve().parents[1]
-FOLDERS = ('config', 'portal', 'obligations', 'verification', 'ai', 'notifications', 'templates', 'static', 'fixtures', 'scripts', 'docs', 'evaluation')
-FRONTEND_FOLDERS = ('frontend/src', 'frontend/tests', 'frontend/dist/records')
-FRONTEND_FILES = ('package.json', 'package-lock.json', 'index.html', 'tsconfig.json',
-                  'tsconfig.app.json', 'tsconfig.node.json', 'vite.config.ts', 'playwright.config.ts')
+FOLDERS = ('config', 'portal', 'obligations', 'casework', 'verification', 'ai', 'access', 'notifications', 'audit', 'scenarios', 'docker',
+           'templates', 'static', 'fixtures', 'scripts', 'docs', 'evaluation')
 FILES = ('manage.py', 'requirements.txt', 'requirements.in', 'README.md', '.env.example',
-         '.gitignore', 'Setup-Offline.ps1', 'Start-Demo.ps1', 'Verify-Demo.ps1')
+         '.gitignore', 'Setup-Offline.ps1', 'Start-Demo.ps1', 'Verify-Demo.ps1', 'run.ps1', 'run.sh',
+         'Dockerfile', 'docker-compose.yml', '.dockerignore')
 PIP_VERSION = '26.2.1'
 
 
@@ -23,8 +23,9 @@ def sha256(path):
 
 
 def check_wheels(wheel_dir):
-    required = dict(line.strip().lower().split('==') for line in
-                    (ROOT / 'requirements.txt').read_text().splitlines() if line.strip())
+    canonical = lambda name: re.sub(r'[-_.]+', '-', name).lower()
+    required = {canonical(name): version for name, version in (line.strip().split('==') for line in
+                    (ROOT / 'requirements.txt').read_text().splitlines() if line.strip())}
     required['pip'] = PIP_VERSION
     found = {}
     wheels = sorted(wheel_dir.glob('*.whl'))
@@ -32,7 +33,7 @@ def check_wheels(wheel_dir):
         with ZipFile(wheel) as archive:
             metadata, = [name for name in archive.namelist() if name.endswith('.dist-info/METADATA')]
             fields = BytesParser().parsebytes(archive.read(metadata))
-            name = fields['Name'].lower()
+            name = canonical(fields['Name'])
             if name in found:
                 raise ValueError(f'Duplicate wheel: {name}')
             found[name] = fields['Version']
@@ -42,26 +43,32 @@ def check_wheels(wheel_dir):
 
 
 def build(wheel_dir):
-    if (ROOT / 'frontend').exists() and not (ROOT / 'frontend/dist/records/index.html').is_file():
+    if (ROOT / 'frontend').exists() and not (ROOT / 'frontend/dist/index.html').is_file():
         raise ValueError('Build the frontend first: cd frontend and run npm ci then npm run build')
     wheels = check_wheels(wheel_dir)
     destination = ROOT / 'dist' / ('fdr-demo-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'))
     destination.mkdir(parents=True, exist_ok=False)
-    for folder in (*FOLDERS, *FRONTEND_FOLDERS):
+    # The React build is generated, so it is copied when present (cd frontend && npm ci && npm run build).
+    frontend_dist = ROOT / 'frontend' / 'dist'
+    if not (frontend_dist / 'index.html').exists():
+        print('WARNING: frontend/dist is missing; the package will show build instructions instead of the React app.')
+    for folder in (*FOLDERS, 'frontend/src', 'frontend/tests'):
         for source in (ROOT / folder).rglob('*'):
-            if (not source.is_file() or source.is_symlink()
-                    or any(part in ('__pycache__', 'node_modules', '.env') for part in source.relative_to(ROOT).parts)
-                    or source.suffix in ('.pyc', '.pyo')
-                    or not source.resolve().is_relative_to(ROOT.resolve())):
+            if (not source.is_file() or source.is_symlink() or '__pycache__' in source.parts or 'node_modules' in source.parts or '.env' in source.parts or source.suffix in ('.pyc', '.pyo')):
                 continue
+            target = destination / source.relative_to(ROOT)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+    for source in frontend_dist.rglob('*') if frontend_dist.is_dir() else []:
+        if source.is_file():
             target = destination / source.relative_to(ROOT)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, target)
     for name in FILES:
         shutil.copyfile(ROOT / name, destination / name)
-    for name in FRONTEND_FILES:
+    for name in ('package.json', 'package-lock.json', 'index.html', 'tsconfig.json', 'vite.config.ts', 'playwright.config.ts'):
         source = ROOT / 'frontend' / name
-        if source.is_file() and not source.is_symlink():
+        if source.is_file():
             (destination / 'frontend').mkdir(exist_ok=True)
             shutil.copyfile(source, destination / 'frontend' / name)
     (destination / 'wheelhouse').mkdir()
