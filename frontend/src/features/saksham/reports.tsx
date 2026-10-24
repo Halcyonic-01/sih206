@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {api, Transport} from './client';
-import {ErrorBox, Notice, useRemote} from './shared';
+import {ErrorBox, Loading, Notice, useRemote} from './shared';
 
 export function Reports({client, identityKey}: {client:Transport; identityKey:string}) {
   return <ReportsBody key={identityKey} client={client}/>;
@@ -9,12 +9,17 @@ function ReportsBody({client}: {client:Transport}) {
   const [kind, setKind] = React.useState('upcoming_maturities');
   const [error, setError] = React.useState<unknown>();
   const [busy, setBusy] = React.useState(false);
-  return <section><h1>Reports</h1><Notice/><p>Scoped current records. Unavailable verification, typed-document and intervention adapters are listed in each workbook.</p>
+  const data = useRemote<{rows:unknown[];count?:number;limitations:string[]}>(client, `reports/${kind}`, 'report');
+  return <section><h1>Reports</h1><Notice/><p>Scoped current records. Source limitations are listed below and in each workbook.</p>
     <label>Report <select value={kind} onChange={e=>setKind(e.target.value)}>{[
-      ['pending_verifications','Pending officer review (verification state unavailable)'],['upcoming_maturities','Upcoming maturities'],
-      ['missing_documents','Missing FDR supporting documents'],['intervention','Known intervention items'],['released_register','Released register']
+      ['pending_verifications','Pending independent verification'],['upcoming_maturities','Upcoming maturities'],
+      ['missing_documents','Missing deposit-mode supporting documents'],['intervention','Known intervention items'],['released_register','Released register']
     ].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
-    <button disabled={busy} onClick={async()=>{setBusy(true);setError(undefined);try{await client.download(api(`reports/${kind}?download=xlsx`));}catch(e){setError(e);}finally{setBusy(false);}}}>Download XLSX</button>
+    {data.error ? <ErrorBox error={data.error}/> : !data.data ? <Loading/> : <>
+      <p role="status">{(data.data.count??data.data.rows.length) ? `${data.data.count??data.data.rows.length} matching items.` : 'No matching items.'}</p>
+      <ul aria-label="Report limitations">{data.data.limitations.map(text=><li key={text}>{text}</li>)}</ul></>}
+    <button disabled={busy||!data.data} onClick={async()=>{setBusy(true);setError(undefined);try{await client.download(api(`reports/${kind}?download=xlsx`));}catch(e){setError(e);}finally{setBusy(false);}}}>Download XLSX</button>
+    {busy&&<p role="status">Preparing download…</p>}
     {!!error&&<ErrorBox error={error}/>}</section>;
 }
 interface Preview {preview_id:number|null;version?:number;status:string;valid_count:number;row_count:number|null;
@@ -38,6 +43,7 @@ function ImportBody({client}: {client:Transport}) {
   return <section><h1>Import synthetic institutions</h1><Notice/><p>Officer-only. Preview first; the complete file must be valid. Existing institutions are never overwritten.</p>
     <form onSubmit={inspect}><fieldset disabled={busy}><legend>CSV preview</legend><label>SIMULATED CSV (up to 1 MiB) <input type="file" accept=".csv,text/csv" required
       onChange={e=>{setFile(e.target.files?.[0]);setPreview(undefined);setDone(false);setError(undefined);}}/></label><button>Preview</button></fieldset></form>
+    {busy&&<p role="status">Processing import…</p>}
     {!!error&&<ErrorBox error={error}/>}<div aria-live="polite">{done&&<p>Import committed. New institution identities were created.</p>}</div>
     {preview&&<section><h2>Preview: {preview.status}</h2><p>{preview.valid_count} valid rows of {preview.row_count??'unknown'}.</p>
       <ul>{preview.errors.map((e,i)=><li key={i}>Row {e.row??'file'}, {e.field}: {e.code}</li>)}</ul>
@@ -47,24 +53,36 @@ function ImportBody({client}: {client:Transport}) {
   </section>;
 }
 interface KpiResult {submission_to_acceptance:{sample_count:number;median_seconds:string|null;p90_seconds:string|null};
-  correction_cycles:{mean_per_accepted_record:string|null};confirmed_share:{percentage_bps:number|null};
-  renewed_on_time:{percentage_bps:number|null}}
+  correction_cycles:{mean_per_accepted_record:string|null};
+  renewed_on_time:{percentage_bps:number|null};limitations?:string[];
+  data_quality?:{incomplete_process_histories:number};confirmed_share:{percentage_bps:number|null;unknown_count?:number}}
 export function Kpis({client, identityKey}: {client:Transport; identityKey:string}) {
   return <KpiBody key={identityKey} client={client} identityKey={identityKey}/>;
 }
 function KpiBody({client,identityKey}: {client:Transport;identityKey:string}) {
   const [start,setStart]=React.useState('');const [end,setEnd]=React.useState('');const [query,setQuery]=React.useState('');
+  const [error,setError]=React.useState<unknown>();
   const data=useRemote<KpiResult>(client,`kpis?${query}`,identityKey,!!query);
   return <section><h1>Process KPIs</h1><Notice/><p>Measured from visible recorded audit history. No independent confirmation or improvement is inferred from missing events.</p>
-    <form onSubmit={e=>{e.preventDefault();setQuery(new URLSearchParams({window_start:new Date(start).toISOString(),window_end:new Date(end).toISOString()}).toString());}}>
+    <form onSubmit={e=>{e.preventDefault();setError(undefined);
+      const from=new Date(start),through=new Date(end);
+      if(!Number.isFinite(from.getTime())||!Number.isFinite(through.getTime())||from>through||through>new Date()) {
+        setQuery('');setError({status:400});return;
+      }
+      setQuery(new URLSearchParams({window_start:from.toISOString(),window_end:through.toISOString()}).toString());}}>
       <label>From <input type="datetime-local" required value={start} onChange={e=>setStart(e.target.value)}/></label>
       <label>Through <input type="datetime-local" required value={end} onChange={e=>setEnd(e.target.value)}/></label><button>Measure selected window</button></form>
-    {query&&!!data.error&&<ErrorBox error={data.error}/>} {query&&data.data&&<dl>
+    {!!error&&<ErrorBox error={error}/>}
+    {query&&!data.error&&!data.data&&<Loading/>}
+    {query&&!!data.error&&<ErrorBox error={data.error}/>} {query&&data.data&&<><dl>
       <dt>Accepted samples</dt><dd>{data.data.submission_to_acceptance.sample_count}</dd>
       <dt>Median submission-to-acceptance seconds</dt><dd>{data.data.submission_to_acceptance.median_seconds??'Unavailable'}</dd>
       <dt>p90 seconds</dt><dd>{data.data.submission_to_acceptance.p90_seconds??'Unavailable'}</dd>
       <dt>Mean correction cycles</dt><dd>{data.data.correction_cycles.mean_per_accepted_record??'Unavailable'}</dd>
       <dt>Renewed on time</dt><dd>{data.data.renewed_on_time.percentage_bps==null?'Unavailable':`${data.data.renewed_on_time.percentage_bps/100}%`}</dd>
-      <dt>Independently confirmed share</dt><dd>{data.data.confirmed_share.percentage_bps==null?'Unavailable':`${data.data.confirmed_share.percentage_bps/100}%`}</dd></dl>}
+      <dt>Independently confirmed share</dt><dd>{data.data.confirmed_share.percentage_bps==null?'Unavailable':`${data.data.confirmed_share.percentage_bps/100}%`}</dd>
+      <dt>Unknown verification histories</dt><dd>{data.data.confirmed_share.unknown_count??'Unavailable'}</dd>
+      <dt>Incomplete process histories</dt><dd>{data.data.data_quality?.incomplete_process_histories??'Unavailable'}</dd></dl>
+      <ul aria-label="KPI limitations">{data.data.limitations?.map(text=><li key={text}>{text}</li>)}</ul></>}
   </section>;
 }

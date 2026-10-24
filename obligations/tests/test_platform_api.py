@@ -51,15 +51,16 @@ class PlatformApiTests(PortalTestCase):
         self.assertIn('no-store', response['Cache-Control'])
         self.assertIn('X-Request-ID', response)
 
-    def test_registered_default_routes_and_no_future_endpoints(self):
+    def test_registered_default_routes_include_owned_release_extension(self):
         for path in ['institutions', f'institutions/{self.institution_a.pk}',
             f'institutions/{self.institution_a.pk}/programme-approvals',
             f'programme-approvals/{self.approval.pk}',
             f'institutions/{self.institution_a.pk}/obligations',
             f'obligations/{self.obligation.pk}', 'calculator', 'rules']:
             self.assertTrue(resolve('/api/'+path).func.view_class.__module__.startswith('obligations.api.'))
-        for path in ['releases', 'kpis', 'reports/pending_verifications']:
-            self.assertEqual(resolve('/api/'+path).func.view_class.__name__, 'NotFoundView')
+        for path, view in [('releases', 'Cases'), ('clearance-tasks', 'ClearanceQueue'),
+                           ('public/verify/' + 'x' * 43, 'PublicVerify')]:
+            self.assertEqual(resolve('/api/'+path).func.view_class.__name__, view)
 
     def test_signed_out_requests_use_shared_401_envelope(self):
         client = Client()
@@ -182,7 +183,8 @@ class PlatformApiTests(PortalTestCase):
 
     def test_unknown_holdings_are_not_zero_and_large_legacy_money_stays_exact(self):
         DepositObligation.objects.filter(pk=self.obligation.pk).update(required_paise=9007199254740993)
-        response=self.client.get(f'/api/obligations/{self.obligation.pk}')
+        with patch('obligations.services.holding_snapshot',side_effect=DependencyUnavailable('Unavailable source')):
+            response=self.client.get(f'/api/obligations/{self.obligation.pk}')
         self.assertEqual(response.status_code,200)
         self.assertEqual(response.json()['required_paise'],'9007199254740993')
         assessment=response.json()['assessment']

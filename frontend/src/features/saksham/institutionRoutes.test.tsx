@@ -91,7 +91,9 @@ describe('institution feature registered in shared auth and routing', () => {
 
   it('shared 401 ends the session and routes to sign-in', async () => {
     source({ '/api/institutions?q=&page=1': () => json({ code: 'not_authenticated', detail: 'Sign in' }, 401) });
-    mount();
+    // Flush the asynchronous session-cache change and Navigate before asserting.
+    // Keep the same redirect expectation and timeout; no auth behavior is mocked away.
+    await act(async () => { mount(); });
     expect(await screen.findByRole('heading', { name: 'Sign in required' })).toBeInTheDocument();
   });
 

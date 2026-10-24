@@ -11,12 +11,17 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.db import OperationalError
 from django.test import override_settings
+from django.urls import resolve
 from django.utils import timezone
 
 from casework import services
 from obligations.catalogue import draft_payload
 from obligations.models import DepositObligation, IssuedLetter, MasterAudit, ReleaseCase, RuleSet
 from obligations.services import DependencyUnavailable
+from access.models import UnitAssignment
+from access.models import AccessLog
+from notifications.models import Notification
+from portal.permissions import CLEARANCE_GROUP
 from portal import releases, services as portal_services
 from portal.models import Document, ReleaseRequest
 from portal.services import WorkflowError
@@ -32,17 +37,20 @@ def synthetic_facts(*, actor, instrument, obligation, path, declarations):
     return result
 
 
-def unit_permission(actor, task):
-    return actor.username == 'officer'
-
-
 @override_settings(ROOT_URLCONF='obligations.test_urls', SAKSHAM_RELEASE_FACTS=synthetic_facts,
-    SAKSHAM_CLEARANCE_PERMISSION=unit_permission, SAKSHAM_CLEARANCE_EVIDENCE=lambda *a: True,
+    SAKSHAM_CLEARANCE_EVIDENCE=lambda *a: True,
     SAKSHAM_COMPLETION_VALIDATOR=lambda upload: True, SAKSHAM_PUBLIC_BASE_URL='https://demo.invalid')
 class CaseworkTests(PortalTestCase):
     def setUp(self):
         self.authority = get_user_model().objects.create_user(username='synthetic-authority')
         self.authority.groups.add(Group.objects.create(name='Authority'))
+        clearance_group, _ = Group.objects.get_or_create(name=CLEARANCE_GROUP)
+        self.clearance = {}
+        for unit in ['PGRC', 'VIGILANCE', 'GRANTS']:
+            user = get_user_model().objects.create_user(username=f'synthetic-{unit.lower()}')
+            user.groups.add(clearance_group)
+            UnitAssignment.objects.create(user=user, unit=unit)
+            self.clearance[unit] = user
         self.instrument = self.submitted()
         self.instrument = portal_services.review(self.officer, self.instrument.pk, self.instrument.version, 'accept', 'Synthetic scrutiny')
         self.rule = RuleSet.objects.create(code='case-demo', version=1, effective_from=date(2026,1,1),
@@ -62,7 +70,7 @@ class CaseworkTests(PortalTestCase):
 
     def ready(self, case):
         for unit in ['PGRC','VIGILANCE','GRANTS']:
-            case = services.decide_clearance(self.officer, case.pk, unit, case.version, 'CLEARED',
+            case = services.decide_clearance(self.clearance[unit], case.pk, unit, case.version, 'CLEARED',
                 'Reviewed synthetic clearance', 'SYNTH-EVIDENCE-' + unit)
         return services.review_penalties(self.officer, case.pk, case.version, 'Reviewed no penalty applicable')
 
@@ -79,6 +87,14 @@ class CaseworkTests(PortalTestCase):
         self.assertEqual(self.instrument.version, before)
         self.assertFalse(ReleaseRequest.objects.exists())
         self.assertFalse(ReleaseCase.objects.exists())
+
+    def test_default_router_discovers_owned_release_routes(self):
+        """The production router, rather than only the old test harness, owns these paths."""
+        with override_settings(ROOT_URLCONF='config.urls'):
+            match = resolve('/api/releases')
+            self.assertEqual(match.func.cls.__name__, 'Cases')
+            match = resolve('/api/public/verify/' + 'x' * 43)
+            self.assertEqual(match.func.cls.__name__, 'PublicVerify')
 
     def test_request_cannot_bypass_scope_or_renewal_conflict(self):
         with self.assertRaises(Exception) as denied:
@@ -110,14 +126,14 @@ class CaseworkTests(PortalTestCase):
         with self.assertRaises(PermissionDenied):
             services.decide_clearance(self.a, case.pk, 'PGRC', case.version, 'CLEARED', 'Denied', 'SYNTH-X')
         with self.assertRaises(WorkflowError):
-            services.decide_clearance(self.officer, case.pk, 'PGRC', 999, 'CLEARED', 'Stale', 'SYNTH-X')
+            services.decide_clearance(self.clearance['PGRC'], case.pk, 'PGRC', 999, 'CLEARED', 'Stale', 'SYNTH-X')
         with override_settings(SAKSHAM_CLEARANCE_EVIDENCE=None), self.assertRaises(DependencyUnavailable):
-            services.decide_clearance(self.officer, case.pk, 'PGRC', case.version, 'CLEARED', 'Unknown evidence', 'SYNTH-X')
+            services.decide_clearance(self.clearance['PGRC'], case.pk, 'PGRC', case.version, 'CLEARED', 'Unknown evidence', 'SYNTH-X')
         self.assertEqual(case.clearances.get(unit='PGRC').status, 'OPEN')
 
     def test_requester_and_clearance_decider_cannot_be_authority(self):
         case = self.ready(self.case())
-        for actor in [self.a, self.officer]:
+        for actor in [self.a, self.clearance['PGRC']]:
             actor.groups.clear()
             actor.groups.add(Group.objects.get(name='Authority'))
             with self.assertRaises(PermissionDenied):
@@ -188,20 +204,18 @@ class CaseworkTests(PortalTestCase):
         self.assertFalse(ReleaseRequest.objects.exists())
         self.assertFalse(ReleaseCase.objects.exists())
 
-    def test_notification_adapter_is_explicit_transactional_and_minimal(self):
-        with patch('django.conf.settings.SAKSHAM_NOTIFY', create=True) as enqueue:
-            case = self.case()
-        self.assertEqual(enqueue.call_count, 1)
-        arguments = enqueue.call_args.kwargs
-        self.assertEqual(arguments['recipients'], [self.a.pk])
-        self.assertEqual(set(arguments['context']), {'case_id','version'})
-        self.assertEqual(arguments['key'], f'S5:{case.pk}:1:RELEASE_CASE_REQUESTED')
+    def test_notification_outbox_is_transactional_and_idempotent(self):
+        self.case()
+        rows = Notification.objects.filter(template_id__in=['release_requested', 'clearance_assigned'])
+        self.assertEqual(rows.filter(template_id='release_requested').count(), 1)
+        self.assertEqual(rows.filter(template_id='clearance_assigned').count(), 3)
+        self.assertEqual(len({row.idempotency_key for row in rows}), 4)
 
     def test_api_own_detail_scope_invalid_stale_and_default_missing_dependency(self):
         case = self.case()
         self.client.force_login(self.b)
         self.assertEqual(self.client.get(f'/api/releases/{case.pk}').status_code, 404)
-        self.client.force_login(self.officer)
+        self.client.force_login(self.clearance['PGRC'])
         response = self.client.post(f'/api/releases/{case.pk}/clearances/PGRC',
             json.dumps({'version': 999, 'status': 'CLEARED', 'reason': 'Stale', 'evidence_ref': 'SYNTH-X'}), content_type='application/json')
         self.assertEqual(response.status_code, 409)
@@ -222,10 +236,11 @@ class CaseworkTests(PortalTestCase):
             'instrument_version': self.instrument.version, 'path':'TERM_COMPLETE', 'declarations':{},
             'reason':'Synthetic API request', 'template_ref':'SYNTHETIC-NONCANONICAL-TEMPLATE-6'}, 201)
         pk = current['id']
-        self.client.force_login(self.officer)
         for unit in ['PGRC','VIGILANCE','GRANTS']:
+            self.client.force_login(self.clearance[unit])
             current = post(f'releases/{pk}/clearances/{unit}', {'version':current['version'],
                 'status':'CLEARED', 'reason':'Reviewed synthetic evidence', 'evidence_ref':'SYNTH-'+unit})
+        self.client.force_login(self.officer)
         current = post(f'releases/{pk}/penalties', {'version':current['version'], 'reason':'Review complete; no penalties'})
         self.client.force_login(self.authority)
         current = post(f'releases/{pk}/approve', {'version':current['version'],
@@ -234,6 +249,7 @@ class CaseworkTests(PortalTestCase):
         with patch('casework.services.secrets.token_urlsafe', return_value='t'*43):
             current = post(f'releases/{pk}/issue', {'version':current['version'], 'reason':'Generate unsigned demo letter'})
         self.assertEqual(self.client.get(f'/api/releases/{pk}/letter').status_code, 200)
+        self.assertTrue(AccessLog.objects.filter(action=AccessLog.NOC_VIEW, object_type='issuedletter').exists())
         from django.test import Client
         public = Client().get('/api/public/verify/' + 't'*43)
         self.assertEqual(public.status_code, 200)
@@ -247,16 +263,24 @@ class CaseworkTests(PortalTestCase):
         self.client.force_login(self.b)
         self.assertEqual(self.client.get(f'/api/releases/{pk}/letter').status_code, 404)
 
-    def test_public_identity_is_frozen_and_queue_dependency_is_not_empty_success(self):
-        case = self.approve(self.ready(self.case()))
+    def test_public_identity_is_frozen_and_queue_is_unit_scoped(self):
+        open_case = self.case()
+        self.client.force_login(self.clearance['PGRC'])
+        response = self.client.get('/api/clearance-tasks')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['results'][0]['case_id'], open_case.pk)
+        case = self.approve(self.ready(open_case))
         with patch('casework.services.secrets.token_urlsafe', return_value='f'*43):
             services.issue(self.authority, case.pk, case.version, 'Synthetic issuance')
+        case.refresh_from_db()
         from portal.models import Institution
         Institution.objects.filter(pk=self.institution_a.pk).update(name='Later corrected identity')
         self.assertEqual(services.public_record('f'*43)['institution_name'], 'Fictional A')
-        self.client.force_login(self.officer)
-        with override_settings(SAKSHAM_CLEARANCE_PERMISSION=None):
-            self.assertEqual(self.client.get('/api/clearance-tasks').status_code, 503)
+        self.client.force_login(self.clearance['VIGILANCE'])
+        response = self.client.post(f'/api/releases/{case.pk}/clearances/PGRC', json.dumps({
+            'version': case.version, 'status': 'CLEARED', 'reason': 'Wrong unit', 'evidence_ref': 'SYNTH-X'}),
+            content_type='application/json')
+        self.assertEqual(response.status_code, 403)
 
     def test_rule_mutation_requires_reassessment(self):
         case = self.ready(self.case())

@@ -1,5 +1,18 @@
 # Minimum interfaces for parallel implementation — AGREEMENT REQUIRED
 
+**P5 update, 25 October 2026:** S4 routes are registered through K1/K2, with
+shared report pagination/access logs and direct typed-document, verification and
+K6 SLA reads. The report JSON `rows` alias is the same page as `results`; XLSX
+exports the complete bounded set. Runtime renewal eligibility stays unknown until
+policy is agreed. See [P5_IMPLEMENTATION.md](P5_IMPLEMENTATION.md). Release routes
+remain unregistered, and older S4-unmounted statements below are historical.
+
+**P4 update, 25 October 2026:** actual Y1 linkage and Y2/Y3 typed document metadata
+are locally merged. The owned source adapter consumes them directly. The reviewed
+receipt-date/completeness contract remains missing; uploads are not receipts.
+See [P4_IMPLEMENTATION.md](P4_IMPLEMENTATION.md). Other pending proposals below
+remain unapproved; stored environment configuration is not proof of Supabase access.
+
 **P2 update, 25 October 2026:** S2 now consumes K1's published extension,
 authentication, error, pagination and schema contracts through
 `obligations/api_urls.py`. [P2_IMPLEMENTATION.md](P2_IMPLEMENTATION.md) supersedes

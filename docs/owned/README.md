@@ -1,5 +1,25 @@
 # Saksham S1–S6 implementation checkpoint
 
+**P6–P9 follow-up (25 October 2026):** release routes are now discovered by the
+normal API loader; unit clearance scope, transactional outbox notifications,
+access logging and frontend route mounting are integrated. The release request
+remains fail-closed pending the authorized Affidavit-6 and Yash's parsed-document
+source contract. Read [P6–P9 integration and verification](P6_P9_IMPLEMENTATION.md)
+before treating S5/S6 as complete.
+
+**P5 follow-up (25 October 2026):** S4 import preview/commit, five scoped XLSX
+reports and KPIs now mount in the shared API and frontend. Actual source adapters,
+shared access logging/pagination and synthetic review seed are connected. Unknown
+receipt/renewal policy and release-stage document requirements remain explicit.
+See [P5 implementation and acceptance](P5_IMPLEMENTATION.md). P6 remains unstarted;
+the earlier checkpoint notes below are historical where superseded.
+
+**P4 follow-up (25 October 2026):** Y1–Y3 and Supabase support were fetched and
+merged locally with P1–P3 preserved. Real linked holdings and scoped typed-document
+metadata now feed the owned assessment. Reviewed receipt timing and policy
+interpretations remain unavailable. See [P4 implementation](P4_IMPLEMENTATION.md).
+No P5/report integration was started and no Supabase data was changed.
+
 **P3 follow-up (25 October 2026):** institution list/detail/calculator screens now
 mount in the shared frontend and call the P2 APIs. Read
 [P3 implementation and verification](P3_IMPLEMENTATION.md) for live synthetic
