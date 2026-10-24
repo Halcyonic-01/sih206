@@ -15,3 +15,7 @@ Object.defineProperty(window, 'matchMedia', {
 })
 class ResizeObserverStub { observe() {} unobserve() {} disconnect() {} }
 ;(globalThis as { ResizeObserver?: unknown }).ResizeObserver ??= ResizeObserverStub
+
+// jsdom does not implement getComputedStyle with a pseudo-element (Ant Design's scrollbar measuring uses it).
+const computedStyle = window.getComputedStyle.bind(window)
+window.getComputedStyle = (element: Element) => computedStyle(element)

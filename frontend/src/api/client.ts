@@ -37,7 +37,7 @@ export class ApiError extends Error {
   get isValidation() { return this.status === 400 }
 }
 
-export type QueryValue = string | number | boolean | null | undefined
+export type QueryValue = string | number | boolean | null | undefined | (string | number)[]
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   /** JSON body. */
@@ -79,7 +79,11 @@ export function buildUrl(path: string, query?: Record<string, QueryValue>) {
   if (!query) return url
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined && value !== null && value !== '') params.set(key, String(value))
+    if (Array.isArray(value)) {
+      value.forEach((item) => params.append(key, String(item))) // repeated key: ?action=A&action=B
+    } else if (value !== undefined && value !== null && value !== '') {
+      params.set(key, String(value))
+    }
   }
   const text = params.toString()
   return text ? `${url}${url.includes('?') ? '&' : '?'}${text}` : url
