@@ -144,9 +144,10 @@ def squash(text):
     return ''.join(text.split()).lower()
 
 
-def smoke(base):
+def smoke(base, prod=False):
     checks = [('/api/health/', 200, '"status":"ok"'), ('/', 200, 'id="root"'), ('/login', 200, 'id="root"'),
-              ('/api/docs/', 200, 'swagger'), ('/legacy/accounts/login/', 200, 'csrfmiddlewaretoken'),
+              # API docs need a signed-in user unless API_DOCS_PUBLIC=true (the default only in DEBUG).
+              ('/api/docs/', 401 if prod else 200, '' if prod else 'swagger'), ('/legacy/accounts/login/', 200, 'csrfmiddlewaretoken'),
               ('/api/auth/me/', 401, '')]
     failed = []
     for path, status, needle in checks:
@@ -189,7 +190,7 @@ def main():
     vite = None
     try:
         if args.smoke:
-            smoke(f'http://{address}')
+            smoke(f'http://{address}', args.prod)
             return
         if args.dev:
             npm = find_npm()
