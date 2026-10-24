@@ -68,3 +68,13 @@ browser journeys pass; a physically disconnected rehearsal remains outstanding.
 - **9 · Reports and KPIs:** officer → Reports → each report → Download XLSX. Process KPIs → window 2025-09-01 to
   2026-10-01 for the dated seeded history only (turnaround, one correction cycle, one renewal on time and one late),
   or up to today to include the records seeded at install time.
+- **Proof deadline (S2):** the same obligation shows *payment proof and Affidavit-3 are not both recorded by the
+  deadline* (intimation 15 Sep, payment proof received 28 Sep, Affidavit-3 missing). Officer → *Record receipt review*
+  with both dates → the finding clears and day-7/12/15 reminders stop. Without any officer review, receipt timing stays
+  unknown; upload times are never treated as receipt dates.
+- **% confirmed (S4 KPI):** `PS6-RTGS-CONFIRMED` is confirmed by a SIMULATED statement line, so the KPI shows a
+  real percentage. Simulated bank-link responses never count.
+- **Bank confirmation email:** with `EMAIL_HOST=localhost`, `EMAIL_PORT=1025` (Mailpit, which `run.sh` starts) a
+  simulated request is caught at http://127.0.0.1:8025; the scheduler delivers requests every 5 minutes
+  (`manage.py deliver_bank_requests` delivers now). Live mode (`BANK_CONFIRMATION_SIMULATED=false`) also needs
+  `--prod`, `NOTIFICATION_EMAIL_ENABLED=true`, an https `BANK_PUBLIC_BASE_URL` and `BANK_CONTACTS_JSON`.

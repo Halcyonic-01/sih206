@@ -121,7 +121,8 @@ def django_env(prod):
     env['PYTHONUNBUFFERED'] = '1'
     if prod:
         env['DJANGO_DEBUG'] = 'false'
-        env.setdefault('DJANGO_SECRET_KEY', prod_secret())
+        # The .env key first, so `manage.py` commands run by hand sign links with the same key as the server.
+        env.setdefault('DJANGO_SECRET_KEY', dotenv_settings().get('DJANGO_SECRET_KEY') or prod_secret())
     return env
 
 
@@ -327,11 +328,12 @@ def background_command(name, env):
 
 
 def scheduler_tick(env, state):
-    """Local stand-in for the Docker scheduler: e-mail retries every 5 minutes, due rules once per day."""
+    """Local stand-in for the Docker scheduler: e-mail and bank requests every 5 minutes, due rules once per day."""
     now = time.time()
     if now >= state['next_send']:
         state['next_send'] = now + SEND_EVERY_SECONDS
         background_command('send_notifications', env)
+        background_command('deliver_bank_requests', env)
     stamp = ROOT / 'data' / f'.rules-ran-{datetime.now(timezone.utc):%Y-%m-%d}'
     if not stamp.exists() and now >= state['next_rules']:
         state['next_rules'] = now + SEND_EVERY_SECONDS  # a failed run is retried later, not in a tight loop

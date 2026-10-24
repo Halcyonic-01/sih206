@@ -17,7 +17,7 @@ from django.utils import timezone
 
 from ai.models import AiRun
 from obligations.models import MasterAudit
-from ai.services import call_model
+from ai.services import MAX_TOKENS, call_model
 from portal.permissions import role
 from portal.services import WorkflowError
 from . import services
@@ -135,9 +135,9 @@ def summarize(actor, case_id, version):
         if AiRun.objects.filter(actor=actor, operation=OPERATION,
                 created_at__gte=timezone.now()-timedelta(hours=1)).count() >= 10:
             raise ValueError('RATE_LIMIT')
-        output = validate_output(call_model({'model': model, 'max_tokens': 1024, 'system': SYSTEM,
+        output = validate_output(call_model({'model': model, 'max_tokens': MAX_TOKENS, 'system': SYSTEM,
             'messages': [{'role': 'user', 'content': [{'type': 'text', 'text': json.dumps(payload, sort_keys=True)}]}],
-            'output_config': {'format': {'type': 'json_schema', 'schema': SCHEMA}}}))
+            'output_config': {'effort': 'low', 'format': {'type': 'json_schema', 'schema': SCHEMA}}}))
         run.status, run.output = 'SUCCESS', output
         return _result(run, 'success')
     except Exception as exc:
