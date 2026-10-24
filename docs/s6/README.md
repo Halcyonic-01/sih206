@@ -1,5 +1,9 @@
 # S6 release UI preparation
 
+Later [owned feature components](../owned/README.md) now implement these screens in
+isolation. They are not mounted in K2's shell and do not make S6 integration complete.
+This folder retains the original preparation corpus and its validator unchanged.
+
 Start with [SCREEN_SPEC.md](SCREEN_SPEC.md), then [fixtures.json](fixtures.json).
 See [CONTRACT_REVIEW.md](CONTRACT_REVIEW.md) for screen-to-source gaps and
 [VALIDATOR_VERIFICATION.md](VALIDATOR_VERIFICATION.md) for current test results.

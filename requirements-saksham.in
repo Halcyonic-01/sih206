@@ -1,0 +1,6 @@
+# Optional owned feature test/runtime dependencies; shared platform files untouched.
+-r requirements.txt
+djangorestframework==3.18.3
+openpyxl==3.1.5
+reportlab==5.1.0
+qrcode==8.2

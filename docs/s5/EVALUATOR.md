@@ -1,5 +1,10 @@
 # S5 pure prerequisite evaluator
 
+Later work adds [owned casework services](../owned/README.md) that consume this
+unchanged pure evaluator through provisional trusted adapters. The evaluator itself
+still applies no action. The descriptions below record its original isolated slice;
+new services remain opt-in and are not wired into default browser routes.
+
 Local synthetic implementation following the [specification](RELEASE_PATH_SPEC.md).
 Code: [release_prerequisites.py](../../obligations/release_prerequisites.py).
 No application workflow is wired to it. Legacy release services and S1–S4 remain
