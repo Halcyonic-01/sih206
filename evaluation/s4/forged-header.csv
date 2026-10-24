@@ -1,0 +1,2 @@
+aicte_id,institution_code,institution_name,trust_name,institution_type,region,state,contact_email,status,data_classification,approved_by
+SYNTH-F,SYNTH-F,Synthetic Forged Field,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,SIMULATED,SYNTHETIC-OFFICER

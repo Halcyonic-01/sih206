@@ -1,0 +1,3 @@
+aicte_id,institution_code,institution_name,trust_name,institution_type,region,state,contact_email,status,data_classification
+SYNTH-OK,SYNTH-OK,Synthetic Valid Before Error,Synthetic Trust,PRIVATE,DEMO_NORTH,Synthetic State,demo@example.invalid,ACTIVE,SIMULATED
+"SYNTH-UNTERMINATED
