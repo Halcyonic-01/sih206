@@ -143,7 +143,20 @@ parser/security behavior is tested separately. Old result files/labels are untou
 No real-world extraction, bank-authentication, regulatory or performance accuracy
 claim is made.
 
-Current offline packaging scripts predate the new apps/frontend. K must update its
-source/build allowlist before distributing an offline ZIP; use a normal Git clone
-plus the commands above meanwhile. This is a local synthetic demo, not a production
-release. Read-only setup/test information should be included in the final K review build.
+The offline packager includes the records, verification and AI apps plus the built
+workspace and PDF worker. Build the frontend first, then prepare platform-matching
+Python 3.12 wheels and the archive from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip download --only-binary=:all: --dest .offline-wheels -r requirements.txt pip==26.2.1
+.\.venv\Scripts\python.exe scripts/build_offline_demo.py
+```
+
+Extract the ZIP into a fresh folder and run `Setup-Offline.ps1`, then `Start-Demo.ps1`.
+Open `http://127.0.0.1:8000/workspace/` with the locally generated demo credentials.
+Python 3.12 must already be installed; Node is needed only when building the bundle.
+The wheels prepared on this machine target Windows x64. Private data, credentials,
+planning files and node_modules are excluded. Package hashes check integrity, not
+publisher authenticity. The installer uses bundled wheels with `--no-index`; a
+physically disconnected rehearsal remains a team acceptance check. This is a local
+synthetic demo, not a production release.
