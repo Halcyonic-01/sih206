@@ -76,6 +76,27 @@ describe('AuditPage', () => {
     expect(await screen.findByText('No events match these filters')).toBeInTheDocument()
   })
 
+  it('verifies the chain and reports a broken event', async () => {
+    route({ '/audit/chain/verify/': () => json({ status: 'broken', checked: 5, backfilled: 0, unsealed: 0, head: 'ab'.repeat(32),
+      broken: [{ event_id: 4, reason: 'event_modified', detail: 'x' }] }) })
+    mount()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('tab', { name: 'Integrity' }))
+    await user.click(await screen.findByRole('button', { name: /Verify chain/ }))
+    expect(await screen.findByText(/Chain broken/)).toBeInTheDocument()
+    expect(screen.getByText(/Event #4: Event was changed after it was recorded/)).toBeInTheDocument()
+  })
+
+  it('shows a success message for an intact chain', async () => {
+    route({ '/audit/chain/verify/': () => json({ status: 'ok', checked: 12, backfilled: 2, unsealed: 0, head: 'cd'.repeat(32), broken: [] }) })
+    mount()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('tab', { name: 'Integrity' }))
+    await user.click(await screen.findByRole('button', { name: /Verify chain/ }))
+    expect(await screen.findByText('Chain verified')).toBeInTheDocument()
+    expect(screen.getByText(/12 events sealed, 2 of them sealed late/)).toBeInTheDocument()
+  })
+
   it('shows a not-allowed state when the server says 403', async () => {
     route({ '/audit/events/?': () => json({ detail: 'An auditor account is required.', code: 'permission_denied' }, 403) })
     mount()

@@ -1,3 +1,4 @@
+import hashlib
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -16,6 +17,8 @@ if not SECRET_KEY:
     if not DEBUG:
         raise RuntimeError('Set DJANGO_SECRET_KEY when DJANGO_DEBUG=false.')
     SECRET_KEY = 'local-synthetic-demo-only-do-not-deploy'
+if not DEBUG and SECRET_KEY.startswith('replace-with'):
+    raise RuntimeError('DJANGO_SECRET_KEY still has the placeholder from .env.example. Generate a real one.')
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
                  if host.strip()]
 
@@ -37,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     'rest_framework', 'drf_spectacular', 'drf_spectacular_sidecar', 'axes',
-    'portal', 'obligations', 'access', 'notifications', 'audit',
+    'portal', 'obligations', 'access', 'notifications', 'audit', 'scenarios',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -69,7 +72,9 @@ ASGI_APPLICATION = 'config.asgi.application'
 (BASE_DIR / 'data').mkdir(exist_ok=True)
 DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
                          'NAME': BASE_DIR / 'data' / 'portal.sqlite3',
-                         'OPTIONS': {'timeout': 20}}}
+                         # IMMEDIATE takes the write lock at BEGIN, so concurrent writers queue instead of failing,
+                         # and the audit hash chain is always extended by one writer at a time.
+                         'OPTIONS': {'timeout': 20, 'transaction_mode': 'IMMEDIATE'}}}
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -203,6 +208,11 @@ PORTAL_BASE_URL = os.environ.get('PORTAL_BASE_URL', 'http://127.0.0.1:8010')
 # Try to send emails right after the event commits (the scheduled send_notifications command retries failures).
 NOTIFY_SEND_ON_COMMIT = env_bool('NOTIFY_SEND_ON_COMMIT', True)
 
+# Key for the audit hash chain (HMAC). Anyone who can only edit the database cannot recompute a valid chain
+# without it. Set AUDIT_CHAIN_KEY in production; the fallback is derived from SECRET_KEY.
+AUDIT_CHAIN_KEY = os.environ.get('AUDIT_CHAIN_KEY') or hashlib.sha256(('audit-chain|' + SECRET_KEY).encode()).hexdigest()
+
 # Deliberate: same-origin framing is required by the in-app PDF viewer; HSTS preload is an explicit opt-in
 # that cannot be undone quickly, so it stays off until AICTE decides on it.
-SILENCED_SYSTEM_CHECKS = ['security.W019', 'security.W021']
+# drf-spectacular warnings are reported by a separate CI step so a missing schema hint never blocks a merge.
+SILENCED_SYSTEM_CHECKS = ['security.W019', 'security.W021', 'drf_spectacular.W001', 'drf_spectacular.W002']

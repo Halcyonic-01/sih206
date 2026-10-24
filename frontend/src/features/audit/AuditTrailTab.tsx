@@ -45,6 +45,12 @@ function EventDrawer({ id, onClose }: { id: number | null; onClose: () => void }
                      { title: 'Before', dataIndex: 'before', render: (value) => <code>{show(value)}</code> },
                      { title: 'After', dataIndex: 'after', render: (value) => <code>{show(value)}</code> },
                    ]} />
+            {event.data.seal && (
+              <Typography.Paragraph type="secondary" style={{ marginTop: 16, wordBreak: 'break-all' }}>
+                Seal <code>{event.data.seal.hash.slice(0, 24)}…</code> chained to <code>{event.data.seal.prev_hash ? `${event.data.seal.prev_hash.slice(0, 24)}…` : 'start of chain'}</code>
+                {event.data.seal.backfilled && <Tag style={{ marginInlineStart: 8 }}>sealed late</Tag>}
+              </Typography.Paragraph>
+            )}
             <Typography.Title level={5} style={{ marginTop: 16 }}>Full snapshot after the event</Typography.Title>
             <pre style={{ maxHeight: 320, overflow: 'auto', background: '#f4f6fa', padding: 12 }}>
               {JSON.stringify(event.data.after, null, 2)}

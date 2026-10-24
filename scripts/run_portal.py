@@ -16,8 +16,10 @@ import shutil
 import subprocess
 import sys
 import time
+import json
 import urllib.error
 import urllib.request
+from http.cookiejar import CookieJar
 import venv
 from pathlib import Path
 
@@ -27,6 +29,7 @@ VENV = ROOT / '.venv'
 VENV_PYTHON = VENV / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
 CREDENTIALS = ROOT / 'data' / 'demo-credentials.txt'
 STAFF_CREDENTIALS = ROOT / 'data' / 'staff-credentials.txt'
+REVIEW_MANIFEST = ROOT / 'data' / 'seed-review-v2.json'
 
 
 def say(message):
@@ -115,6 +118,7 @@ def manage(*args, env, check=True):
 
 def prepare_database(env, force_seed, prod):
     manage('migrate', '--noinput', env=env)
+    manage('seal_audit_chain', env=env)  # seals audit events written before the hash chain existed
     seed_env = {**env, 'DJANGO_DEBUG': 'true'}  # generated credentials are allowed in local DEBUG only
     steps = []
     if force_seed or not CREDENTIALS.exists():
@@ -122,6 +126,8 @@ def prepare_database(env, force_seed, prod):
                   ('seed_scenarios',)]
     if force_seed or not STAFF_CREDENTIALS.exists():
         steps.append(('seed_staff', '--generate-password'))
+    if force_seed or not REVIEW_MANIFEST.exists():
+        steps.append(('seed_review',) + (('--force',) if force_seed else ()))
     if steps:
         say('Creating synthetic demo accounts and scenario records')
     for args in steps:
@@ -149,6 +155,69 @@ def squash(text):
     return ''.join(text.split()).lower()
 
 
+def read_password(path, username):
+    for line in path.read_text(encoding='utf-8').splitlines():
+        name, _, value = line.partition(': ')
+        if name == username:
+            return value.strip()
+    return None
+
+
+class Session:
+    """Minimal cookie + CSRF aware API client for the smoke check."""
+
+    def __init__(self, base):
+        self.base = base
+        self.jar = CookieJar()
+        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
+
+    def csrf(self):
+        self.opener.open(self.base + '/api/auth/csrf/', timeout=10).read()
+        return next(cookie.value for cookie in self.jar if cookie.name == 'csrftoken')
+
+    def call(self, path, body=None):
+        headers = {'Accept': 'application/json'}
+        data = None
+        if body is not None:
+            headers.update({'Content-Type': 'application/json', 'X-CSRFToken': self.csrf()})
+            data = json.dumps(body).encode()
+        try:
+            with self.opener.open(urllib.request.Request(self.base + path, data=data, headers=headers), timeout=15) as response:
+                return response.status, json.loads(response.read() or b'null')
+        except urllib.error.HTTPError as error:
+            return error.code, json.loads(error.read() or b'null')
+
+
+def smoke_accounts(base, failed):
+    """Sign in with the generated demo passwords (never printed) and exercise the platform end to end."""
+    for username, role, path in (('officer', 'officer', CREDENTIALS), ('auditor', 'auditor', STAFF_CREDENTIALS)):
+        password = read_password(path, username) if path.exists() else None
+        if not password:
+            say(f'skip {username}: no generated password found')
+            continue
+        session = Session(base)
+        status, body = session.call('/api/auth/login/', {'username': username, 'password': password})
+        ok = status == 200 and body and body.get('role') == role
+        say(f'{"ok  " if ok else "FAIL"} sign in as {username} -> {status}')
+        if not ok:
+            failed.append(f'login {username}')
+            continue
+        if role == 'officer':
+            status, body = session.call('/api/notifications/unread-count/')
+            ok = status == 200
+            say(f'{"ok  " if ok else "FAIL"} notifications API -> {status}')
+        else:
+            status, body = session.call('/api/audit/chain/verify/')
+            ok = status == 200 and body.get('status') == 'ok'
+            say(f'{"ok  " if ok else "FAIL"} audit chain -> {status} {body.get("status") if body else ""}')
+            status, body = session.call('/api/audit/access-log/')
+            ok2 = status == 200 and body.get('count', 0) > 0
+            say(f'{"ok  " if ok2 else "FAIL"} access log has rows -> {status}')
+            ok = ok and ok2
+        if not ok:
+            failed.append(f'{role} checks')
+
+
 def smoke(base, prod=False):
     checks = [('/api/health/', 200, '"status":"ok"'), ('/', 200, 'id="root"'), ('/login', 200, 'id="root"'),
               # API docs need a signed-in user unless API_DOCS_PUBLIC=true (the default only in DEBUG).
@@ -161,6 +230,7 @@ def smoke(base, prod=False):
         say(f'{"ok  " if ok else "FAIL"} {path} -> {got}')
         if not ok:
             failed.append(path)
+    smoke_accounts(base, failed)
     if failed:
         raise SystemExit('Smoke check failed: ' + ', '.join(failed))
     say('Smoke check passed')

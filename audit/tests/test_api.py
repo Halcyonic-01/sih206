@@ -9,6 +9,7 @@ from portal.models import AuditEvent, Instrument
 
 class AuditApiBase(StaffTestCase):
     def setUp(self):
+        super().setUp()
         self.submitted_record = self.submitted()          # DRAFT_CREATED + SUBMITTED by institution A
         self.draft = self.instrument(self.institution_a, self.a, Instrument.Status.DRAFT, 'PRIVATE-DRAFT')
         AuditEvent.objects.create(instrument=self.draft, actor=self.a, action='DRAFT_CREATED')

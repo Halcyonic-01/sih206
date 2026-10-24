@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db import OperationalError
 from django.test import Client, TestCase, override_settings
@@ -28,6 +29,9 @@ class ApiTestCase(TestCase):
         cls.officer = User.objects.create_user(username='officer', password=PASSWORD)
         cls.officer.groups.add(groups[OFFICER_GROUP])
         cls.norole = User.objects.create_user(username='norole', password=PASSWORD)
+
+    def setUp(self):
+        cache.clear()  # the login throttle counts requests per minute in the cache
 
     def csrf_client(self):
         client = Client(enforce_csrf_checks=True)
