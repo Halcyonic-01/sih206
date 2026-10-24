@@ -4,7 +4,6 @@ import {Alert, Button, Card, Col, Empty, Input, Modal, Row, Select, Space, Spin,
 import {RecordDetail} from './RecordDetail';
 import {RecordForm} from './RecordForm';
 import {ReconciliationPage} from './Verification';
-import {Inbox} from './Inbox';
 import type {Api, DashboardData, Page, RecordItem, Role} from './types';
 
 export function DashboardPage({api, onOpen, onCategory}: {api: Api; onOpen: (id: number) => void; onCategory: (category: string) => void}) {
@@ -14,7 +13,7 @@ export function DashboardPage({api, onOpen, onCategory}: {api: Api; onOpen: (id:
   const data = query.data;
   const max = Math.max(1, ...data.maturity_chart.map(m => m.count));
   return <Space direction="vertical" size="large" style={{width: '100%'}}>
-    <h2>Deposit overview</h2><span>Business date: {data.as_of} · Asia/Kolkata</span>
+    <h2>Deposit overview</h2><span>Business date: {data.as_of} Â· Asia/Kolkata</span>
     <Row gutter={[16, 16]}>{Object.entries(data.counts).filter(([name]) => name !== 'all').map(([name, count]) => <Col xs={12} md={8} key={name}>
       <Card><Statistic title={name.charAt(0).toUpperCase() + name.slice(1)} value={count}/><Button type="link" onClick={() => onCategory(name)}>View records</Button></Card>
     </Col>)}</Row>
@@ -25,7 +24,7 @@ export function DashboardPage({api, onOpen, onCategory}: {api: Api; onOpen: (id:
       {title: 'Required INR', dataIndex: 'required_paise', render: (v: number | null) => v === null ? 'Needs review' : (v/100).toFixed(2)},
       {title: 'Held INR', dataIndex: 'held_paise', render: (v: number) => (v/100).toFixed(2)},
       {title: 'Shortfall INR', dataIndex: 'shortfall_paise', render: (v: number | null) => v === null ? 'Unknown' : (v/100).toFixed(2)},
-      {title: 'Term gap', dataIndex: 'term_gap', render: (v: boolean) => v ? 'Review required' : '—'}]}/></Card>}
+      {title: 'Term gap', dataIndex: 'term_gap', render: (v: boolean) => v ? 'Review required' : 'â€”'}]}/></Card>}
     <Card title="Cases requiring attention"><Table rowKey={r => `${r.kind}:${r.id}`} scroll={{x: 650}} dataSource={data.interventions} locale={{emptyText: 'No cases in these intervention queues'}} columns={[
       {title: 'Reference', dataIndex: 'reference', render: (value: string, row) => <Button type="link" onClick={() => onOpen(row.id)}>{value}</Button>},
       {title: 'Issue', dataIndex: 'kind'}, {title: 'Next action', dataIndex: 'next_action'}]}/></Card>
@@ -37,17 +36,18 @@ export function DashboardPage({api, onOpen, onCategory}: {api: Api; onOpen: (id:
   </Space>;
 }
 
-export function RecordsWorkspace({api, role, globalQuery}: {api: Api; role: Role; globalQuery?: string}) {
+export function RecordsWorkspace({api, role, globalQuery, initialRecordId, initialCategory}: {api: Api; role: Role; globalQuery?: string; initialRecordId?: number; initialCategory?: string}) {
   const [section, setSection] = useState('records');
-  const [selected, setSelected] = useState<number>();
+  const [selected, setSelected] = useState<number | undefined>(initialRecordId);
   const [create, setCreate] = useState(false);
   const [q, setQ] = useState('');
-  const [category, setCategory] = useState('all');
+  const [category, setCategory] = useState(initialCategory || 'all');
+  useEffect(() => {setCategory(initialCategory || 'all'); setPage(1);}, [initialCategory]);
   const [mode, setMode] = useState('');
   const [page, setPage] = useState(1);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  useEffect(() => {if (globalQuery !== undefined) {setQ(globalQuery); setPage(1); setSelected(undefined); setSection('records');}}, [globalQuery]);
+  useEffect(() => {if (globalQuery !== undefined) {setQ(globalQuery); setPage(1); if (!initialRecordId) setSelected(undefined); setSection('records');}}, [globalQuery]);
   const cache = useQueryClient();
   const params = new URLSearchParams({q, category, page: String(page), page_size: '20'});
   if (mode) params.set('mode', mode);
@@ -81,11 +81,10 @@ export function RecordsWorkspace({api, role, globalQuery}: {api: Api; role: Role
     </Modal>
   </Space>;
   return <><label className="workspace-section">Workspace section <select aria-label="Workspace section" value={section} onChange={event => setSection(event.target.value)}>
-    <option value="records">Records</option><option value="dashboard">Dashboard</option><option value="inbox">Notifications</option>
+    <option value="records">Records</option><option value="dashboard">Dashboard</option>
     {role === 'officer' && <option value="reconciliation">Reconciliation</option>}
   </select></label><Tabs className="workspace-tabs" activeKey={section} onChange={setSection} items={[
     {key: 'records', label: 'Records', children: list},
     {key: 'dashboard', label: 'Dashboard', children: <DashboardPage api={api} onOpen={setSelected} onCategory={value => {setCategory(value); setPage(1); setSection('records');}}/>},
-    {key: 'inbox', label: 'Notifications', children: <Inbox api={api} role={role}/>},
-    ...(role === 'officer' ? [{key: 'reconciliation', label: 'Reconciliation', children: <ReconciliationPage api={api}/>}] : [])]}/></>;
+        ...(role === 'officer' ? [{key: 'reconciliation', label: 'Reconciliation', children: <ReconciliationPage api={api}/>}] : [])]}/></>;
 }

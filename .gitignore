@@ -14,6 +14,7 @@ dist/
 !.env.example
 demo-credentials.txt
 authority-credentials.txt
+staff-credentials.txt
 # Generated offline dependencies and archives
 wheelhouse/
 *.whl
@@ -24,3 +25,7 @@ wheelhouse/
 # Team planning documents shared privately (keep local; never commit or push)
 planning/
 docs/**/*.pdf
+# Build outputs (React build, collected static files)
+node_modules/
+frontend/dist/
+staticfiles/

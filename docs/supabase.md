@@ -27,7 +27,7 @@ The Session pooler supports IPv4. A direct database connection also works on a
 network with the appropriate IPv6/IPv4 support. This integration rejects the
 transaction pooler on port 6543 because it uses session schema state.
 
-Settings load the root `.env` with python-dotenv, without overriding explicitly
+Settings load the root `.env` with the shared platform loader, without overriding explicitly
 set process variables or expanding `${...}` in passwords. To force offline SQLite,
 set `DATABASE_BACKEND=sqlite` in the process environment. With `auto` (default), an
 empty URL uses SQLite; a nonempty invalid URL fails clearly instead of silently
@@ -65,6 +65,24 @@ verification, obtain the project's CA certificate from Supabase and configure
 No live cloud connection is established until the actual URI is configured.
 
 ## Existing data and accounts
+
+If this development project used Yash's prototype notification schema before the
+team-platform merge, the check refuses to silently use the incompatible tables.
+Use this explicit, non-destructive upgrade after reviewing the branch:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py check_supabase --upgrade-legacy-notifications --migrate
+```
+
+It retains all earlier notification and delivery-attempt rows in the private
+`notifications_yash_archive` and `notifications_yash_attempt_archive` tables,
+and creates the authoritative shared outbox tables. The active inbox starts
+fresh; archived history remains available to database administrators. It does
+not reset users, deposit records, documents or Django's applied-migration history.
+The operation is transactional and is a no-op once the shared tables are present.
+Unknown layouts or an existing archive with an incompatible active table fail
+without overwriting data. This bridge has also been exercised on a temporary
+PostgreSQL schema, with every synthetic row and DDL change rolled back afterward.
 
 A fresh Supabase database starts empty. Existing SQLite records, account password
 hashes and local documents are not transferred automatically. This deliberately

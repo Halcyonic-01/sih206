@@ -1,3 +1,9 @@
+Current integration: `routes.tsx` registers records, dashboard, reconciliation and
+`/workspace` through the platform feature registry. `HeaderSearch.tsx` supplies the
+header slot. The injected adapter uses the shared session client/AuthProvider and
+its protected Blob helper; the standalone root/auth implementation is retired.
+Notifications are owned by the shared `features/notifications` screens.
+
 # Yash records workspace (Y4, Y5, Y7)
 
 `RecordsWorkspace` receives the authenticated role and an `Api` adapter. Mount it

@@ -1,5 +1,15 @@
 Django>=5.2,<5.3
-pikepdf==10.17.0
 djangorestframework==3.18.3
+drf-spectacular==0.30.0
+# Serves Swagger UI / ReDoc from our own origin, so /api/docs/ works offline and under the CSP.
+drf-spectacular-sidecar==2026.10.1
+django-axes==8.3.1
+whitenoise==6.12.0
+
+# Container web server (K10)
+gunicorn==26.2.0
+pikepdf==10.17.0
+
+openpyxl==3.1.5
+reportlab==5.1.0
 psycopg[binary]==3.3.6
-python-dotenv==1.2.4

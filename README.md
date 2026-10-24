@@ -1,4 +1,6 @@
-# AICTE Security Deposit / FDR Portal
+# Pramaan — Trust Backed by Evidence
+
+AICTE Security Deposit / FDR Portal (SIH 2026, problem statement 26265).
 
 Supabase PostgreSQL support is available through a private root `.env` connection
 URI. See [Supabase setup](docs/supabase.md). Local tests and offline demo commands
@@ -20,15 +22,45 @@ A localhost, synthetic-data MVP for **institution submission → protected PDFs 
 
 **New teammate: start here.** GitHub is the source of truth. Clone the repository to get editable source, tests, documentation, synthetic PDFs and evaluation data; install the pinned Python dependencies locally. You do not need the previous developer's database, passwords, virtual environment or conversation history.
 
+## Quick start: React app + Django on one port (platform, K1 to K10)
+
+The interface is now a React app (`frontend/`) served by Django together with the JSON API; the previous
+Django-template interface stays at `/legacy/` until 28 Oct 2026. Python 3.12 and Node.js 22+ are needed.
+
+```bash
+./run.sh              # macOS / Linux          (first run creates .env, installs, builds, migrates, seeds synthetic data;
+                      #                         then runs the daily rules + e-mail retries and, if installed, Mailpit)
+.\run.ps1             # Windows PowerShell
+docker compose up --build   # alternative, see docs/docker.md
+```
+
+Open **http://127.0.0.1:8010/**. Generated sign-in passwords are in `data/demo-credentials.txt`,
+`data/authority-credentials.txt` and `data/staff-credentials.txt` (git-ignored, never printed). Useful variants:
+`./run.sh --dev` (hot reload, open http://localhost:5173/), `./run.sh --prod` (DEBUG off), `./run.sh --smoke`
+(start, probe, stop), `--no-scheduler` / `--no-mailpit` (leave those background parts out).
+API contract: `/api/docs/`. Details: [API conventions](docs/api-conventions.md),
+[scheduled rules](docs/scheduled-rules.md), [review build](docs/review-build.md), [frontend guide](frontend/README.md).
+Copy `.env.example` to `.env` to configure e-mail, HTTPS and the audit-chain key.
+
 ## 1. Current status and boundaries
 
 All six approved implementation milestones are present. The release audit recorded **159 passing tests**, real HTTP workflow checks, measured rule evaluation and a recovery drill. These are dated results, not a guarantee for every future edit or machine.
 
 This is a **synthetic localhost demonstration candidate**. Public/real-data deployment is blocked. Target-browser visual/PDF and physically disconnected rehearsal still require manual sign-off. Read the [release-readiness report](docs/release-readiness.md).
 
-This is an FDR lifecycle portal, not a general AICTE application-validation engine. There is **no OCR, AI model, automatic PDF extraction, bank connection, regulatory policy engine, notification delivery or payment execution**. Officers manually inspect documents. Acceptance means **accepted for tracking**, not bank-authenticated or legally compliant.
+This is an FDR lifecycle portal, not a general AICTE application-validation engine. There is **no OCR, AI model, automatic PDF extraction, bank connection, regulatory policy engine or payment execution**. In-app and e-mail notifications, daily deadline rules and a tamper-evident audit trail now exist (see the quick start); e-mail goes to the console unless SMTP is configured. Officers manually inspect documents. Acceptance means **accepted for tracking**, not bank-authenticated or legally compliant.
 
-S1 adds the [institution and obligation model foundation](obligations/README.md): four new tables, validation and migration tests. Calculations, policy publication, APIs and institution screens are still future tasks. Existing records receive no inferred requirements or exemptions. Run `manage.py test` to include the new app's tests alongside the original portal suite.
+S1 adds the [institution and obligation model foundation](obligations/README.md): four new tables, validation and migration tests. Existing records receive no inferred requirements or exemptions. Run `manage.py test` to include the new app's tests alongside the original portal suite.
+
+The [independent S2 backend portion](obligations/S2.md) now provides draft demo rule configuration, read-only amount/coverage calculations, evidence-linked obligation findings and penalty proposals. It is not connected to the current browser workflow. APIs and instrument adapters await teammate dependencies; policy publication and S3 screens are not implemented. Existing `technical-v2` checks and decisions are unchanged.
+
+The newer local [S1–S6 owned implementation](docs/owned/README.md) adds tested services,
+an opt-in DRF API harness, transactional imports, reports/KPIs, guarded release
+casework and isolated React components. These are built against provisional ports;
+they are not mounted in the default app or integrated with the teammates' stack.
+Read its contract and verification records before using it. Install
+`requirements-saksham.txt` to run the **full current test suite**; the original
+`requirements.txt` still supports the preserved legacy runtime. No S7 work is added.
 
 ## 2. Read these documents in order
 
@@ -53,14 +85,14 @@ Roadmap/backlog items are **proposals**, not existing features. Start with basel
 |---|---|
 | Language | Python 3.12; tested development runtime 3.12.14 |
 | Backend, forms, auth, ORM | Django 5.2.18 |
-| Frontend | Django templates, HTML and local CSS; no separate React/Node build |
+| Frontend | React 19 + Vite + TypeScript + Ant Design (`frontend/`, built into `frontend/dist` and served by Django); the earlier Django templates remain under `/legacy/` |
 | Database | Local SQLite |
 | Documents | Private local files, generated storage names, size and SHA-256 metadata |
 | Checks | Two deterministic metadata rules and manually entered observations |
 | Application dependencies | asgiref 3.12.1, Django 5.2.18, sqlparse 0.6.0, tzdata 2026.5 |
 | Optional offline tooling | Existing wheel/package scripts remain available; ordinary GitHub setup uses requirements.txt |
 
-No Node, API key, cloud account, external database service or Docker installation is needed. A read-only replay created for an earlier demonstration is not an application dependency and is not included in the clean handover.
+Node.js 22+ is needed to build the React app (`run.sh` / `run.ps1` do it). No API key, cloud account, external database service or Docker installation is needed. A read-only replay created for an earlier demonstration is not an application dependency and is not included in the clean handover.
 
 ## 4. Recommended Windows setup: clone from GitHub
 

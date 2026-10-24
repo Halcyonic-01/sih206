@@ -1,0 +1,2 @@
+# Frozen datasets/reports are hashed as bytes. Preserve them across platforms.
+*.json -text

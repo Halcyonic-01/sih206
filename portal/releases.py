@@ -10,6 +10,14 @@ from .permissions import institution_for, require_authority
 from .services import WorkflowError, _compare_and_update, event, snapshot
 from .uploads import validate_pdf_upload
 
+# S5-owned extension guard. Existing requests without casework are unchanged.
+_OWNED_CASE_TOKEN = object()
+
+
+def _case_guard(release, token):
+    if token is not _OWNED_CASE_TOKEN and hasattr(release, 'casework'):
+        raise WorkflowError('Use the casework service so clearance and evidence gates are rechecked.')
+
 
 def _eligible(instrument):
     if not instrument.is_current:
@@ -47,8 +55,9 @@ def _authority_request(actor, instrument_id, release_id):
 
 
 @transaction.atomic
-def decide_release(actor, instrument_id, release_id, expected_version, decision, reason):
+def decide_release(actor, instrument_id, release_id, expected_version, decision, reason, *, _casework_token=None):
     instrument, release = _authority_request(actor, instrument_id, release_id)
+    _case_guard(release, _casework_token)
     if release.status != ReleaseRequest.Status.PENDING:
         raise WorkflowError('Only a pending request can receive an authority decision.')
     if decision not in ('approve', 'reject') or not reason.strip() or len(reason) > 2000:
@@ -64,11 +73,12 @@ def decide_release(actor, instrument_id, release_id, expected_version, decision,
     return release
 
 
-def complete_release(actor, instrument_id, release_id, expected_version, notes, document):
+def complete_release(actor, instrument_id, release_id, expected_version, notes, document, *, _casework_token=None):
     stored_file = None
     try:
         with transaction.atomic():
             instrument, release = _authority_request(actor, instrument_id, release_id)
+            _case_guard(release, _casework_token)
             if release.status != ReleaseRequest.Status.APPROVED:
                 raise WorkflowError('Only an authorized release can be completed.')
             if not notes.strip() or len(notes) > 2000 or document is None:

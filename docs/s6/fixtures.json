@@ -1,0 +1,1757 @@
+{
+  "fixture_format": "s6-release-ui-spec-v1",
+  "artifact_status": "SPECIFICATION_ONLY_NO_FRONTEND",
+  "data_classification": "SYNTHETIC",
+  "simulation_label": "SIMULATED",
+  "rule_status": "DRAFT_DEMO_NOT_APPROVED",
+  "source_checkpoint": "227a59c",
+  "assessment_date": "2026-10-24",
+  "usage": "Alternative presentation snapshots; not API responses, seed data, credentials, permissions or a chronology. No document bytes, real tokens or URLs exist.",
+  "all_examples_require": [
+    "No effects applied",
+    "No automatic approval",
+    "No bank verification",
+    "Human consequential decisions",
+    "No software movement of money",
+    "Never use fixtures as runtime failure fallback"
+  ],
+  "private_scenarios": [
+    {
+      "id": "case-ready",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-01",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Ready for human authority review",
+        "s5_outcome": "READY_FOR_AUTHORITY_REVIEW",
+        "s5_reason_codes": [],
+        "checks": [
+          "Readiness is separate from PENDING saved status.",
+          "All three units are reviewed synthetic facts, not actual clearance records."
+        ],
+        "prohibited_controls": [
+          "automatic_approval"
+        ]
+      }
+    },
+    {
+      "id": "case-term-unknown",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-02",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Term basis unavailable",
+        "s5_outcome": "CONTEXT_UNAVAILABLE",
+        "s5_reason_codes": [
+          "TERM_BASIS_UNKNOWN"
+        ],
+        "checks": [
+          "Show unavailable, not elapsed or zero."
+        ],
+        "prohibited_controls": [
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "wizard-term-not-elapsed",
+      "screen": "wizard",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-03",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Obligation term not elapsed",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "TERM_NOT_ELAPSED"
+        ],
+        "checks": [
+          "Instrument maturity does not establish term completion."
+        ],
+        "prohibited_controls": [
+          "submit_as_term_complete"
+        ]
+      }
+    },
+    {
+      "id": "wizard-progressive-certificate",
+      "screen": "wizard",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-04",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "PROGRESSIVE_CLOSURE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "No-students certificate required",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "NO_STUDENTS_CERTIFICATE_REQUIRED"
+        ],
+        "checks": [
+          "Do not auto-waive from the instrument date."
+        ],
+        "prohibited_controls": [
+          "advance_to_review"
+        ]
+      }
+    },
+    {
+      "id": "case-progressive-reviewed",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-05",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "PROGRESSIVE_CLOSURE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Reviewed synthetic certificate",
+        "s5_outcome": "READY_FOR_AUTHORITY_REVIEW",
+        "s5_reason_codes": [],
+        "checks": [
+          "Show scoped certificate reference; no fabricated PDF URL."
+        ],
+        "prohibited_controls": [
+          "automatic_approval"
+        ]
+      }
+    },
+    {
+      "id": "case-exception-unknown",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-07",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "PROGRESSIVE_CLOSURE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Maturity exception unestablished",
+        "s5_outcome": "CONTEXT_UNAVAILABLE",
+        "s5_reason_codes": [
+          "MATURITY_EXCEPTION_UNESTABLISHED"
+        ],
+        "checks": [
+          "Require explicit reviewed applicability."
+        ],
+        "prohibited_controls": [
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "wizard-merger-child",
+      "screen": "wizard",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-08",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "MERGER",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "One child certificate is missing",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "CHILD_CERTIFICATE_MISSING"
+        ],
+        "checks": [
+          "Show child 101 and 102 separately only within supplied scope."
+        ],
+        "prohibited_controls": [
+          "advance_to_review"
+        ]
+      }
+    },
+    {
+      "id": "case-conversion-proceedings",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-10",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "CONVERSION_TO_UNIVERSITY",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Conversion proceedings pending",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "CONVERSION_PROCEEDINGS_PENDING"
+        ],
+        "checks": [
+          "Keep the proceeding gate visible."
+        ],
+        "prohibited_controls": [
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "case-conversion-unknown",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-11",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "CONVERSION_TO_UNIVERSITY",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Complaint status unavailable",
+        "s5_outcome": "CONTEXT_UNAVAILABLE",
+        "s5_reason_codes": [
+          "CONVERSION_COMPLAINT_STATUS_UNKNOWN"
+        ],
+        "checks": [
+          "Null is not no complaint."
+        ],
+        "prohibited_controls": [
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "case-penalty-proposed",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-13",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "CLOSURE_BY_AICTE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Penalty disposition pending",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "PENALTY_DISPOSITION_PENDING"
+        ],
+        "checks": [
+          "Show proposed amount and clause, not a settled balance."
+        ],
+        "prohibited_controls": [
+          "approve",
+          "automatic_deduction"
+        ]
+      }
+    },
+    {
+      "id": "case-penalty-confirmed",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-14",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "CLOSURE_BY_AICTE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Penalty confirmed for review",
+        "s5_outcome": "READY_FOR_AUTHORITY_REVIEW",
+        "s5_reason_codes": [],
+        "checks": [
+          "Confirmation does not prove payment or net refund."
+        ],
+        "prohibited_controls": [
+          "automatic_deduction"
+        ]
+      }
+    },
+    {
+      "id": "case-rtgs-letter-kind",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-15",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "RTGS"
+      },
+      "expected": {
+        "heading": "Sanction order proposed",
+        "s5_outcome": "READY_FOR_AUTHORITY_REVIEW",
+        "s5_reason_codes": [],
+        "checks": [
+          "No issued PDF, UTR or payment success."
+        ],
+        "prohibited_controls": [
+          "automatic_refund"
+        ]
+      }
+    },
+    {
+      "id": "case-rpgf-letter-kind",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-16",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "RPGF"
+      },
+      "expected": {
+        "heading": "NOC proposed",
+        "s5_outcome": "READY_FOR_AUTHORITY_REVIEW",
+        "s5_reason_codes": [],
+        "checks": [
+          "Do not force FDR-only document assumptions."
+        ],
+        "prohibited_controls": [
+          "automatic_issuance"
+        ]
+      }
+    },
+    {
+      "id": "case-clearance-open",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-17",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Grants clearance open",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "CLEARANCE_OPEN"
+        ],
+        "checks": [
+          "Two cleared units cannot override the third."
+        ],
+        "prohibited_controls": [
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "case-clearance-objection",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-18",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Vigilance objection",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "CLEARANCE_OBJECTION"
+        ],
+        "checks": [
+          "Display reason and permitted evidence; no green all-cleared badge."
+        ],
+        "prohibited_controls": [
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "case-external-hold",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-19",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "External NOC required",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "EXTERNAL_NOC_REQUIRED"
+        ],
+        "checks": [
+          "Internal clearance is not a replacement."
+        ],
+        "prohibited_controls": [
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "wizard-affidavit-conflict",
+      "screen": "wizard",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-21",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Signed affidavit conflicts with answers",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "AFFIDAVIT_CONTRADICTION"
+        ],
+        "checks": [
+          "Human correction and renewed review required."
+        ],
+        "prohibited_controls": [
+          "advance_to_review"
+        ]
+      }
+    },
+    {
+      "id": "case-evidence-denied",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-22",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {},
+      "expected": {
+        "heading": "Evidence unavailable",
+        "s5_outcome": "DENIED",
+        "s5_reason_codes": [
+          "EVIDENCE_SCOPE_MISMATCH"
+        ],
+        "checks": [
+          "Do not render foreign document metadata or case payload."
+        ],
+        "prohibited_controls": [
+          "view_foreign_pdf",
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "wizard-unusable-document",
+      "screen": "wizard",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-23",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Document unusable",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "DOCUMENT_UNUSABLE"
+        ],
+        "checks": [
+          "Parser rejection stays distinct from filename or envelope acceptance."
+        ],
+        "prohibited_controls": [
+          "advance_to_review"
+        ]
+      }
+    },
+    {
+      "id": "case-penalty-unavailable",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-25",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Penalty review unavailable",
+        "s5_outcome": "CONTEXT_UNAVAILABLE",
+        "s5_reason_codes": [
+          "PENALTY_REVIEW_UNAVAILABLE"
+        ],
+        "checks": [
+          "Do not substitute an empty list or zero amount."
+        ],
+        "prohibited_controls": [
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "case-requester-authority",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 1001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-26",
+        "operation": "APPROVE",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {},
+      "expected": {
+        "heading": "Decision not permitted",
+        "s5_outcome": "DENIED",
+        "s5_reason_codes": [
+          "REQUESTER_SELF_DECISION"
+        ],
+        "checks": [
+          "Role change cannot permit self-decision."
+        ],
+        "prohibited_controls": [
+          "approve",
+          "reject",
+          "complete"
+        ]
+      }
+    },
+    {
+      "id": "case-clearer-authority",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 2001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-27",
+        "operation": "APPROVE",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {},
+      "expected": {
+        "heading": "Decision not permitted",
+        "s5_outcome": "DENIED",
+        "s5_reason_codes": [
+          "CLEARANCE_DECIDER_CONFLICT"
+        ],
+        "checks": [
+          "Prior clearance actor cannot be deciding authority."
+        ],
+        "prohibited_controls": [
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "case-stale",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-28",
+        "operation": "APPROVE",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 4,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Case changed; reload and reassess",
+        "s5_outcome": "CONFLICT",
+        "s5_reason_codes": [
+          "STALE_VERSION"
+        ],
+        "checks": [
+          "No optimistic success; discard old readiness."
+        ],
+        "prohibited_controls": [
+          "replay_without_refresh"
+        ]
+      }
+    },
+    {
+      "id": "wizard-existing-request",
+      "screen": "wizard",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 1001,
+        "role_label": "INSTITUTION",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-29",
+        "operation": "REQUEST",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Active release already exists",
+        "s5_outcome": "CONFLICT",
+        "s5_reason_codes": [
+          "ACTIVE_RELEASE_EXISTS"
+        ],
+        "checks": [
+          "Preserve existing case; do not create duplicate."
+        ],
+        "prohibited_controls": [
+          "submit"
+        ]
+      }
+    },
+    {
+      "id": "wizard-renewal-conflict",
+      "screen": "wizard",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 1001,
+        "role_label": "INSTITUTION",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-30",
+        "operation": "REQUEST",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Renewal proposal exists",
+        "s5_outcome": "CONFLICT",
+        "s5_reason_codes": [
+          "RENEWAL_CONFLICT"
+        ],
+        "checks": [
+          "Do not delete or bypass the proposal."
+        ],
+        "prohibited_controls": [
+          "submit"
+        ]
+      }
+    },
+    {
+      "id": "case-approve-projection",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-31",
+        "operation": "APPROVE",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Authorization simulation only",
+        "s5_outcome": "AUTHORIZATION_RECORDABLE_IN_DEMO",
+        "s5_reason_codes": [],
+        "checks": [
+          "Persisted PENDING remains PENDING until a real server action succeeds.",
+          "Projected APPROVED keeps monitoring active."
+        ],
+        "prohibited_controls": [
+          "optimistic_approval",
+          "automatic_completion"
+        ]
+      }
+    },
+    {
+      "id": "case-completion-missing-pdf",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-32",
+        "operation": "COMPLETE",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "APPROVED",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "New completion PDF required",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "NEW_COMPLETION_EVIDENCE_REQUIRED"
+        ],
+        "checks": [
+          "APPROVED means completion pending; original PDF is not a substitute."
+        ],
+        "prohibited_controls": [
+          "complete"
+        ]
+      }
+    },
+    {
+      "id": "case-rtgs-completion-reference",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-33",
+        "operation": "COMPLETE",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "APPROVED",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "RTGS"
+      },
+      "expected": {
+        "heading": "Recorded refund reference required",
+        "s5_outcome": "BLOCKED",
+        "s5_reason_codes": [
+          "REFUND_REFERENCE_REQUIRED"
+        ],
+        "checks": [
+          "Do not generate a UTR or infer a payment from PDF presence."
+        ],
+        "prohibited_controls": [
+          "complete"
+        ]
+      }
+    },
+    {
+      "id": "case-complete-projection",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-34",
+        "operation": "COMPLETE",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "APPROVED",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Completion simulation only",
+        "s5_outcome": "COMPLETION_RECORDABLE_IN_DEMO",
+        "s5_reason_codes": [],
+        "checks": [
+          "Persisted APPROVED and monitoring active remain unchanged.",
+          "Hypothetical completed/monitoring-off result belongs only in a simulation panel."
+        ],
+        "prohibited_controls": [
+          "optimistic_completion"
+        ]
+      }
+    },
+    {
+      "id": "case-letter-failed",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-35",
+        "operation": "ISSUE_LETTER",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "APPROVED",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Letter issuance failed",
+        "s5_outcome": "RETRYABLE_FAILURE",
+        "s5_reason_codes": [
+          "LETTER_ISSUANCE_FAILED"
+        ],
+        "checks": [
+          "No issued badge, live QR token or completion success."
+        ],
+        "prohibited_controls": [
+          "download_unissued_letter",
+          "complete"
+        ]
+      }
+    },
+    {
+      "id": "wizard-cross-scope",
+      "screen": "wizard",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 1002,
+        "role_label": "INSTITUTION",
+        "scope_institution_ids": [
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-37",
+        "operation": "REQUEST",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {},
+      "expected": {
+        "heading": "Case unavailable",
+        "s5_outcome": "DENIED",
+        "s5_reason_codes": [
+          "CASE_OUTSIDE_SCOPE"
+        ],
+        "checks": [
+          "No protected identity, history, documents or case data."
+        ],
+        "prohibited_controls": [
+          "submit",
+          "view_pdf"
+        ]
+      }
+    },
+    {
+      "id": "case-reject-projection",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-38",
+        "operation": "REJECT",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Rejection simulation only",
+        "s5_outcome": "REJECTION_RECORDABLE_IN_DEMO",
+        "s5_reason_codes": [],
+        "checks": [
+          "Persisted PENDING is unchanged; no history invented.",
+          "Future confirmed rejection retains monitoring and its reason."
+        ],
+        "prohibited_controls": [
+          "optimistic_rejection"
+        ]
+      }
+    },
+    {
+      "id": "case-units-unknown",
+      "screen": "case",
+      "state": "synthetic_assessment",
+      "actor": {
+        "id": 3001,
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101,
+          102
+        ]
+      },
+      "condition": {
+        "s5_ref": "S5-40",
+        "operation": "ASSESS",
+        "snapshot_recipe": "Fresh S5 defaults recursively merged with this S5 input_patch; arrays/scalars/null replace."
+      },
+      "view_data": {
+        "persisted_case_status": "PENDING",
+        "persisted_version": 3,
+        "persisted_monitoring_active": true,
+        "path": "TERM_COMPLETE",
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Applicable clearance set unavailable",
+        "s5_outcome": "CONTEXT_UNAVAILABLE",
+        "s5_reason_codes": [
+          "CLEARANCE_SCOPE_UNKNOWN"
+        ],
+        "checks": [
+          "Three rows do not prove all applicable units are known."
+        ],
+        "prohibited_controls": [
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "wizard-path",
+      "screen": "wizard",
+      "state": "path_selection",
+      "actor": {
+        "role_label": "INSTITUTION",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "path_selection"
+      },
+      "view_data": {
+        "path_options": [
+          "TERM_COMPLETE",
+          "PROGRESSIVE_CLOSURE",
+          "MERGER",
+          "CONVERSION_TO_UNIVERSITY",
+          "CLOSURE_BY_AICTE"
+        ],
+        "mode": "FDR"
+      },
+      "expected": {
+        "heading": "Select a release path",
+        "checks": [
+          "Path and mode are distinct.",
+          "No implied eligibility."
+        ],
+        "prohibited_controls": [
+          "submit"
+        ]
+      }
+    },
+    {
+      "id": "wizard-template-unavailable",
+      "screen": "wizard",
+      "state": "template_unavailable",
+      "actor": {
+        "role_label": "INSTITUTION",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "template_unavailable"
+      },
+      "view_data": {
+        "template_available": false
+      },
+      "expected": {
+        "heading": "Declaration template unavailable",
+        "checks": [
+          "Do not invent eleven questions or treat aggregate flags as a legal form."
+        ],
+        "prohibited_controls": [
+          "advance_to_documents"
+        ]
+      }
+    },
+    {
+      "id": "wizard-review-request",
+      "screen": "wizard",
+      "state": "review",
+      "actor": {
+        "role_label": "INSTITUTION",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "review"
+      },
+      "view_data": {
+        "request_gate": "EVIDENCE_AND_BASIS_REVIEWED_SYNTHETIC",
+        "clearance_status": "NOT_YET_REQUESTED",
+        "penalty_review": null
+      },
+      "expected": {
+        "heading": "Review release request",
+        "checks": [
+          "Unknown penalty/unfinished clearances alone do not block initial REQUEST.",
+          "Require request-specific server permission; do not reuse ASSESS as request gate."
+        ],
+        "prohibited_controls": [
+          "automatic_submit",
+          "approve"
+        ]
+      }
+    },
+    {
+      "id": "wizard-path-changed",
+      "screen": "wizard",
+      "state": "preview_invalidated",
+      "actor": {
+        "role_label": "INSTITUTION",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "preview_invalidated"
+      },
+      "view_data": {
+        "old_path": "TERM_COMPLETE",
+        "new_path": "MERGER",
+        "preview_valid": false
+      },
+      "expected": {
+        "heading": "Review updated requirements",
+        "checks": [
+          "Clear stale assessment and refresh child checklist.",
+          "Do not delete stored evidence silently."
+        ],
+        "prohibited_controls": [
+          "submit_with_old_preview"
+        ]
+      }
+    },
+    {
+      "id": "wizard-upload-invalid",
+      "screen": "wizard",
+      "state": "invalid_input",
+      "actor": {
+        "role_label": "INSTITUTION",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "invalid_input"
+      },
+      "view_data": {
+        "upload_error": "PDF_PARSE_REJECTED",
+        "upload_accepted": false
+      },
+      "expected": {
+        "heading": "Upload could not be accepted",
+        "checks": [
+          "Focus error summary; preserve safe fields.",
+          "No upload success or invented page count."
+        ],
+        "prohibited_controls": [
+          "advance_to_review"
+        ]
+      }
+    },
+    {
+      "id": "case-viewer-failed",
+      "screen": "case",
+      "state": "viewer_unavailable",
+      "actor": {
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "viewer_unavailable"
+      },
+      "view_data": {
+        "document_ref": "SYNTH-DOC-FDR",
+        "page_count": null,
+        "viewer_loaded": false
+      },
+      "expected": {
+        "heading": "Preview unavailable",
+        "checks": [
+          "Offer protected download only if server allows.",
+          "Do not invent page anchor or public file URL."
+        ],
+        "prohibited_controls": [
+          "unscoped_download"
+        ]
+      }
+    },
+    {
+      "id": "case-loading",
+      "screen": "case",
+      "state": "loading",
+      "actor": {
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "loading"
+      },
+      "view_data": {},
+      "expected": {
+        "heading": "Loading release case",
+        "checks": [
+          "No prior case identity or controls rendered."
+        ],
+        "prohibited_controls": [
+          "approve",
+          "complete"
+        ]
+      }
+    },
+    {
+      "id": "case-service-unavailable",
+      "screen": "case",
+      "state": "service_unavailable",
+      "actor": {
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "service_unavailable"
+      },
+      "view_data": {},
+      "expected": {
+        "heading": "Release case temporarily unavailable",
+        "checks": [
+          "No fixture fallback, empty clearance success, or zero penalty.",
+          "Retry reads; reconcile uncertain writes before retry."
+        ],
+        "prohibited_controls": [
+          "approve",
+          "complete"
+        ]
+      }
+    },
+    {
+      "id": "case-session-expired",
+      "screen": "case",
+      "state": "session_expired",
+      "actor": {
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "session_expired"
+      },
+      "view_data": {},
+      "expected": {
+        "heading": "Sign in to continue",
+        "checks": [
+          "Clear protected cache; use shared auth flow.",
+          "Do not replay pending mutation after login."
+        ],
+        "prohibited_controls": [
+          "approve",
+          "complete"
+        ]
+      }
+    },
+    {
+      "id": "case-response-race",
+      "screen": "case",
+      "state": "late_response",
+      "actor": {
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "late_response"
+      },
+      "view_data": {},
+      "expected": {
+        "heading": "Loading current case",
+        "checks": [
+          "Discard response for old case, identity or version.",
+          "No previous case flash or document preview."
+        ],
+        "prohibited_controls": [
+          "apply_old_response"
+        ]
+      }
+    },
+    {
+      "id": "case-legacy",
+      "screen": "case",
+      "state": "legacy",
+      "actor": {
+        "role_label": "AUTHORITY",
+        "scope_institution_ids": [
+          101
+        ]
+      },
+      "condition": {
+        "trigger": "legacy"
+      },
+      "view_data": {
+        "legacy_request_status": "APPROVED",
+        "persisted_monitoring_active": true
+      },
+      "expected": {
+        "heading": "Release authorized; completion pending",
+        "checks": [
+          "Preserve existing request, protected evidence and history.",
+          "APH path/clearance/letter is not claimed for a legacy request."
+        ],
+        "prohibited_controls": [
+          "invent_clearance_history"
+        ]
+      }
+    },
+    {
+      "id": "queue-open",
+      "screen": "clearance_queue",
+      "state": "assigned_tasks",
+      "actor": {
+        "role_label": "CLEARANCE_UNIT",
+        "scope_unit": "GRANTS"
+      },
+      "condition": {
+        "trigger": "assigned_tasks"
+      },
+      "view_data": {
+        "unit": "GRANTS",
+        "tasks": [
+          {
+            "ref": "SYNTH-TASK-GRANTS",
+            "institution_name": "Synthetic Demo Institute A",
+            "status": "OPEN",
+            "due_date": "2026-10-25",
+            "responsible_party": "Assigned Grants group"
+          }
+        ]
+      },
+      "expected": {
+        "heading": "Assigned Grants tasks",
+        "checks": [
+          "Only server-scoped group work shown.",
+          "Reason/evidence required for an allowed human clearance; no authority decision here."
+        ],
+        "prohibited_controls": [
+          "bulk_clear",
+          "approve_release"
+        ]
+      }
+    },
+    {
+      "id": "queue-empty",
+      "screen": "clearance_queue",
+      "state": "empty",
+      "actor": {
+        "role_label": "CLEARANCE_UNIT",
+        "scope_unit": "GRANTS"
+      },
+      "condition": {
+        "trigger": "empty"
+      },
+      "view_data": {
+        "tasks": []
+      },
+      "expected": {
+        "heading": "No assigned clearance work",
+        "checks": [
+          "Empty queue is not a global all-cleared result."
+        ],
+        "prohibited_controls": [
+          "bulk_clear"
+        ]
+      }
+    },
+    {
+      "id": "queue-denied",
+      "screen": "clearance_queue",
+      "state": "access_denied",
+      "actor": {
+        "role_label": "CLEARANCE_UNIT",
+        "scope_unit": "GRANTS"
+      },
+      "condition": {
+        "trigger": "access_denied"
+      },
+      "view_data": {},
+      "expected": {
+        "heading": "Queue unavailable",
+        "checks": [
+          "No task names, case identities, counts or evidence."
+        ],
+        "prohibited_controls": [
+          "decide_task"
+        ]
+      }
+    },
+    {
+      "id": "queue-stale",
+      "screen": "clearance_queue",
+      "state": "conflict",
+      "actor": {
+        "role_label": "CLEARANCE_UNIT",
+        "scope_unit": "GRANTS"
+      },
+      "condition": {
+        "trigger": "conflict"
+      },
+      "view_data": {},
+      "expected": {
+        "heading": "Task changed; reload",
+        "checks": [
+          "No local clearance success; reload version before renewed human decision."
+        ],
+        "prohibited_controls": [
+          "replay_without_refresh"
+        ]
+      }
+    }
+  ],
+  "public_record_allowlist": [
+    "serial",
+    "issue_date",
+    "institution_name",
+    "kind",
+    "status"
+  ],
+  "public_scenarios": [
+    {
+      "id": "public-issued",
+      "screen": "public_verify",
+      "state": "ISSUED",
+      "view_data": {
+        "serial": "SYNTH-NOC-2026-001",
+        "issue_date": "2026-10-24",
+        "institution_name": "Synthetic Demo Institute A",
+        "kind": "NOC",
+        "status": "ISSUED"
+      },
+      "expected": {
+        "heading": "Issued demo record found",
+        "checks": [
+          "No bank verification, payment or digital signature claim."
+        ],
+        "prohibited_controls": [
+          "view_private_case",
+          "download_private_pdf"
+        ]
+      },
+      "s5_lineage_ref": null
+    },
+    {
+      "id": "public-revoked",
+      "screen": "public_verify",
+      "state": "REVOKED",
+      "view_data": {
+        "serial": "SYNTH-NOC-2026-001",
+        "issue_date": "2026-10-24",
+        "institution_name": "Synthetic Demo Institute A",
+        "kind": "NOC",
+        "status": "REVOKED"
+      },
+      "expected": {
+        "heading": "Revoked \u2014 do not rely on this letter",
+        "checks": [
+          "Revocation is prominent; no current-valid claim."
+        ],
+        "prohibited_controls": [
+          "view_private_case",
+          "download_private_pdf"
+        ]
+      },
+      "s5_lineage_ref": "S5-36"
+    },
+    {
+      "id": "public-not-found",
+      "screen": "public_verify",
+      "state": "NOT_FOUND",
+      "view_data": {},
+      "expected": {
+        "heading": "Verification record unavailable",
+        "checks": [
+          "Generic result; do not reflect token or disclose whether a private case exists."
+        ],
+        "prohibited_controls": [
+          "view_private_case",
+          "download_private_pdf"
+        ]
+      },
+      "s5_lineage_ref": null
+    },
+    {
+      "id": "public-service-failed",
+      "screen": "public_verify",
+      "state": "UNAVAILABLE",
+      "view_data": {},
+      "expected": {
+        "heading": "Verification service temporarily unavailable",
+        "checks": [
+          "Offer retry; do not convert failure to not-found, issued or revoked."
+        ],
+        "prohibited_controls": [
+          "view_private_case",
+          "download_private_pdf"
+        ]
+      },
+      "s5_lineage_ref": null
+    },
+    {
+      "id": "public-loading",
+      "screen": "public_verify",
+      "state": "LOADING",
+      "view_data": {},
+      "expected": {
+        "heading": "Checking verification record",
+        "checks": [
+          "No previously viewed letter remains visible."
+        ],
+        "prohibited_controls": [
+          "view_private_case",
+          "download_private_pdf"
+        ]
+      },
+      "s5_lineage_ref": null
+    }
+  ]
+}

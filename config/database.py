@@ -22,7 +22,7 @@ def database_config(base_dir, environ=None, *, testing=False):
     # Existing test commands stay local even when the application uses Supabase.
     if testing or backend == 'sqlite' or (backend == 'auto' and not url):
         return {'ENGINE': 'django.db.backends.sqlite3', 'NAME': base_dir / 'data/portal.sqlite3',
-                'OPTIONS': {'timeout': 20}}
+                'OPTIONS': {'timeout': 20, 'transaction_mode': 'IMMEDIATE'}}
     if not url:
         raise ImproperlyConfigured('Set DATABASE_URL in the ignored .env file or process environment.')
     try:

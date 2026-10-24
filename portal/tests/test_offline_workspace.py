@@ -18,7 +18,7 @@ class OfflineWorkspaceTests(SimpleTestCase):
             expected = ('ai/migrations/0001_initial.py', 'verification/migrations/0001_initial.py',
                         'notifications/migrations/0001_initial.py', 'ai/ocr_worker.py',
                         'frontend/src/main.tsx', 'frontend/package.json',
-                        'frontend/dist/records/index.html', 'frontend/dist/records/assets/pdf.worker.js')
+                        'frontend/dist/index.html', 'frontend/dist/assets/pdf.worker.js')
             private = ('frontend/node_modules/private.txt', 'frontend/.env',
                        'frontend/test-results/private.txt', 'planning/private.pdf',
                        'data/demo-credentials.txt', '.env', 'ai/__pycache__/private.pyc')

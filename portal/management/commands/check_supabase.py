@@ -4,6 +4,7 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, DatabaseError, transaction
 from config.database import private_schema
+from config.legacy_notifications import has_legacy_notifications, archive_legacy_notifications
 
 
 class Command(BaseCommand):
@@ -12,6 +13,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--initialize', action='store_true')
         parser.add_argument('--migrate', action='store_true')
+        parser.add_argument('--upgrade-legacy-notifications', action='store_true',
+            help='Archive prototype notification history and create the authoritative shared outbox tables.')
 
     def handle(self, **options):
         if connection.vendor != 'postgresql':
@@ -38,8 +41,13 @@ class Command(BaseCommand):
                 cursor.execute('SELECT current_schema()')
                 if cursor.fetchone()[0] != schema:
                     raise CommandError('Connection search_path does not select the private application schema; use a Session pooler/direct connection.')
+            if has_legacy_notifications(connection):
+                if not options['upgrade_legacy_notifications']:
+                    raise CommandError('Legacy notification tables detected. Use --upgrade-legacy-notifications --migrate to archive that history and install the shared outbox without resetting portal data.')
+                archive_legacy_notifications(connection)
+                self.stdout.write('Legacy notification history retained in private archive tables; shared outbox installed.')
             if options['migrate']:
                 call_command('migrate', interactive=False, verbosity=options['verbosity'])
             self.stdout.write(self.style.SUCCESS('PostgreSQL connection and private application schema are ready. Credentials were not printed.'))
-        except (DatabaseError, OSError):
+        except (DatabaseError, OSError, ValueError):
             raise CommandError('Could not complete the Supabase database check. Verify the dashboard connection URI, password, network access, TLS and schema permissions. No credentials were printed.') from None

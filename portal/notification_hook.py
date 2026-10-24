@@ -5,7 +5,7 @@ from django.utils.module_loading import import_string
 
 
 def notify_record(item, template):
-    path = getattr(settings, 'YASH_NOTIFY_BACKEND', '')
+    path = getattr(settings, 'YASH_NOTIFY_BACKEND', 'notifications.service.notify')
     if not path:
         # An installation may explicitly disable the adapter.
         return False
@@ -14,7 +14,9 @@ def notify_record(item, template):
     if template == 'record_submitted':
         recipients = list(get_user_model().objects.filter(is_active=True,
             groups__name='Officer').values_list('pk', flat=True))
-    import_string(path)(recipients=recipients, template=template,
-        context={'instrument_id': item.pk, 'reference': item.reference},
+    template = {'record_submitted': 'instrument_submitted',
+                'record_reviewed': 'instrument_accepted' if item.status == 'ACCEPTED' else 'instrument_changes_requested'}.get(template, template)
+    queued = import_string(path)(recipients=recipients, template=template,
+        context={'instrument_id': item.pk, 'reference': item.reference, 'url': f'/records/{item.pk}'},
         key=f'instrument:{item.pk}:{template}:v{item.version}')
-    return True
+    return bool(queued)

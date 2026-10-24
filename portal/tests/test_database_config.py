@@ -9,9 +9,10 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command, CommandError
 from django.db import OperationalError
 from django.test import SimpleTestCase
-from dotenv import load_dotenv
+from config.envfile import load_env_file
 
 from config.database import database_config, private_schema
+from config.legacy_notifications import has_legacy_notifications, archive_legacy_notifications
 from scripts import build_offline_demo
 
 SYNTHETIC_URL = 'postgresql://postgres.synthetic:fake%40password@aws-0-test.pooler.supabase.com:5432/postgres'
@@ -71,11 +72,11 @@ class DatabaseConfigurationTests(SimpleTestCase):
         with TemporaryDirectory() as directory, patch.dict('os.environ', {}, clear=True):
             file = Path(directory)/'.env'
             file.write_text('DATABASE_URL="postgresql://user:fake${DO_NOT_EXPAND}@localhost/db"\n', encoding='utf-8')
-            load_dotenv(file, override=False, interpolate=False)
+            load_env_file(file)
             import os
             self.assertIn('${DO_NOT_EXPAND}', os.environ['DATABASE_URL'])
             os.environ['DATABASE_URL'] = SYNTHETIC_URL
-            load_dotenv(file, override=False, interpolate=False)
+            load_env_file(file)
             self.assertEqual(os.environ['DATABASE_URL'], SYNTHETIC_URL)
 
     def test_offline_wheel_validation_normalizes_distribution_names(self):
@@ -131,3 +132,25 @@ class SupabaseCheckCommandTests(SimpleTestCase):
             with self.assertRaises(CommandError) as error:
                 call_command('check_supabase', stdout=StringIO())
         self.assertNotIn('secret connection URI', str(error.exception))
+
+
+class LegacyOutboxDetectionTests(SimpleTestCase):
+    def connection(self, columns=None):
+        from types import SimpleNamespace
+        connection = MagicMock(vendor='postgresql')
+        connection.introspection.get_table_list.return_value = [] if columns is None else [SimpleNamespace(name='notifications_notification')]
+        connection.introspection.get_table_description.return_value = [SimpleNamespace(name=name) for name in columns or []]
+        return connection
+
+    def test_absent_and_shared_tables_need_no_bridge(self):
+        self.assertFalse(has_legacy_notifications(self.connection()))
+        self.assertFalse(has_legacy_notifications(self.connection(['idempotency_key', 'recipient_key', 'template_id'])))
+
+    def test_prototype_is_detected_and_unknown_schema_is_not_modified(self):
+        self.assertTrue(has_legacy_notifications(self.connection(['key', 'template', 'recipient_id'])))
+        with self.assertRaisesMessage(ValueError, 'Unrecognized'):
+            has_legacy_notifications(self.connection(['unrecognized']))
+
+    def test_bridge_rejects_non_postgresql(self):
+        with self.assertRaisesMessage(ValueError, 'PostgreSQL-only'):
+            archive_legacy_notifications(MagicMock(vendor='sqlite'))

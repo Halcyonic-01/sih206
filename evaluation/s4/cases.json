@@ -1,0 +1,83 @@
+{
+  "dataset_id": "s4-institution-csv-v1",
+  "data_classification": "SYNTHETIC",
+  "simulation_label": "SIMULATED",
+  "review_status": "AUTHOR_LABELLED_NOT_INDEPENDENTLY_ADJUDICATED",
+  "cases": [
+    {
+      "id": "valid-unicode-quoted-comma-leading-zero",
+      "file": "valid.csv",
+      "rationale": "Three fictional institutions; quoted comma, Unicode and preserved leading-zero identity.",
+      "existing": [],
+      "expected": {"status": "VALID", "row_count": 3, "valid_count": 3, "invalid_count": 0, "valid_row_numbers": [2,3,4], "errors": []},
+      "expected_values": {"2": {"aicte_id": "000123", "institution_code": "SYNTH-A", "institution_name": "Synthetic Aster, Institute"}, "3": {"institution_name": "सिंथेटिक संस्थान"}, "4": {"status": "INACTIVE"}}
+    },
+    {
+      "id": "field-errors-retain-only-independent-valid-row",
+      "file": "invalid-fields.csv",
+      "rationale": "Each bad field has a literal label; the final independent row remains a candidate, not an imported record.",
+      "existing": [],
+      "expected": {"status": "INVALID", "row_count": 8, "valid_count": 1, "invalid_count": 7, "valid_row_numbers": [9], "errors": [
+        {"row":2,"field":"contact_email","code":"INVALID_EMAIL"},
+        {"row":3,"field":"institution_type","code":"INVALID_CHOICE"},
+        {"row":4,"field":"trust_name","code":"REQUIRED"},
+        {"row":5,"field":"data_classification","code":"NOT_SIMULATED"},
+        {"row":6,"field":"institution_name","code":"FORMULA_PREFIX"},
+        {"row":7,"field":"aicte_id","code":"INVALID_TOKEN"},
+        {"row":8,"field":"status","code":"INVALID_CHOICE"}
+      ]}
+    },
+    {
+      "id": "duplicate-identities-flag-all-rows",
+      "file": "duplicates.csv",
+      "rationale": "ID collision flags the first two rows; code collision flags the second and third, after trim/uppercase.",
+      "existing": [],
+      "expected": {"status":"INVALID","row_count":3,"valid_count":0,"invalid_count":3,"valid_row_numbers":[],"errors":[
+        {"row":2,"field":"aicte_id","code":"DUPLICATE_IDENTITY"},
+        {"row":3,"field":"aicte_id","code":"DUPLICATE_IDENTITY"},
+        {"row":3,"field":"institution_code","code":"DUPLICATE_IDENTITY"},
+        {"row":4,"field":"institution_code","code":"DUPLICATE_IDENTITY"}
+      ]}
+    },
+    {
+      "id": "existing-and-legacy-identities-are-conflicts",
+      "file": "valid.csv",
+      "rationale": "No upsert: supplied existing ID and legacy institution code block rows without querying any database.",
+      "existing": [{"aicte_id":"000123","institution_code":"SYNTH-EXISTING"},{"aicte_id":null,"institution_code":" synth-b "}],
+      "expected": {"status":"INVALID","row_count":3,"valid_count":1,"invalid_count":2,"valid_row_numbers":[4],"errors":[
+        {"row":2,"field":"aicte_id","code":"EXISTING_IDENTITY"},
+        {"row":3,"field":"institution_code","code":"EXISTING_IDENTITY"}
+      ]}
+    },
+    {
+      "id": "late-malformed-quoting-discards-earlier-candidate",
+      "file": "malformed.csv",
+      "rationale": "Unterminated CSV after a valid row is a whole-file failure, not a partial preview.",
+      "existing": [],
+      "expected": {"status":"INVALID","row_count":null,"valid_count":0,"invalid_count":null,"valid_row_numbers":[],"errors":[{"row":null,"field":"__file__","code":"CSV_SYNTAX"}]}
+    },
+    {
+      "id": "forged-administrative-column-rejected",
+      "file": "forged-header.csv",
+      "rationale": "Identity import cannot assign an approver or accept unknown columns.",
+      "existing": [],
+      "expected": {"status":"INVALID","row_count":null,"valid_count":0,"invalid_count":null,"valid_row_numbers":[],"errors":[{"row":null,"field":"__header__","code":"HEADER_UNKNOWN"}]}
+    },
+    {
+      "id": "required-header-columns-not-inferred",
+      "file": "missing-header.csv",
+      "rationale": "All profile columns are explicit; no inferred type, status, contact or simulation label.",
+      "existing": [],
+      "expected": {"status":"INVALID","row_count":null,"valid_count":0,"invalid_count":null,"valid_row_numbers":[],"errors":[
+        {"row":null,"field":"institution_name","code":"HEADER_MISSING"},
+        {"row":null,"field":"trust_name","code":"HEADER_MISSING"},
+        {"row":null,"field":"institution_type","code":"HEADER_MISSING"},
+        {"row":null,"field":"region","code":"HEADER_MISSING"},
+        {"row":null,"field":"state","code":"HEADER_MISSING"},
+        {"row":null,"field":"contact_email","code":"HEADER_MISSING"},
+        {"row":null,"field":"status","code":"HEADER_MISSING"},
+        {"row":null,"field":"data_classification","code":"HEADER_MISSING"}
+      ]}
+    }
+  ]
+}

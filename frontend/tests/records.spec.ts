@@ -3,11 +3,11 @@ import {readFileSync} from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve('..');
-const passwords = Object.fromEntries(readFileSync(path.join(root, 'data/demo-credentials.txt'), 'utf8')
+const passwords = Object.fromEntries(readFileSync(process.env.DEMO_CREDENTIALS_FILE || path.join(root, 'data/demo-credentials.txt'), 'utf8')
   .split(/\r?\n/).filter(line => line.includes(': ')).map(line => line.split(': ')));
 
 async function login(page: Page, username: string) {
-  await page.goto('/accounts/login/?next=/workspace/');
+  await page.goto('/legacy/accounts/login/?next=/workspace/');
   await page.getByLabel('Username:').fill(username);
   await page.getByLabel('Password:').fill(passwords[username]);
   await page.getByRole('button', {name: 'Sign in', exact: true}).click();
@@ -123,10 +123,9 @@ test('global search cannot expose another institution’s record', async ({page}
   await expect(page.getByRole('button', {name: 'YASH-RTGS-MATCH', exact: true})).toHaveCount(0);
 });
 
-test('notification inbox and delivery operations are available to the officer', async ({page}) => {
+test('shared notification inbox receives record submissions', async ({page}) => {
   await login(page, 'officer');
-  await page.getByRole('tab', {name: 'Notifications', exact: true}).click();
+  await page.goto('/notifications');
   await expect(page.getByRole('heading', {name: 'Notifications', exact: true})).toBeVisible();
-  await expect(page.getByRole('heading', {name: 'Delivery operations', exact: true})).toBeVisible();
-  await expect(page.getByText('Deposit submitted for review', {exact: true}).first()).toBeVisible();
+  await expect(page.getByText(/New submission to review:/).first()).toBeVisible();
 });

@@ -27,7 +27,7 @@ def main():
             if ': ' in line:
                 username, password = line.split(': ', 1)
                 passwords[username] = password
-    assert Browser().request('/instruments/export.csv')[2].startswith(smoke_http.BASE + '/accounts/login/')
+    assert Browser().request('/instruments/export.csv')[2].startswith(smoke_http.BASE + smoke_http.LEGACY + '/accounts/login/')
     categories = ('all', 'pending', 'accepted', 'approaching', 'today', 'matured')
     elapsed, exported, documents = [], {}, set()
     for username in ('institution_a', 'institution_b', 'officer', 'authority'):

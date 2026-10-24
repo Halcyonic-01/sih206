@@ -69,7 +69,7 @@ def event(instrument, actor, action, before, reason='', after_extra=None):
                 'CHANGES_REQUESTED': 'record_reviewed'}.get(action)
     if template:
         from .notification_hook import notify_record
-        notify_record(instrument, template)
+        instrument._notification_queued = notify_record(instrument, template)
 
 
 def _compare_and_update(instrument, expected_version, **changes):
