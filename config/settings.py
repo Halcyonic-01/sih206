@@ -1,10 +1,15 @@
 import os
 import json
+import sys
 from pathlib import Path
+from dotenv import load_dotenv
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Explicit shell/deployment variables win; preserve literal password characters.
+load_dotenv(BASE_DIR / '.env', override=False, interpolate=False, encoding='utf-8-sig')
+from .database import database_config
 OCR_ENABLED = os.environ.get('OCR_ENABLED', 'true').lower() == 'true'
 OCR_TESSERACT = os.environ.get('OCR_TESSERACT', '')
 OCR_PDFTOPPM = os.environ.get('OCR_PDFTOPPM', '')
@@ -56,9 +61,7 @@ TEMPLATES = [{
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 (BASE_DIR / 'data').mkdir(exist_ok=True)
-DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
-                         'NAME': BASE_DIR / 'data' / 'portal.sqlite3',
-                         'OPTIONS': {'timeout': 20}}}
+DATABASES = {'default': database_config(BASE_DIR, testing=sys.argv[1:2] == ['test'])}
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},

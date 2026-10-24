@@ -59,7 +59,8 @@ Email delivery is disabled by default. The default backend captures local test
 messages in process memory; those are labelled CAPTURED, never externally SENT.
 For an approved SMTP service configure the operating-system variables in
 `.env.example`, including `DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`
-and `NOTIFICATION_EMAIL_ENABLED=true`. Settings do not automatically read `.env`.
+and `NOTIFICATION_EMAIL_ENABLED=true`. Settings now load the ignored root `.env`;
+explicit process variables take precedence. See [Supabase setup](supabase.md).
 No real email was sent during verification; tests use local capture/mocks.
 
 ## Bank confirmation

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from email.parser import BytesParser
 import hashlib
 import json
+import re
 from pathlib import Path
 import shutil
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -23,8 +24,10 @@ def sha256(path):
 
 
 def check_wheels(wheel_dir):
-    required = dict(line.strip().lower().split('==') for line in
-                    (ROOT / 'requirements.txt').read_text().splitlines() if line.strip())
+    def canonical(name):
+        return re.sub(r'[-_.]+', '-', name).lower()
+    required = {canonical(name): version for name, version in (line.strip().split('==') for line in
+                    (ROOT / 'requirements.txt').read_text().splitlines() if line.strip())}
     required['pip'] = PIP_VERSION
     found = {}
     wheels = sorted(wheel_dir.glob('*.whl'))
@@ -32,7 +35,7 @@ def check_wheels(wheel_dir):
         with ZipFile(wheel) as archive:
             metadata, = [name for name in archive.namelist() if name.endswith('.dist-info/METADATA')]
             fields = BytesParser().parsebytes(archive.read(metadata))
-            name = fields['Name'].lower()
+            name = canonical(fields['Name'])
             if name in found:
                 raise ValueError(f'Duplicate wheel: {name}')
             found[name] = fields['Version']

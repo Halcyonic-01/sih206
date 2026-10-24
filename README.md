@@ -1,5 +1,9 @@
 # AICTE Security Deposit / FDR Portal
 
+Supabase PostgreSQL support is available through a private root `.env` connection
+URI. See [Supabase setup](docs/supabase.md). Local tests and offline demo commands
+continue to use SQLite. Live connection requires your own project's credentials.
+
 ## Yash's records workspace (Y1-Y8)
 
 The current branch adds deposit/document fields, PDF structure validation, REST
@@ -211,7 +215,7 @@ Ordinary GitHub development uses the source commands above, not the optional off
 
 ## 10. Configuration and recovery
 
-Settings read operating-system environment variables. .env.example is a reference, not an automatically loaded file. Variables: DJANGO_DEBUG, DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS, DJANGO_SECURE_COOKIES, MAX_UPLOAD_MB, BUSINESS_TIMEZONE, REMINDER_DAYS. See the code map for defaults and boundaries.
+Settings read the ignored root `.env` and operating-system environment variables; explicitly set process variables take precedence. Copy `.env.example` as a reference. Database connection and isolation settings are documented in [Supabase setup](docs/supabase.md). Existing variables include DJANGO_DEBUG, DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS, DJANGO_SECURE_COOKIES, MAX_UPLOAD_MB, BUSINESS_TIMEZONE and REMINDER_DAYS.
 
 Database: data/portal.sqlite3. Documents: data/documents. Stop the server and back them up **together**. Restore into a new folder, never over the only working copy. Credentials/backups remain private. The testing walkthrough provides safe commands.
 
