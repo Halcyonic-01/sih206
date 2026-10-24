@@ -12,6 +12,8 @@ This is a **synthetic localhost demonstration candidate**. Public/real-data depl
 
 This is an FDR lifecycle portal, not a general AICTE application-validation engine. There is **no OCR, AI model, automatic PDF extraction, bank connection, regulatory policy engine, notification delivery or payment execution**. Officers manually inspect documents. Acceptance means **accepted for tracking**, not bank-authenticated or legally compliant.
 
+S1 adds the [institution and obligation model foundation](obligations/README.md): four new tables, validation and migration tests. Calculations, policy publication, APIs and institution screens are still future tasks. Existing records receive no inferred requirements or exemptions. Run `manage.py test` to include the new app's tests alongside the original portal suite.
+
 ## 2. Read these documents in order
 
 | Your question | Document |
@@ -159,6 +161,7 @@ Expected: PASS, 24 role/category comparisons, 18 distinct PDF downloads. After c
 
 ```text
 config/                 Django settings and root routes
+obligations/            S1 institution profiles, approvals, rule records and obligations
 portal/
   models.py             institutions, instruments, documents, observations, releases, audit
   forms.py              field/upload validation
