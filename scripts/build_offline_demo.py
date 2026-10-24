@@ -9,9 +9,11 @@ import shutil
 from zipfile import ZipFile, ZIP_DEFLATED
 
 ROOT = Path(__file__).resolve().parents[1]
-FOLDERS = ('config', 'portal', 'obligations', 'templates', 'static', 'fixtures', 'scripts', 'docs', 'evaluation')
+FOLDERS = ('config', 'portal', 'obligations', 'access', 'notifications', 'audit', 'scenarios', 'docker',
+           'templates', 'static', 'fixtures', 'scripts', 'docs', 'evaluation')
 FILES = ('manage.py', 'requirements.txt', 'requirements.in', 'README.md', '.env.example',
-         '.gitignore', 'Setup-Offline.ps1', 'Start-Demo.ps1', 'Verify-Demo.ps1')
+         '.gitignore', 'Setup-Offline.ps1', 'Start-Demo.ps1', 'Verify-Demo.ps1', 'run.ps1', 'run.sh',
+         'Dockerfile', 'docker-compose.yml', '.dockerignore')
 PIP_VERSION = '26.2.1'
 
 
@@ -42,10 +44,19 @@ def build(wheel_dir):
     wheels = check_wheels(wheel_dir)
     destination = ROOT / 'dist' / ('fdr-demo-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'))
     destination.mkdir(parents=True, exist_ok=False)
+    # The React build is generated, so it is copied when present (cd frontend && npm ci && npm run build).
+    frontend_dist = ROOT / 'frontend' / 'dist'
+    if not (frontend_dist / 'index.html').exists():
+        print('WARNING: frontend/dist is missing; the package will show build instructions instead of the React app.')
     for folder in FOLDERS:
         for source in (ROOT / folder).rglob('*'):
             if not source.is_file() or '__pycache__' in source.parts or source.suffix in ('.pyc', '.pyo'):
                 continue
+            target = destination / source.relative_to(ROOT)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+    for source in frontend_dist.rglob('*') if frontend_dist.is_dir() else []:
+        if source.is_file():
             target = destination / source.relative_to(ROOT)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, target)

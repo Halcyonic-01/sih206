@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.contrib.auth.models import Group
 
 from access.models import UnitAssignment
@@ -33,6 +34,10 @@ class StaffTestCase(PortalTestCase):
         cls.unassigned_clearance.groups.add(clearance_group)
         cls.auditor = User.objects.create_user(username='auditor', password=PASSWORD)
         cls.auditor.groups.add(auditor_group)
+
+    def setUp(self):
+        super().setUp()
+        cache.clear()  # the login throttle counts requests per minute in the cache
 
     def instrument(self, institution, owner, status=Instrument.Status.SUBMITTED, reference='REF-1'):
         return Instrument.objects.create(
