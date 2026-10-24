@@ -1,8 +1,10 @@
 $ErrorActionPreference = 'Stop'
 $previousDebug = $env:DJANGO_DEBUG
+$previousDatabaseBackend = $env:DATABASE_BACKEND
 Push-Location $PSScriptRoot
 try {
     $env:DJANGO_DEBUG = 'true'
+    $env:DATABASE_BACKEND = 'sqlite'
     $python = "$PSScriptRoot\.venv\Scripts\python.exe"
     & $python manage.py check
     if ($LASTEXITCODE -ne 0) { throw 'Django check failed.' }
@@ -16,4 +18,4 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Synthetic evaluation contract failed.' }
     & $python manage.py due_actions --as-of 2026-10-23
     if ($LASTEXITCODE -ne 0) { throw 'Due-action report failed.' }
-} finally { $env:DJANGO_DEBUG = $previousDebug; Pop-Location }
+} finally { $env:DJANGO_DEBUG = $previousDebug; $env:DATABASE_BACKEND = $previousDatabaseBackend; Pop-Location }

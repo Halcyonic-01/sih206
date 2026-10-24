@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import F, Q
 
@@ -25,6 +26,17 @@ class UserProfile(models.Model):
 
 
 class Instrument(models.Model):
+    class Mode(models.TextChoices):
+        FDR = 'FDR', 'Fixed Deposit Receipt'
+        RTGS = 'RTGS', 'RTGS deposit'
+        RPGF = 'RPGF', 'Refundable Performance Guaranty Fund'
+
+    class VerificationLevel(models.TextChoices):
+        DECLARED = 'DECLARED', 'Declared; not independently confirmed'
+        REVIEWED = 'REVIEWED', 'Document reviewed'
+        CONFIRMED = 'CONFIRMED', 'Independent confirmation recorded; see evidence'
+        DISCREPANCY = 'DISCREPANCY', 'Discrepancy requiring review'
+
     class Status(models.TextChoices):
         DRAFT = 'DRAFT', 'Draft'
         SUBMITTED = 'SUBMITTED', 'Submitted'
@@ -32,8 +44,25 @@ class Instrument(models.Model):
         ACCEPTED = 'ACCEPTED', 'Accepted for tracking'
 
     institution = models.ForeignKey(Institution, on_delete=models.PROTECT)
+    obligation = models.ForeignKey(
+        'obligations.DepositObligation',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='instruments',
+    )
     reference = models.CharField('FDR reference', max_length=100)
     bank = models.CharField('Issuing bank', max_length=200)
+    mode = models.CharField(max_length=4, choices=Mode, default=Mode.FDR)
+    ifsc = models.CharField('IFSC', max_length=11, blank=True, default='', validators=[
+        RegexValidator(r'\A[A-Z]{4}0[A-Z0-9]{6}\Z', 'Enter an 11-character uppercase IFSC code.')])
+    branch = models.CharField(max_length=200, blank=True, default='')
+    holder_names = models.CharField(max_length=500, blank=True, default='')
+    utr = models.CharField('UTR / payment reference', max_length=100, blank=True, default='')
+    # Unknown is distinct from a confirmed absence of a lien on legacy records.
+    lien_marked = models.BooleanField(null=True, blank=True, default=None)
+    verification_level = models.CharField(
+        max_length=15, choices=VerificationLevel, default=VerificationLevel.DECLARED)
     amount_paise = models.PositiveBigIntegerField()
     issue_date = models.DateField()
     maturity_date = models.DateField()
@@ -50,6 +79,11 @@ class Instrument(models.Model):
     class Meta:
         ordering = ['-updated_at', '-pk']
         constraints = [
+            models.CheckConstraint(condition=Q(mode__in=['FDR', 'RTGS', 'RPGF']),
+                                   name='instrument_mode_valid'),
+            models.CheckConstraint(
+                condition=Q(verification_level__in=['DECLARED', 'REVIEWED', 'CONFIRMED', 'DISCREPANCY']),
+                name='instrument_verification_valid'),
             models.CheckConstraint(condition=Q(amount_paise__gt=0), name='amount_positive'),
             models.CheckConstraint(condition=Q(maturity_date__gte=F('issue_date')),
                                    name='maturity_after_issue'),
@@ -64,6 +98,13 @@ class Instrument(models.Model):
 
     def clean(self):
         super().clean()
+        if self.obligation_id and self.institution_id:
+            # Check by ID without relying on an unsaved or stale related object.
+            from obligations.models import DepositObligation
+            owner_id = DepositObligation.objects.filter(pk=self.obligation_id).values_list(
+                'institution_id', flat=True).first()
+            if owner_id != self.institution_id:
+                raise ValidationError({'obligation': 'Choose an obligation belonging to this institution.'})
         if self.pk:
             original = Instrument.objects.filter(pk=self.pk).values('predecessor_id').first()
             if original and original['predecessor_id'] != self.predecessor_id:
@@ -106,6 +147,17 @@ class Instrument(models.Model):
 class Document(models.Model):
     class Kind(models.TextChoices):
         FDR = 'FDR', 'FDR supporting document'
+        PAYMENT_PROOF = 'PAYMENT_PROOF', 'Payment proof'
+        RPGF_PROOF = 'RPGF_PROOF', 'RPGF deposit proof'
+        AFFIDAVIT_3 = 'AFFIDAVIT_3', 'Affidavit 3'
+        AFFIDAVIT_6 = 'AFFIDAVIT_6', 'Affidavit 6'
+        APPROVAL_LETTER = 'APPROVAL_LETTER', 'LoA / EoA'
+        BANK_CERTIFICATE = 'BANK_CERTIFICATE', 'Bank certificate'
+        REQUEST_LETTER = 'REQUEST_LETTER', 'Release request letter'
+        STUDENT_CLEARANCE = 'STUDENT_CLEARANCE', 'University / board student clearance'
+        EXTERNAL_NOC = 'EXTERNAL_NOC', 'External clearance / NOC'
+        NOC = 'NOC', 'Issued No Objection Certificate'
+        SANCTION_ORDER = 'SANCTION_ORDER', 'Issued sanction order'
         RELEASE_EVIDENCE = 'RELEASE_EVIDENCE', 'Release completion evidence'
 
     instrument = models.ForeignKey(Instrument, on_delete=models.PROTECT, related_name='documents')
@@ -114,11 +166,15 @@ class Document(models.Model):
     original_name = models.CharField(max_length=255)
     size_bytes = models.PositiveIntegerField()
     sha256 = models.CharField(max_length=64)
+    page_count = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at', '-pk']
+        constraints = [models.CheckConstraint(
+            condition=Q(page_count__isnull=True) | Q(page_count__gte=1),
+            name='document_page_count_positive')]
 
     def __str__(self):
         return f'{self.original_name} (document #{self.pk})'
@@ -211,6 +267,9 @@ class ReviewObservation(models.Model):
         super().clean()
         if self.document_id and self.instrument_id and self.document.instrument_id != self.instrument_id:
             raise ValidationError({'document': 'Choose a document attached to this instrument.'})
+        if self.document_id and self.page_number and self.document.page_count is not None:
+            if self.page_number > self.document.page_count:
+                raise ValidationError({'page_number': 'The page reference exceeds the document page count.'})
 
     @property
     def is_resolved(self):

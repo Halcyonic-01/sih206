@@ -43,6 +43,7 @@ def setup():
                     'pip==26.2.1', '-r', str(ROOT / 'requirements.txt')], check=True, cwd=ROOT)
     environment = os.environ.copy()
     environment['DJANGO_DEBUG'] = 'true'
+    environment['DATABASE_BACKEND'] = 'sqlite'
     for args in [('migrate', '--noinput'), ('seed_demo', '--generate-password'),
                  ('seed_demo', '--authority-only', '--generate-password'), ('seed_staff', '--generate-password'),
                  ('seed_scenarios',), ('seed_review',), ('check',)]:

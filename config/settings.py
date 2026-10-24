@@ -1,11 +1,13 @@
 import hashlib
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.core.exceptions import ImproperlyConfigured
 
 from .envfile import load_env_file
+from .database import database_config
 from .staticrules import immutable_assets, static_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     'rest_framework', 'drf_spectacular', 'drf_spectacular_sidecar', 'axes',
-    'portal', 'obligations', 'access', 'notifications', 'audit', 'scenarios',
+    'portal', 'obligations', 'access', 'notifications', 'audit', 'scenarios', 'verification', 'ai',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -70,11 +72,7 @@ TEMPLATES = [{
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 (BASE_DIR / 'data').mkdir(exist_ok=True)
-DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
-                         'NAME': BASE_DIR / 'data' / 'portal.sqlite3',
-                         # IMMEDIATE takes the write lock at BEGIN, so concurrent writers queue instead of failing,
-                         # and the audit hash chain is always extended by one writer at a time.
-                         'OPTIONS': {'timeout': 20, 'transaction_mode': 'IMMEDIATE'}}}
+DATABASES = {'default': database_config(BASE_DIR, testing=sys.argv[1:2] == ['test'])}
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -216,3 +214,16 @@ AUDIT_CHAIN_KEY = os.environ.get('AUDIT_CHAIN_KEY') or hashlib.sha256(('audit-ch
 # that cannot be undone quickly, so it stays off until AICTE decides on it.
 # drf-spectacular warnings are reported by a separate CI step so a missing schema hint never blocks a merge.
 SILENCED_SYSTEM_CHECKS = ['security.W019', 'security.W021', 'drf_spectacular.W001', 'drf_spectacular.W002']
+
+# Yash document/OCR/advisory verification features.
+import json
+OCR_ENABLED = env_bool('OCR_ENABLED', True)
+OCR_TESSERACT = os.environ.get('OCR_TESSERACT', '')
+OCR_PDFTOPPM = os.environ.get('OCR_PDFTOPPM', '')
+YASH_NOTIFY_BACKEND = 'notifications.service.notify'
+NOTIFICATION_EMAIL_ENABLED = env_bool('NOTIFICATION_EMAIL_ENABLED', False)
+BANK_CONTACTS = json.loads(os.environ.get('BANK_CONTACTS_JSON', '{}'))
+BANK_CONFIRMATION_SIMULATED = env_bool('BANK_CONFIRMATION_SIMULATED', True)
+BANK_PUBLIC_BASE_URL = os.environ.get('BANK_PUBLIC_BASE_URL', PORTAL_BASE_URL)
+AI_ENABLED = env_bool('AI_ENABLED', False)
+AI_MODEL = os.environ.get('AI_MODEL', 'claude-opus-5-5')

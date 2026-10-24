@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react'
+import {configDefaults} from 'vitest/config'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 
@@ -25,8 +26,10 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
   },
   test: {
+    exclude: [...configDefaults.exclude, 'tests/**'], // Playwright runs separately.
     environment: 'jsdom',
     globals: true,
+    testTimeout: 15000, // Ant Design interactions need headroom on shared CI runners.
     setupFiles: ['./src/test/setup.ts'],
     css: false,
   },

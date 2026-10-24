@@ -149,6 +149,11 @@ export async function api<T = unknown>(path: string, options: RequestOptions = {
   return (await response.json()) as T
 }
 
+/** Protected document bytes for the inline PDF viewer, using the shared session/error path. */
+export async function documentBlob(path: string): Promise<Blob> {
+  return (await send(path, {})).blob()
+}
+
 export const get = <T>(path: string, query?: Record<string, QueryValue>, signal?: AbortSignal) =>
   api<T>(path, { query, signal })
 export const post = <T>(path: string, json?: unknown) => api<T>(path, { method: 'POST', json: json ?? {} })

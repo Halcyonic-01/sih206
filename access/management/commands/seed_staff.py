@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from access.models import UnitAssignment
+from access.private_files import make_private
 from portal.permissions import AUDITOR_GROUP, CLEARANCE_GROUP
 
 ACCOUNTS = [
@@ -64,7 +65,7 @@ class Command(BaseCommand):
                 for username, _, _ in missing:
                     handle.write(f'{username}: {password}\n')
             try:
-                path.chmod(0o600)
+                make_private(path)
             except OSError:
                 pass
             self.stdout.write('Random credentials saved to data/staff-credentials.txt (not printed).')

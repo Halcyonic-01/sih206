@@ -1,5 +1,16 @@
 # Five-minute SIH demonstration and fallback
 
+Yash workspace demonstration: `/workspace/` supports creation/submission, PDF-page
+review, discrepancy/correction/resubmission, acceptance, renewal, dashboard and
+synthetic statement preview/commit. See `yash-workspace.md` for setup, browser tests,
+optional AI-off fallback and honest pending K/S integrations. The legacy script
+below remains available unchanged as a fallback.
+
+Y1 developer note: `portal.0005_record_fields` adds optional deposit/obligation
+metadata and document categories/page counts (see `record-fields.md`). The current
+screens remain the FDR demo; no verification, PDF parsing or RTGS workflow is
+claimed from the new storage fields alone.
+
 Use a **fresh extracted offline package**, not the development database or a previous rehearsal. Setup creates 17 instruments and 18 PDFs. Read local passwords privately from its two data/ credentials files. Four separate browser profiles avoid shared-login interference between roles. All documents and names are synthetic. Keep fixtures/release-evidence.pdf ready.
 
 Start from the extracted folder with `Start-Demo.ps1 -Port 8003`, then open http://127.0.0.1:8003/. If that port is occupied, select another free port and use it consistently. Use the optional dashboard evaluation date 2026-10-23. Do not change the system clock. Run Verify-Demo.ps1 before the presentation; the verification takes longer than the five-minute talk and is not part of it.
@@ -21,3 +32,16 @@ Live actions persist and change counts; do not quote the initial counts again af
 Fallback: if a live mutation fails, stop retrying and reload to inspect state. Show M6-RELEASE_APPROVED for authorized-but-monitored state and M6-RELEASE_COMPLETED for preseeded completion/evidence. Identify these as preseeded outcomes, not actions just performed. Use M6-RENEWAL_OLD and its successor for a read-only lineage demonstration. Keep a second fresh extraction and the ZIP/checksum on local storage; Python 3.12 must already be available. If the UI fails entirely, show the recorded test/evaluation report and due-action output, explicitly saying the live demo failed. No screenshots or video have been generated or verified by this audit.
 
 Before sign-off, manually verify readable text, form errors, scrolling, PDF download/viewing and screen sharing in the target browser; rehearse with the network physically disconnected if offline operation will be claimed. Browser automation could not initialize in the audit environment, so those checks remain open.
+
+## Current workspace additions
+
+For database integration, show `check_supabase` only after configuring the private
+database URI and initializing a dedicated development project. Offline Start-Demo
+continues to use SQLite. Never show the `.env` credentials during a demo.
+
+The legacy timing table above describes the earlier MVP. For this branch, also show
+SYNTHETIC-OCR-001 → Documents → Read with local OCR, review the six suggestions,
+and explain that saving is explicit. Show Notifications/inbox and officer delivery
+operations. Show the bank-request panel, explaining reviewed contacts and simulation
+mode; never call a simulated/mocked response an actual bank confirmation. The new
+browser journeys pass; a physically disconnected rehearsal remains outstanding.

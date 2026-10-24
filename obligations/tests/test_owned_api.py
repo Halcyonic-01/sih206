@@ -111,7 +111,9 @@ class OwnedApiTests(PortalTestCase):
     def test_missing_link_is_unknown_not_zero(self):
         ob = DepositObligation.objects.create(institution=self.institution_a, rule_version=self.rule,
                                               required_paise=10000)
-        response = self.client.get(f'/api/obligations/{ob.pk}')
+        from obligations.services import DependencyUnavailable
+        with patch('obligations.services.holding_snapshot', side_effect=DependencyUnavailable('Missing ledger')):
+            response = self.client.get(f'/api/obligations/{ob.pk}')
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.json()['assessment']['coverage'])
         self.assertEqual(response.json()['assessment']['status'], 'UNAVAILABLE')
