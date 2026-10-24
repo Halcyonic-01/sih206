@@ -21,6 +21,8 @@ describe('api client', () => {
 
   it('builds /api URLs and drops empty query values', () => {
     expect(buildUrl('/records/', { q: 'abc', page: 2, empty: '', none: undefined })).toBe('/api/records/?q=abc&page=2')
+    expect(buildUrl('/audit/', { action: ['A', 'B'], q: 'x' })).toBe('/api/audit/?action=A&action=B&q=x')
+    expect(buildUrl('/audit/', { action: [] })).toBe('/api/audit/')
     expect(buildUrl('records/')).toBe('/api/records/')
     expect(buildUrl('/api/health/')).toBe('/api/health/')
   })

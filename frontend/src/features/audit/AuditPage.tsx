@@ -1,0 +1,18 @@
+import { Card, Tabs } from 'antd'
+import { PageHeader } from '@/components/PageHeader'
+import AccessLogTab from './AccessLogTab'
+import AuditTrailTab from './AuditTrailTab'
+
+export default function AuditPage() {
+  return (
+    <>
+      <PageHeader title="Audit and access" subtitle="Read-only. Every change to a record and every sign-in, download and export." />
+      <Card>
+        <Tabs destroyInactiveTabPane items={[
+          { key: 'trail', label: 'Audit trail', children: <AuditTrailTab /> },
+          { key: 'access', label: 'Access log', children: <AccessLogTab /> },
+        ]} />
+      </Card>
+    </>
+  )
+}

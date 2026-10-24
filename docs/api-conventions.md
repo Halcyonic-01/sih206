@@ -117,3 +117,16 @@ notify(who.officers(), 'instrument_submitted',
 * API: `GET /api/notifications/` (own inbox, `?unread=1`), `GET /api/notifications/unread-count/`,
   `POST /api/notifications/{id}/read/`, `POST /api/notifications/read-all/`,
   `GET /api/notifications/delivery-status/` (auditor only, no message content).
+
+## Auditor endpoints (K7)
+
+Auditor role only (403 for everyone else, 401 when signed out). Drafts stay private, so they never appear.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/audit/events/` | audit trail; filters `instrument`, `q` (reference), `institution`, `actor`, `actor_name`, repeated `action`, `date_from`, `date_to` (YYYY-MM-DD, business timezone, inclusive) |
+| `GET /api/audit/events/{id}/` | full `before` / `after` snapshots and computed `changes` |
+| `GET /api/audit/events/facets/` | actions, actors, institutions for the filter lists |
+| `GET /api/audit/access-log/` | filters `user`, `username`, repeated `action`, `object_type`, `object_id`, `ip`, dates |
+| `GET /api/audit/access-log/facets/` | actions and object types |
+| `GET /api/audit/events/export/`, `GET /api/audit/access-log/export/` | CSV (at most 5,000 rows, formula-safe); each export is itself access-logged |
