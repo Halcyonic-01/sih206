@@ -115,6 +115,7 @@ def manage(*args, env, check=True):
 
 def prepare_database(env, force_seed, prod):
     manage('migrate', '--noinput', env=env)
+    manage('seal_audit_chain', env=env)  # seals audit events written before the hash chain existed
     seed_env = {**env, 'DJANGO_DEBUG': 'true'}  # generated credentials are allowed in local DEBUG only
     steps = []
     if force_seed or not CREDENTIALS.exists():

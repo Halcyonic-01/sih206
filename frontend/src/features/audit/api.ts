@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import { get, type Page, type QueryValue } from '@/api/client'
 
 export interface AuditEventRow {
@@ -14,6 +14,16 @@ export interface AuditEventDetail extends AuditEventRow {
   before: Record<string, unknown>
   after: Record<string, unknown>
   changes: { field: string; before: unknown; after: unknown }[]
+  seal: { hash: string; prev_hash: string; backfilled: boolean } | null
+}
+
+export interface ChainResult {
+  status: 'ok' | 'broken' | 'incomplete'
+  checked: number
+  backfilled: number
+  unsealed: number
+  head: string
+  broken: { event_id: number; reason: string; detail: string }[]
 }
 
 export interface AccessLogRow {
@@ -74,4 +84,8 @@ export function useAccessLog(filters: Filters, page: number) {
 
 export function useAccessFacets() {
   return useQuery({ queryKey: ['audit', 'access-facets'], queryFn: () => get<AccessFacets>('/audit/access-log/facets/'), staleTime: 60_000 })
+}
+
+export function useVerifyChain() {
+  return useMutation({ mutationFn: () => get<ChainResult>('/audit/chain/verify/') })
 }

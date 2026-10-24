@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.http import HttpResponse
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -19,6 +19,7 @@ from portal.api.permissions import has_role
 from portal.exports import spreadsheet_text
 from portal.models import AuditEvent
 from portal.permissions import scoped_access_logs, scoped_audit_events
+from .chain import verify_chain
 
 EXPORT_LIMIT = 5000
 SKIP_DIFF = {'version'}
@@ -77,9 +78,14 @@ def changes(before, after):
 
 class AuditEventDetailSerializer(AuditEventSerializer):
     changes = serializers.SerializerMethodField()
+    seal = serializers.SerializerMethodField()
 
     class Meta(AuditEventSerializer.Meta):
-        fields = AuditEventSerializer.Meta.fields + ['before', 'after', 'changes']
+        fields = AuditEventSerializer.Meta.fields + ['before', 'after', 'changes', 'seal']
+
+    def get_seal(self, event):
+        seal = getattr(event, 'seal', None)
+        return {'hash': seal.hash, 'prev_hash': seal.prev_hash, 'backfilled': seal.backfilled} if seal else None
 
     def get_changes(self, event):
         return changes(event.before, event.after)
@@ -250,3 +256,17 @@ class AccessLogExport(APIView):
                              'User agent', 'Request ID'],
                             [[r.pk, r.created_at.isoformat(), r.username, r.action, r.object_type, r.object_id,
                               r.detail, r.path, r.ip_address, r.user_agent, r.request_id] for r in rows])
+
+
+class ChainVerify(APIView):
+    """Recompute the whole hash chain. Read-only; safe to call repeatedly."""
+    permission_classes = [has_role('auditor')]
+
+    @extend_schema(responses=inline_serializer('ChainVerification', {
+        'status': serializers.ChoiceField(choices=['ok', 'broken', 'incomplete']),
+        'checked': serializers.IntegerField(), 'backfilled': serializers.IntegerField(),
+        'unsealed': serializers.IntegerField(), 'head': serializers.CharField(),
+        'broken': serializers.ListField(child=serializers.DictField()),
+    }))
+    def get(self, request):
+        return Response(verify_chain().as_dict())

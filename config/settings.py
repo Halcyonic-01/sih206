@@ -1,3 +1,4 @@
+import hashlib
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -69,7 +70,9 @@ ASGI_APPLICATION = 'config.asgi.application'
 (BASE_DIR / 'data').mkdir(exist_ok=True)
 DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
                          'NAME': BASE_DIR / 'data' / 'portal.sqlite3',
-                         'OPTIONS': {'timeout': 20}}}
+                         # IMMEDIATE takes the write lock at BEGIN, so concurrent writers queue instead of failing,
+                         # and the audit hash chain is always extended by one writer at a time.
+                         'OPTIONS': {'timeout': 20, 'transaction_mode': 'IMMEDIATE'}}}
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -202,6 +205,10 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'AICTE Deposit Portal 
 PORTAL_BASE_URL = os.environ.get('PORTAL_BASE_URL', 'http://127.0.0.1:8010')
 # Try to send emails right after the event commits (the scheduled send_notifications command retries failures).
 NOTIFY_SEND_ON_COMMIT = env_bool('NOTIFY_SEND_ON_COMMIT', True)
+
+# Key for the audit hash chain (HMAC). Anyone who can only edit the database cannot recompute a valid chain
+# without it. Set AUDIT_CHAIN_KEY in production; the fallback is derived from SECRET_KEY.
+AUDIT_CHAIN_KEY = os.environ.get('AUDIT_CHAIN_KEY') or hashlib.sha256(('audit-chain|' + SECRET_KEY).encode()).hexdigest()
 
 # Deliberate: same-origin framing is required by the in-app PDF viewer; HSTS preload is an explicit opt-in
 # that cannot be undone quickly, so it stays off until AICTE decides on it.

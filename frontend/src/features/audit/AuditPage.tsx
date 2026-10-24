@@ -2,6 +2,7 @@ import { Card, Tabs } from 'antd'
 import { PageHeader } from '@/components/PageHeader'
 import AccessLogTab from './AccessLogTab'
 import AuditTrailTab from './AuditTrailTab'
+import IntegrityTab from './IntegrityTab'
 
 export default function AuditPage() {
   return (
@@ -11,6 +12,7 @@ export default function AuditPage() {
         <Tabs destroyInactiveTabPane items={[
           { key: 'trail', label: 'Audit trail', children: <AuditTrailTab /> },
           { key: 'access', label: 'Access log', children: <AccessLogTab /> },
+          { key: 'integrity', label: 'Integrity', children: <IntegrityTab /> },
         ]} />
       </Card>
     </>

@@ -130,3 +130,19 @@ Auditor role only (403 for everyone else, 401 when signed out). Drafts stay priv
 | `GET /api/audit/access-log/` | filters `user`, `username`, repeated `action`, `object_type`, `object_id`, `ip`, dates |
 | `GET /api/audit/access-log/facets/` | actions and object types |
 | `GET /api/audit/events/export/`, `GET /api/audit/access-log/export/` | CSV (at most 5,000 rows, formula-safe); each export is itself access-logged |
+
+## Audit hash chain (K9)
+
+Every `AuditEvent` is sealed (`audit.AuditSeal`) in the same transaction that writes it:
+`hash = HMAC-SHA256(AUDIT_CHAIN_KEY, prev_hash | canonical event JSON)`. Seals are append-only and the database
+rejects a second seal with the same `prev_hash` (no forks).
+
+* `python manage.py verify_audit_chain` exits non-zero when an event was edited, removed or inserted
+  (`event_modified`, `event_missing`, `chain_break`, or unsealed rows). `GET /api/audit/chain/verify/` returns the same
+  result for the auditor screen.
+* `python manage.py seal_audit_chain` seals older events; they are marked `backfilled` ("sealed late"): this proves
+  they were not changed since, not that they were correct when written. `run_portal.py` runs it after `migrate`.
+* Do not create audit events with `bulk_create` or raw SQL: they would be reported as unsealed.
+* Limits: this detects tampering after the fact. Stage 3 adds database triggers / INSERT-only roles and anchors
+  the chain head in write-once storage, so a database administrator cannot silently rebuild the chain.
+* SQLite now runs with `transaction_mode=IMMEDIATE` so writers queue instead of racing.
