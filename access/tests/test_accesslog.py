@@ -22,6 +22,7 @@ class DownloadAndExportLoggingTests(StaffTestCase):
         self.client.force_login(self.officer)
         response = self.client.get(reverse('document_download', args=[document.pk]),
                                    HTTP_USER_AGENT='UnitTest/1.0', HTTP_X_REQUEST_ID='trace-abcdef12')
+        self.addCleanup(response.close)  # Release the streamed PDF before Windows removes the test directory.
         self.assertEqual(response.status_code, 200)
         row = AccessLog.objects.get(action=AccessLog.DOCUMENT_DOWNLOAD)
         self.assertEqual((row.user, row.username), (self.officer, 'officer'))
@@ -153,7 +154,8 @@ class SeedStaffTests(TestCase):
             self.assertEqual(set(User.objects.get(username='auditor').groups.values_list('name', flat=True)), {'Auditor'})
             credentials = Path(base, 'data', 'staff-credentials.txt')
             self.assertTrue(credentials.exists())
-            self.assertEqual(credentials.stat().st_mode & 0o077, 0)  # owner-only
+            from access.private_files import is_private
+            self.assertTrue(is_private(credentials))  # POSIX mode or native owner-only NTFS ACL
             self.assertIn('nothing changed', self.run_seed(base))
             self.assertEqual(UnitAssignment.objects.count(), 3)
 

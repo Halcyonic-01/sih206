@@ -76,12 +76,13 @@ class ReliabilityTests(PortalTestCase):
         self.assertFalse(Document.objects.exists())
 
     def test_signature_only_unreadable_file_is_not_automatically_accepted(self):
-        # Records the existing envelope-only limitation; this is not a PDF parser.
+        # Y2 closes the old envelope-only limitation without recording a draft.
         self.client.force_login(self.a)
         upload = SimpleUploadedFile('unreadable.pdf', b'%PDF-1.7\nnot a PDF body\n%%EOF', content_type='application/pdf')
         response = self.client.post(reverse('instrument_create'), self.payload(document=upload))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Instrument.objects.get().status, 'DRAFT')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('document', response.context['form'].errors)
+        self.assertFalse(Instrument.objects.exists())
         self.assertFalse(AuditEvent.objects.filter(action='ACCEPTED').exists())
 
     def test_database_failure_during_observation_keeps_version_and_findings(self):

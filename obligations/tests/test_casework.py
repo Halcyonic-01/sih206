@@ -50,6 +50,9 @@ class CaseworkTests(PortalTestCase):
         self.obligation = DepositObligation.objects.create(institution=self.institution_a,
             rule_version=self.rule, required_paise=1000,
             term_start=date(2016,1,1), term_end=timezone.localdate()-timedelta(days=1))
+        # Y1's real relationship is now present: fixtures must satisfy the live scope guard.
+        self.instrument.obligation = self.obligation
+        self.instrument.save(update_fields=['obligation'])
 
     def case(self):
         self.instrument.refresh_from_db()

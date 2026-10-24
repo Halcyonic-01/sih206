@@ -24,7 +24,7 @@ export function money(value: number | string | null | undefined): string {
 }
 export function paise(text: string): number {
   if (!/^\d+(\.\d{1,2})?$/.test(text)) throw new Error('Use a positive INR amount with at most two decimals.');
-  const [whole, fraction = ''] = text.split('.');
+  const [whole = '0', fraction = ''] = text.split('.');
   const amount = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
   if (amount <= 0n || amount > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('Amount is outside the supported range.');
   return Number(amount);

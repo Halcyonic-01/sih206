@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     'rest_framework', 'drf_spectacular', 'drf_spectacular_sidecar', 'axes',
-    'portal', 'obligations', 'access', 'notifications', 'audit', 'scenarios',
+    'portal', 'obligations', 'access', 'notifications', 'audit', 'scenarios', 'verification', 'ai',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -216,3 +216,16 @@ AUDIT_CHAIN_KEY = os.environ.get('AUDIT_CHAIN_KEY') or hashlib.sha256(('audit-ch
 # that cannot be undone quickly, so it stays off until AICTE decides on it.
 # drf-spectacular warnings are reported by a separate CI step so a missing schema hint never blocks a merge.
 SILENCED_SYSTEM_CHECKS = ['security.W019', 'security.W021', 'drf_spectacular.W001', 'drf_spectacular.W002']
+
+# Yash document/OCR/advisory verification features.
+import json
+OCR_ENABLED = env_bool('OCR_ENABLED', True)
+OCR_TESSERACT = os.environ.get('OCR_TESSERACT', '')
+OCR_PDFTOPPM = os.environ.get('OCR_PDFTOPPM', '')
+YASH_NOTIFY_BACKEND = 'notifications.service.notify'
+NOTIFICATION_EMAIL_ENABLED = env_bool('NOTIFICATION_EMAIL_ENABLED', False)
+BANK_CONTACTS = json.loads(os.environ.get('BANK_CONTACTS_JSON', '{}'))
+BANK_CONFIRMATION_SIMULATED = env_bool('BANK_CONFIRMATION_SIMULATED', True)
+BANK_PUBLIC_BASE_URL = os.environ.get('BANK_PUBLIC_BASE_URL', PORTAL_BASE_URL)
+AI_ENABLED = env_bool('AI_ENABLED', False)
+AI_MODEL = os.environ.get('AI_MODEL', 'claude-opus-5-5')

@@ -18,10 +18,12 @@ class Finding:
 
 
 def check_document_present(instrument):
-    if not instrument.documents.filter(kind=Document.Kind.FDR).exists():
+    kind = {'FDR': Document.Kind.FDR, 'RTGS': Document.Kind.PAYMENT_PROOF,
+            'RPGF': Document.Kind.RPGF_PROOF}[instrument.mode]
+    if not instrument.documents.filter(kind=kind).exists():
         return Finding(
-            code='FDR_DOCUMENT_REQUIRED', severity='blocking',
-            explanation='Upload an FDR PDF before submitting or accepting this record.',
+            code='FDR_DOCUMENT_REQUIRED' if instrument.mode == 'FDR' else 'DEPOSIT_DOCUMENT_REQUIRED', severity='blocking',
+            explanation='Upload the deposit-mode supporting PDF before submitting or accepting this record.',
             values={'attached_document_count': 0},
         )
     return None
@@ -52,4 +54,5 @@ def run_checks(instrument):
 
 def checks_snapshot(instrument):
     return {'checks_version': CHECKS_VERSION,
+            'deposit_checks_version': 'deposit-modes-v1',
             'technical_findings': [finding.as_dict() for finding in run_checks(instrument)]}

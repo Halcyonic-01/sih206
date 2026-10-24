@@ -28,7 +28,9 @@ def evaluate(dataset_path):
     from django.core.management import call_command
     from django.test import override_settings
     from portal.models import Document, Institution, Instrument
-    from portal.uploads import validate_pdf_upload
+    # Preserve the frozen historical envelope benchmark; Y2 parser checks have
+    # their own tests and must not retroactively relabel this dataset.
+    from portal.uploads import validate_pdf_envelope
     from portal.validation import CHECKS_VERSION, run_checks
     call_command('migrate', verbosity=0)
     user = get_user_model().objects.create_user(username='synthetic-evaluation', password=None)
@@ -72,7 +74,7 @@ def evaluate(dataset_path):
             accepted = True
             with override_settings(MAX_UPLOAD_BYTES=case.get('limit', 10 * 1024 * 1024)):
                 try:
-                    validate_pdf_upload(upload)
+                    validate_pdf_envelope(upload)
                 except ValidationError:
                     accepted = False
             uploads.append({'id': case['id'], 'accepted': accepted,

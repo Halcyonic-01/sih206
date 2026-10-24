@@ -22,12 +22,17 @@ class InitialMigrationTests(TransactionTestCase):
         item = Instrument.objects.create(institution=institution, created_by=user,
             reference='SYNTHETIC-FDR', bank='Synthetic bank', amount_paise=50000025,
             issue_date=date(2026, 1, 1), maturity_date=date(2027, 1, 1))
-        before = list(Instrument.objects.filter(pk=item.pk).values())
+        # Use the original schema while obligations (and dependent portal
+        # migrations) are reversed. Current models may reference removed columns.
+        legacy_apps = MigrationExecutor(connection).loader.project_state(
+            [('portal', '0004_release_workflow')]).apps
+        LegacyInstrument = legacy_apps.get_model('portal', 'Instrument')
+        before = list(LegacyInstrument.objects.filter(pk=item.pk).values())
         latest = MigrationExecutor(connection).loader.graph.leaf_nodes()
         self.addCleanup(lambda: MigrationExecutor(connection).migrate(latest))
         for target in [[('obligations', None)], latest, [('obligations', None)], latest]:
             MigrationExecutor(connection).migrate(target)
-            self.assertEqual(list(Instrument.objects.filter(pk=item.pk).values()), before)
+            self.assertEqual(list(LegacyInstrument.objects.filter(pk=item.pk).values()), before)
             self.assertTrue(Institution.objects.filter(pk=institution.pk).exists())
         apps = MigrationExecutor(connection).loader.project_state(latest).apps
         for name in ['InstitutionProfile', 'ProgrammeApproval', 'RuleSet', 'DepositObligation']:

@@ -7,6 +7,7 @@ from django.core import mail
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.test import Client
+from django.utils import timezone
 from django.urls import reverse
 
 from access.models import AccessLog
@@ -48,6 +49,11 @@ class Scenario4ApproachingMaturityAndAlerts(ScenarioCase):
     def test_t_minus_30_reminder_reaches_the_bell_and_the_inbox_of_email(self):
         as_of = date(2026, 10, 23)
         record = self.accepted(as_of + timedelta(days=30))
+        # Y3 now queues submission/review events as well. This scenario isolates
+        # the subsequent scheduled reminder, without assuming those events do not exist.
+        call_command('send_notifications', stdout=StringIO())
+        mail.outbox.clear()
+        Notification.objects.filter(channel='IN_APP').update(read_at=timezone.now())
         call_command('run_due_rules', '--as-of', as_of.isoformat(), stdout=StringIO())
 
         institution_client = Client()
@@ -66,7 +72,7 @@ class Scenario4ApproachingMaturityAndAlerts(ScenarioCase):
         self.assertEqual(recipients, ['inst-a@demo.example', 'officer@demo.example'])
         self.assertIn(f'/records/{record.pk}', mail.outbox[0].body)
         self.assertNotIn('500000', mail.outbox[0].body)   # no amounts in email
-        self.assertEqual(Notification.objects.filter(channel='EMAIL', status='SENT').count(), 2)
+        self.assertEqual(Notification.objects.filter(template_id='maturity_reminder', channel='EMAIL', status='SENT').count(), 2)
 
         before = Notification.objects.count()
         call_command('run_due_rules', '--as-of', as_of.isoformat(), stdout=StringIO())
