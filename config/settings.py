@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     'rest_framework', 'drf_spectacular', 'drf_spectacular_sidecar', 'axes',
-    'portal', 'obligations', 'access',
+    'portal', 'obligations', 'access', 'notifications',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -186,6 +186,23 @@ SPECTACULAR_SETTINGS = {
 # /api/docs/ is open in local DEBUG mode; otherwise only signed-in users can read it.
 API_DOCS_PUBLIC = env_bool('API_DOCS_PUBLIC', DEBUG)
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Email: the console backend in local DEBUG mode; set EMAIL_HOST (and credentials) for real SMTP.
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND') or (
+    'django.core.mail.backends.console.EmailBackend' if not os.environ.get('EMAIL_HOST')
+    else 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_PORT = env_int('EMAIL_PORT', 587)
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', True)
+EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', False)
+EMAIL_TIMEOUT = env_int('EMAIL_TIMEOUT', 10, minimum=1)
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'AICTE Deposit Portal <no-reply@localhost>')
+# Used to build links inside emails. Set to the public https address when deployed.
+PORTAL_BASE_URL = os.environ.get('PORTAL_BASE_URL', 'http://127.0.0.1:8010')
+# Try to send emails right after the event commits (the scheduled send_notifications command retries failures).
+NOTIFY_SEND_ON_COMMIT = env_bool('NOTIFY_SEND_ON_COMMIT', True)
+
 # Deliberate: same-origin framing is required by the in-app PDF viewer; HSTS preload is an explicit opt-in
 # that cannot be undone quickly, so it stays off until AICTE decides on it.
 SILENCED_SYSTEM_CHECKS = ['security.W019', 'security.W021']

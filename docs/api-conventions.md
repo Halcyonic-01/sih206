@@ -91,3 +91,29 @@ sign-out and failed sign-in are logged automatically (the attempted username onl
 
 Demo accounts: `python manage.py seed_staff --generate-password` creates `clearance_pgrc`,
 `clearance_vigilance`, `clearance_grants` and `auditor` and writes `data/staff-credentials.txt` (git-ignored).
+
+## Notifications (K5)
+
+```python
+from notifications.service import notify
+from notifications import recipients as who
+
+notify(who.officers(), 'instrument_submitted',
+       {'reference': instrument.reference, 'url': f'/records/{instrument.pk}'},
+       key=f'instrument:{instrument.pk}:submitted:v{instrument.version}')
+```
+
+* `recipients`: users, user ids or plain email addresses. Helpers in `notifications/recipients.py`:
+  `officers()`, `authorities()`, `auditors()`, `clearance_users(unit=None)`, `institution_users(inst)`,
+  `institution_contacts(inst)` (users plus the AICTE profile contact email).
+* `template`: an id from `notifications/catalog.py`. Unknown ids still work if the context has `subject` and
+  `message`. Add real templates there (K owns the file) when you need new wording.
+* `key`: idempotency key of the **event**. Repeating a call with the same key and recipient does nothing, so it
+  is safe in retries and in `run_due_rules`. Include the version or date that makes the event unique.
+* `url`: a React path (`/records/42`), never an absolute URL. Messages carry a reference only, never amounts or
+  account details.
+* Call it inside the event's transaction: the row is rolled back with the event (outbox). Email is attempted right
+  after commit; `python manage.py send_notifications` retries (5 attempts, 5/15/60/240 min backoff).
+* API: `GET /api/notifications/` (own inbox, `?unread=1`), `GET /api/notifications/unread-count/`,
+  `POST /api/notifications/{id}/read/`, `POST /api/notifications/read-all/`,
+  `GET /api/notifications/delivery-status/` (auditor only, no message content).
