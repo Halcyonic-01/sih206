@@ -42,6 +42,8 @@ test('submission, PDF review, discrepancy, correction, acceptance and renewal', 
   await expect.poll(() => owner.locator('canvas').evaluate((el: HTMLCanvasElement) => el.width)).toBeGreaterThan(0);
   await owner.getByRole('button', {name: 'Extract with AI', exact: true}).click();
   await expect(owner.getByText('AI is off. Continue manual document review.', {exact: true})).toBeVisible();
+  await owner.getByRole('button', {name: 'Read with local OCR', exact: true}).click();
+  await expect(owner.getByText('Processed locally. Low-confidence, missing and conflicting fields require manual entry.', {exact: true})).toBeVisible();
   await owner.getByRole('button', {name: 'Submit for review', exact: true}).click();
   await owner.getByRole('button', {name: 'Record action', exact: true}).click();
   await expect(owner.getByText('SUBMITTED', {exact: true})).toBeVisible();
@@ -101,12 +103,13 @@ test('dashboard, responsive list, and synthetic reconciliation preview', async (
   await page.getByRole('tab', {name: 'Reconciliation', exact: true}).click();
   await page.locator('input[type=file]').setInputFiles(path.join(root, 'fixtures/synthetic-statement.csv'));
   await page.getByRole('button', {name: 'Preview matches', exact: true}).click();
-  await expect(page.getByText('SIMULATED_MATCH', {exact: true})).toBeVisible();
-  await expect(page.getByText('DISCREPANCY', {exact: true})).toBeVisible();
+  const reconciliation = page.getByRole('tabpanel', {name: 'Reconciliation'});
+  await expect(reconciliation.getByText('SIMULATED_MATCH', {exact: true})).toBeVisible();
+  await expect(reconciliation.getByText('DISCREPANCY', {exact: true})).toBeVisible();
   await page.getByRole('button', {name: 'Record previewed batch', exact: true}).click();
   await expect(page.getByText(/Synthetic batch \d+ recorded|already imported/)).toBeVisible();
   await page.setViewportSize({width: 390, height: 844});
-  await page.getByRole('tab', {name: 'Records', exact: true}).click();
+  await page.getByLabel('Workspace section', {exact: true}).selectOption('records');
   await expect(page.getByRole('heading', {name: 'Deposit records'})).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
@@ -118,4 +121,12 @@ test('global search cannot expose another institution’s record', async ({page}
   await search.press('Enter');
   await expect(page.getByText('No records match these filters', {exact: true})).toBeVisible();
   await expect(page.getByRole('button', {name: 'YASH-RTGS-MATCH', exact: true})).toHaveCount(0);
+});
+
+test('notification inbox and delivery operations are available to the officer', async ({page}) => {
+  await login(page, 'officer');
+  await page.getByRole('tab', {name: 'Notifications', exact: true}).click();
+  await expect(page.getByRole('heading', {name: 'Notifications', exact: true})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Delivery operations', exact: true})).toBeVisible();
+  await expect(page.getByText('Deposit submitted for review', {exact: true}).first()).toBeVisible();
 });

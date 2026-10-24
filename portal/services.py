@@ -65,6 +65,11 @@ def event(instrument, actor, action, before, reason='', after_extra=None):
         after.update(after_extra)
     AuditEvent.objects.create(instrument=instrument, actor=actor, action=action,
                               reason=reason, before=before, after=after)
+    template = {'SUBMITTED': 'record_submitted', 'ACCEPTED': 'record_reviewed',
+                'CHANGES_REQUESTED': 'record_reviewed'}.get(action)
+    if template:
+        from .notification_hook import notify_record
+        notify_record(instrument, template)
 
 
 def _compare_and_update(instrument, expected_version, **changes):

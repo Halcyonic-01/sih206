@@ -32,3 +32,12 @@ Live actions persist and change counts; do not quote the initial counts again af
 Fallback: if a live mutation fails, stop retrying and reload to inspect state. Show M6-RELEASE_APPROVED for authorized-but-monitored state and M6-RELEASE_COMPLETED for preseeded completion/evidence. Identify these as preseeded outcomes, not actions just performed. Use M6-RENEWAL_OLD and its successor for a read-only lineage demonstration. Keep a second fresh extraction and the ZIP/checksum on local storage; Python 3.12 must already be available. If the UI fails entirely, show the recorded test/evaluation report and due-action output, explicitly saying the live demo failed. No screenshots or video have been generated or verified by this audit.
 
 Before sign-off, manually verify readable text, form errors, scrolling, PDF download/viewing and screen sharing in the target browser; rehearse with the network physically disconnected if offline operation will be claimed. Browser automation could not initialize in the audit environment, so those checks remain open.
+
+## Current workspace additions
+
+The legacy timing table above describes the earlier MVP. For this branch, also show
+SYNTHETIC-OCR-001 → Documents → Read with local OCR, review the six suggestions,
+and explain that saving is explicit. Show Notifications/inbox and officer delivery
+operations. Show the bank-request panel, explaining reviewed contacts and simulation
+mode; never call a simulated/mocked response an actual bank confirmation. The new
+browser journeys pass; a physically disconnected rehearsal remains outstanding.

@@ -16,6 +16,7 @@ class OfflineWorkspaceTests(SimpleTestCase):
         with TemporaryDirectory(prefix='yash-package-') as folder:
             root = Path(folder)
             expected = ('ai/migrations/0001_initial.py', 'verification/migrations/0001_initial.py',
+                        'notifications/migrations/0001_initial.py', 'ai/ocr_worker.py',
                         'frontend/src/main.tsx', 'frontend/package.json',
                         'frontend/dist/records/index.html', 'frontend/dist/records/assets/pdf.worker.js')
             private = ('frontend/node_modules/private.txt', 'frontend/.env',

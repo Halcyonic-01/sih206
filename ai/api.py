@@ -6,6 +6,7 @@ from portal.api.records import RecordEndpoint
 from portal.models import Document
 from portal.permissions import scoped_instruments
 from .services import extract
+from .ocr import extract_local
 
 
 class Extract(RecordEndpoint):
@@ -15,4 +16,11 @@ class Extract(RecordEndpoint):
                                 synthetic=request.data.get('synthetic') is True))
 
 
-urlpatterns = [path('documents/<int:pk>/ai-extract/', Extract.as_view())]
+class LocalOcr(RecordEndpoint):
+    def post(self, request, pk):
+        document = get_object_or_404(Document.objects.filter(instrument__in=scoped_instruments(request.user)), pk=pk)
+        return Response(extract_local(request.user, document))
+
+
+urlpatterns = [path('documents/<int:pk>/ai-extract/', Extract.as_view()),
+               path('documents/<int:pk>/ocr/', LocalOcr.as_view())]

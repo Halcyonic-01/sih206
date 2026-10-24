@@ -9,7 +9,7 @@ import shutil
 from zipfile import ZipFile, ZIP_DEFLATED
 
 ROOT = Path(__file__).resolve().parents[1]
-FOLDERS = ('config', 'portal', 'obligations', 'verification', 'ai', 'templates', 'static', 'fixtures', 'scripts', 'docs', 'evaluation')
+FOLDERS = ('config', 'portal', 'obligations', 'verification', 'ai', 'notifications', 'templates', 'static', 'fixtures', 'scripts', 'docs', 'evaluation')
 FRONTEND_FOLDERS = ('frontend/src', 'frontend/tests', 'frontend/dist/records')
 FRONTEND_FILES = ('package.json', 'package-lock.json', 'index.html', 'tsconfig.json',
                   'tsconfig.app.json', 'tsconfig.node.json', 'vite.config.ts', 'playwright.config.ts')

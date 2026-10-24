@@ -22,8 +22,7 @@ cd ..
 Open `/workspace/`. It uses the existing Django sign-in page; private random demo
 credentials remain in ignored `data/demo-credentials.txt`. Seed commands preserve
 existing accounts and records. Do not paste credentials into issues or screenshots.
-Existing `/` routes and templates remain available. No auth replacement, notification
-delivery, policy engine, SSO or public deployment is claimed by this workspace.
+Existing `/` routes and templates remain available. See [the OCR, notification and bank-channel handoff](pending-integrations.md) for the new integration setup and tested boundaries. No live bank/provider connection or public deployment is claimed.
 
 The minimal frontend entry, settings/URL registration, and release evidence page-count
 assignment were explicitly approved by Yash while the shared K1/K2 code was absent.
@@ -37,15 +36,14 @@ tokens. The static bundle is generated locally and is not committed.
 |---|---|---|
 | Y1 | Deposit modes, institution-validated obligation FK, bank/payment metadata, nullable lien, verification level, document categories/page count; additive 0005 migration | Review by K; S1 is merged upstream |
 | Y2 | Killable PDF parser with 10-second deadline, strict structure checks, page count, rejection of encryption/active content/embedded files; observation bounds | Parsing is not antivirus, authenticity validation or an OS memory sandbox |
-| Y3 | Scoped records/search/filter/page/export/detail/create/edit/submit/review/observations/resolve/renew/correct/upload/download APIs; action flags; optimistic writes; retained evidence | K5 notification adapter and final K1 OpenAPI/auth integration |
-| Y4 | Records/form/detail tabs/PDF.js viewer, officer actions, corrections, typed upload and renewal; error/empty/loading states | Mount in K2 shared shell when published |
-| Y5 | Six PS categories, scope-preserving search/date filters, intervention queues and accessible maturity chart | S2 owns coverage/term rules. Until its contract arrives, shortfalls are explicitly unavailable and matured records are follow-up candidates, not automatic policy violations |
-| Y6 | Append-only ORM evidence; officer review evidence; bounded synthetic statement CSV preview/commit, UTR/amount/date comparison, ambiguity handling, replay prevention and stale-version rollback; officer-only cross-institution duplicate warning; configured-prefix issuer warning | Independent bank confirmation is not implemented. A reviewed issuer-prefix list and K5 adapter must be supplied by their owners |
+| Y3 | Scoped records/search/filter/page/export/detail/create/edit/submit/review/observations/resolve/renew/correct/upload/download APIs; action flags; optimistic writes; retained evidence | Outbox and session/client integration added; authoritative OpenAPI/platform review remains |
+| Y4 | Records/form/detail tabs/PDF.js viewer, officer actions, corrections, typed upload and renewal; error/empty/loading states | Shared client/AuthProvider added; retain compatibility with the team shell |
+| Y5 | Six PS categories, scope-preserving search/date filters, intervention queues and accessible maturity chart | Scoped coverage from reviewed stored requirements added; full programme/rule calculation still belongs to S2. Unknown policy stays unknown |
+| Y6 | Append-only ORM evidence; officer review evidence; bounded synthetic statement CSV preview/commit, UTR/amount/date comparison, ambiguity handling, replay prevention and stale-version rollback; officer-only cross-institution duplicate warning; configured-prefix issuer warning | Signed-link/OTP bank workflow and notification outbox added. Live bank configuration/response and a reviewed issuer directory remain external prerequisites |
 | Y7 | Verification evidence tab and synthetic reconciliation upload/preview/commit/results screen | No claim that synthetic matches establish bank confirmation |
 | Y8 | Shared ai module/AiRun, no-tools schema-constrained PDF extraction transport with 30-second hard deadline, field/page validation, advisory mismatch display and explicit prefill; disabled/manual fallback | Prepared before P0 merge with explicit Yash approval. Live provider calls and real-document accuracy have not been tested |
 
-Stage 3 work (bank confirmation portal, read-only copilot, live feeds, Locker delivery,
-fuzzy matching) remains selection-gated under AGENTS.md. It is not part of this build.
+Yash explicitly requested local OCR and the bank workflow after the initial build. Other Stage 3 work (copilot, live feeds, Locker delivery and fuzzy matching) remains outside this implementation.
 
 ## API routes (all under /api/)
 
@@ -54,7 +52,10 @@ fuzzy matching) remains selection-gated under AGENTS.md. It is not part of this 
 - `POST instruments/{id}/observations/{observation_id}/resolve/`.
 - `GET instruments/export.csv` (same query filters); `GET documents/{id}/download/`.
 - `GET dashboard/`; `GET instruments/{id}/verification/`.
-- `GET/POST verification/statements/`; `POST documents/{id}/ai-extract/`.
+- `GET/POST verification/statements/`; `POST documents/{id}/ai-extract/` and `ocr/`.
+- `GET/POST instruments/{id}/bank-requests/`; public form `/bank/confirm/{token}/`.
+- `GET notifications/`, `GET notifications/deliveries/` (officer); `POST notifications/{id}/read/`.
+- `GET obligations/`; session endpoints under `auth/`.
 
 Lists accept `q`, `category`, `mode`, `status`, `verification_level`,
 `maturity_from`, `maturity_to`, `page`, `page_size` (max 100).
@@ -84,19 +85,16 @@ retaining previous version-specific evidence.
 
 ## Integration contracts
 
-`portal.api.records_urls` can be mounted under the final K1 API root.
-`portal.notification_hook.notify_record` exposes a K5 adapter setting:
-`YASH_NOTIFY_BACKEND` is the dotted callable receiving `recipients` (user-ID list),
-`template`, `context` and unique event `key`. Agree that payload with K before
-configuring it. Missing adapter returns `notification_queued=false`; it does not
-silently claim delivery. Delivery/outbox/recipient policy remains K's work.
+`portal.api.records_urls` remains independently mountable. Shared auth/session endpoints,
+frontend client/AuthProvider and `notifications.services.notify` are now connected.
+Disabling `YASH_NOTIFY_BACKEND` explicitly returns `notification_queued=false`.
+Queueing is distinct from actual delivery. See [integration setup](pending-integrations.md).
 
 `VERIFICATION_ISSUER_PREFIXES` is an optional reviewed tuple of four-letter prefixes.
 It defaults to empty; no bank directory has been invented or scraped. Even a listed
 prefix establishes neither branch existence nor FDR authenticity.
 
-S2 must publish a scoped coverage contract before shortfalls/renewal obligations
-can be shown. This implementation intentionally does not duplicate Saksham's rules.
+Scoped coverage reads reviewed stored requirements. Authoritative programme-to-required-amount rules and policy publication remain S2 work; missing policy is never inferred.
 
 ## Optional AI configuration
 

@@ -71,7 +71,7 @@ export function RecordDetail({api, id, onBack, onOpen}: {api: Api; id: number; o
           {title: 'Observation', dataIndex: 'comment'}, {title: 'Severity', dataIndex: 'severity'},
           {title: 'Evidence', render: (_, o: NonNullable<RecordItem['observations']>[number]) => <Button onClick={() => {setDoc(o.document_id); setPage(o.page_number || 1); setTab('documents');}}>Page {o.page_number ?? 'unspecified'}</Button>},
           {title: 'Resolution', render: (_, o: NonNullable<RecordItem['observations']>[number]) => o.resolved_at ? o.resolution : item.actions?.can_observe ? <Button onClick={() => setAction(`observations/${o.id}/resolve`)}>Resolve</Button> : 'Pending officer action'}]}/></Space>},
-      {key: 'verification', label: 'Verification', children: <VerificationTab api={api} id={id}/>},
+      {key: 'verification', label: 'Verification', children: <VerificationTab api={api} id={id} version={item.version} canRequestBank={!!item.actions?.can_request_bank}/>},
       {key: 'lineage', label: 'Lineage', children: <Space direction="vertical">
         {(['predecessor', 'successor'] as const).map(key => <div key={key}>{key}: {item.lineage?.[key] ? <Button onClick={() => onOpen(item.lineage![key]!.id)}>{item.lineage[key]!.reference}</Button> : 'No visible linked record'}</div>)}
         <p>The original stays current until its successor is accepted.</p></Space>},

@@ -70,7 +70,7 @@ class RecordsApiTests(PortalTestCase):
         self.assertEqual(self.post(self.path(item, 'submit'), {'version': 999}).status_code, 409)
         response = self.post(self.path(item, 'submit'), {'version': item.version})
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertFalse(response.json()['notification_queued'])
+        self.assertTrue(response.json()['notification_queued'])
         item.refresh_from_db()
         data = {'version': item.version, 'decision': 'accept', 'reason': 'Synthetic review'}
         self.assertEqual(self.post(self.path(item, 'review'), data).status_code, 403)

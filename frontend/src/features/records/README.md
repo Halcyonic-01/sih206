@@ -17,7 +17,9 @@ detail tabs, protected PDF navigation, officer correction/review/observations an
 resolution; typed document uploads; dashboard categories, intervention queues and
 accessible maturity data; evidence ladder and synthetic statement preview/commit.
 
-S2's approved shortfall/coverage interface is not published, so the dashboard
-explicitly reports coverage unavailable. Notification hooks likewise return
-`notification_queued=false` until K5's adapter is configured. No simulated statement
-match is displayed or counted as independent bank confirmation.
+The shared session client/AuthProvider is mounted in main.tsx. The dashboard now
+shows coverage from reviewed stored requirements and marks missing policy unknown.
+Notifications include a scoped inbox and officer delivery operations. Documents
+include local OCR and advisory prefill. Verification includes bank request history
+and officer requests to operator-reviewed contacts. Simulations never independently
+confirm funds. See docs/pending-integrations.md for configuration and limitations.

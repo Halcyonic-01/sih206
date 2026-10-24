@@ -7,6 +7,7 @@ from portal.api.records import RecordEndpoint, item_for
 from portal.permissions import require_officer, scoped_instruments
 from .models import StatementImport
 from .services import checks, import_statement, plan_matches
+from .bank import request_confirmation
 
 
 class Evidence(RecordEndpoint):
@@ -40,3 +41,17 @@ class Statements(RecordEndpoint):
         batch, existing = import_statement(request.user, content, request.data.get('source', ''), versions)
         return Response({'id': batch.pk, 'existing': existing, 'simulated': True,
             'rows': list(batch.lines.values('number', 'utr', 'amount_paise', 'value_date', 'result', 'instrument_id'))})
+
+
+class BankRequests(RecordEndpoint):
+    def get(self, request, pk):
+        item = item_for(request.user, pk)
+        return Response(list(item.bank_requests.order_by('-created_at').values(
+            'id', 'instrument_version', 'simulated', 'status', 'created_at', 'expires_at', 'last_error')[:30]))
+
+    def post(self, request, pk):
+        require_officer(request.user)
+        item_for(request.user, pk)
+        row = request_confirmation(request.user, pk, request.data.get('version'))
+        return Response({'id': str(row.pk), 'status': row.status, 'simulated': row.simulated,
+                         'detail': 'Queued for delivery to the operator-reviewed bank contact.'}, status=201)

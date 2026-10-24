@@ -17,8 +17,9 @@ from .models import StatementImport, StatementLine, VerificationEvidence
 
 
 def record_review(actor, item, reason):
-    item.verification_level = Instrument.VerificationLevel.REVIEWED
-    item.save(update_fields=['verification_level'])
+    if item.verification_level != Instrument.VerificationLevel.CONFIRMED:
+        item.verification_level = Instrument.VerificationLevel.REVIEWED
+        item.save(update_fields=['verification_level'])
     VerificationEvidence.objects.create(instrument=item, actor=actor, instrument_version=item.version,
         method='OFFICER_REVIEW', result='REVIEWED', source=reason[:200], fields_observed={})
 

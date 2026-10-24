@@ -62,10 +62,9 @@ def dashboard(user, params):
     for code, items, action in interventions:
         for item in items.distinct().order_by('maturity_date', 'pk')[:50]:
             rows.append({'id': item.pk, 'reference': item.reference, 'kind': code, 'next_action': action})
-    # S2 owns the coverage calculation. Never label an unknown requirement met.
-    # TODO(S2): connect the agreed scope-aware coverage result once published.
-    # Do not implement a competing rule/coverage calculator or imply no shortfall.
-    shortfalls = []
+    from obligations.coverage import coverage, scoped_obligations
+    coverage_rows = [coverage(item, as_of) for item in scoped_obligations(user).order_by('pk')[:200]]
+    shortfalls = [item for item in coverage_rows if item['known'] and item['shortfall_paise']]
     months = records.filter(status='ACCEPTED', superseded_at__isnull=True, released_at__isnull=True,
                             maturity_date__gte=as_of).values_list('maturity_date', flat=True)
     buckets = {}
@@ -73,5 +72,6 @@ def dashboard(user, params):
         key = day.strftime('%Y-%m')
         buckets[key] = buckets.get(key, 0) + 1
     return {'as_of': as_of, 'demo_date': bool(params.get('as_of')), 'counts': counts,
-            'interventions': rows, 'shortfalls': shortfalls, 'coverage_available': False,
+            'interventions': rows, 'shortfalls': shortfalls, 'coverage': coverage_rows,
+            'coverage_available': bool(coverage_rows) and all(item['known'] for item in coverage_rows),
             'maturity_chart': [{'month': key, 'count': count} for key, count in sorted(buckets.items())]}

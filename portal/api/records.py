@@ -53,6 +53,8 @@ def actions(user, item):
     editable = own and item.status in ['DRAFT', 'CHANGES_REQUESTED']
     reviewable = role(user) == 'officer' and item.created_by_id != user.pk and item.status == 'SUBMITTED'
     return {'can_edit': editable, 'can_submit': editable, 'can_upload': editable,
+            'can_request_bank': role(user) == 'officer' and item.created_by_id != user.pk
+                                and item.status in ('SUBMITTED', 'ACCEPTED') and not item.released_at and not item.superseded_at,
             'can_review': reviewable, 'can_observe': reviewable, 'can_correct': reviewable,
             'can_renew': own and item.is_current and not item.has_active_release
                          and not Instrument.objects.filter(predecessor=item).exists()}

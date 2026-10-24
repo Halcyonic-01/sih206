@@ -19,5 +19,6 @@ export type RecordItem = {
 };
 export type Page = {count: number; page: number; page_size: number; results: RecordItem[]};
 export type DashboardData = {as_of: string; counts: Record<string, number>; coverage_available: boolean;
+  coverage?: {obligation_id: number; institution: string; required_paise: number | null; held_paise: number; shortfall_paise: number | null; term_gap: boolean}[];
   interventions: {id: number; reference: string; kind: string; next_action: string}[];
   maturity_chart: {month: string; count: number}[]};

@@ -1,0 +1,16 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bank confirmation</title></head>
+<body style="font-family:system-ui;max-width:650px;margin:32px auto;padding:16px">
+<h1>{% if simulated %}SIMULATED {% endif %}Bank confirmation</h1>
+<p>Complete the fields from your bank records. This response is evidence for officer review; it does not approve a deposit or release.</p>
+<form method="post">{% csrf_token %}
+<p><label>One-time code <input name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code"></label></p>
+<p><label>Authentic? <select name="authentic" required><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label></p>
+<p><label>Reference <input name="reference" maxlength="100" required></label></p>
+<p><label>Amount (INR) <input name="amount" type="number" step="0.01" min="0.01" required></label></p>
+<p><label>Issue date <input name="issue_date" type="date" required></label></p>
+<p><label>Maturity date <input name="maturity_date" type="date" required></label></p>
+<p><label>IFSC <input name="ifsc" maxlength="11" required></label></p>
+<p><label>Holder names <input name="holder_names" maxlength="250" required></label></p>
+<p><label>Lien marked? <select name="lien_marked" required><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label></p>
+<p><label>Loans or mortgage? <select name="loans_or_mortgage" required><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label></p>
+<button type="submit">Submit bank response</button></form></body></html>

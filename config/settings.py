@@ -1,9 +1,26 @@
 import os
+import json
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+OCR_ENABLED = os.environ.get('OCR_ENABLED', 'true').lower() == 'true'
+OCR_TESSERACT = os.environ.get('OCR_TESSERACT', '')
+OCR_PDFTOPPM = os.environ.get('OCR_PDFTOPPM', '')
+YASH_NOTIFY_BACKEND = 'notifications.services.notify'
+NOTIFICATION_EMAIL_ENABLED = os.environ.get('NOTIFICATION_EMAIL_ENABLED', 'false').lower() == 'true'
+EMAIL_BACKEND = os.environ.get('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.locmem.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() == 'true'
+EMAIL_TIMEOUT = 10
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'portal@example.invalid')
+BANK_CONTACTS = json.loads(os.environ.get('BANK_CONTACTS_JSON', '{}'))
+BANK_CONFIRMATION_SIMULATED = os.environ.get('BANK_CONFIRMATION_SIMULATED', 'true').lower() == 'true'
+BANK_PUBLIC_BASE_URL = os.environ.get('BANK_PUBLIC_BASE_URL', 'http://127.0.0.1:8010')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
 if not SECRET_KEY:
@@ -14,7 +31,7 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').sp
 INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
-    'portal', 'obligations', 'rest_framework', 'verification', 'ai',
+    'portal', 'obligations', 'rest_framework', 'verification', 'ai', 'notifications',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
