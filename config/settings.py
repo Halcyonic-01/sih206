@@ -1,11 +1,13 @@
 import hashlib
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.core.exceptions import ImproperlyConfigured
 
 from .envfile import load_env_file
+from .database import database_config
 from .staticrules import immutable_assets, static_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -70,11 +72,7 @@ TEMPLATES = [{
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 (BASE_DIR / 'data').mkdir(exist_ok=True)
-DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
-                         'NAME': BASE_DIR / 'data' / 'portal.sqlite3',
-                         # IMMEDIATE takes the write lock at BEGIN, so concurrent writers queue instead of failing,
-                         # and the audit hash chain is always extended by one writer at a time.
-                         'OPTIONS': {'timeout': 20, 'transaction_mode': 'IMMEDIATE'}}}
+DATABASES = {'default': database_config(BASE_DIR, testing=sys.argv[1:2] == ['test'])}
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},

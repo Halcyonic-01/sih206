@@ -35,6 +35,10 @@ Before sign-off, manually verify readable text, form errors, scrolling, PDF down
 
 ## Current workspace additions
 
+For database integration, show `check_supabase` only after configuring the private
+database URI and initializing a dedicated development project. Offline Start-Demo
+continues to use SQLite. Never show the `.env` credentials during a demo.
+
 The legacy timing table above describes the earlier MVP. For this branch, also show
 SYNTHETIC-OCR-001 → Documents → Read with local OCR, review the six suggestions,
 and explain that saving is explicit. Show Notifications/inbox and officer delivery

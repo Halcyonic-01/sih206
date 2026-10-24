@@ -1,3 +1,9 @@
+> After the team-main merge, use the shared SPA (`/records`, `/dashboard`,
+> `/reconciliation`, `/notifications`) and `/legacy/` for old templates.
+> `/workspace` is retained as a compatible records route. Platform notification
+> service/scheduler and shared auth/client supersede the prototype implementations.
+> See [Supabase setup](supabase.md) for existing-database compatibility upgrades.
+
 # Yash feature handoff: Y1-Y8
 
 ## Run locally

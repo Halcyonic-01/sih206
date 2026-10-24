@@ -1,3 +1,11 @@
+> Current team integration: use the shared React shell at `/`, records at `/records`,
+> dashboard at `/dashboard`, reconciliation at `/reconciliation`, notifications at
+> `/notifications`, and audit screens through the shared menu. `/workspace` is a
+> compatibility alias. Legacy templates are under `/legacy/`. The shared
+> notification implementation, its scheduler and `send_notifications` command
+> supersede the prototype outbox/operations implementation described historically
+> below. Supabase upgrade details are in [Supabase setup](supabase.md).
+
 # OCR, notification and bank-channel handoff
 
 These additions were explicitly requested by Yash after the initial Y1-Y8 build.
@@ -36,7 +44,7 @@ smoke check, not a held-out or representative accuracy evaluation.
 
 ## Notifications
 
-`notifications.services.notify(recipients, template, context, key)` writes the
+`notifications.service.notify(recipients, template, context, key)` writes the
 outbox inside the workflow transaction. Submission goes to officers; review goes
 to the institution's active users. Only the record ID/reference are included.
 Repeated keys cannot create duplicate recipient/channel rows. The inbox and read
@@ -44,22 +52,22 @@ acknowledgements are recipient-scoped; delivery operations are officer-only.
 
 ```powershell
 .\.venv\Scripts\python.exe manage.py run_due_rules
-.\.venv\Scripts\python.exe manage.py deliver_notifications
+.\.venv\Scripts\python.exe manage.py send_notifications
 ```
 
 Schedule the first command daily and the second every minute using the deployment
 scheduler. The command implements configured `REMINDER_DAYS` maturity reminders;
 it does not invent a regulatory escalation matrix or working-day SLA calendar.
-Failures retry after 1/2/4/8 minutes, then remain FAILED with safe error codes.
-The inbox/operations page shows pending, sent, captured and failed states.
+Failures retry after 1/2/4/8 minutes, then remain FAILED using the shared platform delivery history. The shared inbox is mounted at /notifications/.
 SENT email means SMTP relay acceptance, not recipient reading or exactly-once
 delivery. A process crash after SMTP acceptance can cause a duplicate retry.
 
 Email delivery is disabled by default. The default backend captures local test
-messages in process memory; those are labelled CAPTURED, never externally SENT.
+messages in process memory; local captures are not proof of external delivery.
 For an approved SMTP service configure the operating-system variables in
 `.env.example`, including `DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`
-and `NOTIFICATION_EMAIL_ENABLED=true`. Settings do not automatically read `.env`.
+and `NOTIFICATION_EMAIL_ENABLED=true`. Settings now load the ignored root `.env`;
+explicit process variables take precedence. See [Supabase setup](supabase.md).
 No real email was sent during verification; tests use local capture/mocks.
 
 ## Bank confirmation
