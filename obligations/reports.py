@@ -128,6 +128,13 @@ def xlsx_bytes(report):
     return target.getvalue()
 
 
+def renewal_required(holding):
+    obligation = holding.obligation
+    if obligation is None or obligation.term_end is None:
+        return None
+    return holding.maturity_date < obligation.term_end
+
+
 def kpi_report(actor, *, window_start, window_end, as_of=None):
     cutoff = as_of or timezone.now()
     holdings = sources.records_for(actor)
@@ -168,12 +175,14 @@ def kpi_report(actor, *, window_start, window_end, as_of=None):
             if accepted_events:
                 successor = AcceptedSuccessor(candidate.pk, candidate.institution_id, accepted_events[0].created_at)
         renewals.append(RenewalSnapshot(h.pk, h.institution_id, h.maturity_date,
-            # The obligation defines whether renewal is required, not acceptance alone.
-            None, complete, successor))
+            # The obligation defines whether renewal is required, not acceptance alone: a holding that matures
+            # before its obligation's term ends must be renewed (APH 10-year term). No linked term stays unknown.
+            renewal_required(h), complete, successor))
     result = calculate_kpis(processes=tuple(processes), renewals=tuple(renewals),
         scope_institution_ids=tuple(sorted({h.institution_id for h in holdings})),
         window_start=window_start, window_end=window_end, as_of=cutoff, simulation_label='SIMULATED')
-    result['limitations'] = ['Renewal eligibility is unknown until obligation/release policy is agreed.',
+    result['limitations'] = ['Renewal is counted as required when a holding matures before its linked obligation term ends; '
+        'holdings without a linked obligation term are excluded as unknown.',
         'Only current-version BANK_CONFIRMATION/CONFIRMED evidence counts; simulated matches never count.',
         'Missing creation/declaration history remains unknown. No before/after improvement study is implied.']
     return result

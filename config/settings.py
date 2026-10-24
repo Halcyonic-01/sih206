@@ -227,3 +227,13 @@ BANK_CONFIRMATION_SIMULATED = env_bool('BANK_CONFIRMATION_SIMULATED', True)
 BANK_PUBLIC_BASE_URL = os.environ.get('BANK_PUBLIC_BASE_URL', PORTAL_BASE_URL)
 AI_ENABLED = env_bool('AI_ENABLED', False)
 AI_MODEL = os.environ.get('AI_MODEL', 'claude-opus-5-5')
+
+# Release case (S5) ports: they fail closed when unset, so the platform supplies them. SAKSHAM_PROOF_RECEIPTS stays
+# unset on purpose: an upload time is not a reviewed receipt date, so PROOF_OVERDUE needs a reviewed source first.
+from config import integrations as _integrations  # noqa: E402
+SAKSHAM_RELEASE_FACTS = _integrations.release_facts
+SAKSHAM_CLEARANCE_EVIDENCE = _integrations.clearance_evidence
+SAKSHAM_COMPLETION_VALIDATOR = _integrations.completion_validator
+SAKSHAM_NOTIFY = _integrations.notify
+# The QR code on an issued letter points here: PORTAL_BASE_URL + /verify/<token>.
+SAKSHAM_PUBLIC_BASE_URL = PORTAL_BASE_URL

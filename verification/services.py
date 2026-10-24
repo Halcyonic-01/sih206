@@ -1,4 +1,4 @@
-"""Synthetic reconciliation: matching never establishes bank authenticity."""
+"""Synthetic reconciliation: a statement match confirms the deposit fields, labelled SIMULATED; never bank authenticity."""
 from collections import Counter
 import csv
 from datetime import date
@@ -95,7 +95,9 @@ def import_statement(actor, content, source, versions):
             if type(expected) is not int:
                 raise ValidationError('A preview version is required for each matched record.')
             before = records.snapshot(item)
-            changes = {'verification_level': 'DISCREPANCY'} if row['result'] == 'DISCREPANCY' else {}
+            # Plan Y6 / F3: a UTR + amount + date match records statement confirmation (level 3); the evidence row
+            # keeps method SIMULATED_STATEMENT, so the record shows where the confirmation came from.
+            changes = {'verification_level': {'DISCREPANCY': 'DISCREPANCY', 'SIMULATED_MATCH': 'CONFIRMED'}[row['result']]}
             records._compare_and_update(item, expected, **changes)
         line = StatementLine.objects.create(batch=batch, number=row['number'], utr=row['utr'],
             amount_paise=row['amount_paise'], value_date=row['value_date'], result=row['result'], instrument=item)

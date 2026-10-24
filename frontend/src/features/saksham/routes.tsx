@@ -9,6 +9,7 @@ const Reports = lazy(() => import('./ReportPages').then(module => ({ default: mo
 const Kpis = lazy(() => import('./ReportPages').then(module => ({ default: module.KpisPage })));
 const Import = lazy(() => import('./ReportPages').then(module => ({ default: module.InstitutionImportPage })));
 const ReleaseRequest = lazy(() => import('./ReleasePages').then(module => ({ default: module.ReleaseRequestPage })));
+const ReleaseCases = lazy(() => import('./ReleasePages').then(module => ({ default: module.ReleaseCasesPage })));
 const ReleaseCase = lazy(() => import('./ReleasePages').then(module => ({ default: module.ReleaseCasePage })));
 const ClearanceQueue = lazy(() => import('./ReleasePages').then(module => ({ default: module.ClearanceQueuePage })));
 const PublicVerification = lazy(() => import('./ReleasePages').then(module => ({ default: module.PublicVerificationPage })));
@@ -24,8 +25,9 @@ export const routes: AppRoute[] = [
     menu: { label: 'Process KPIs', order: 22 } },
   { path: '/imports/institutions', element: <Import />, roles: ['officer'],
     menu: { label: 'Synthetic institution import', order: 23 } },
-  { path: '/releases/request', element: <ReleaseRequest />, roles: ['institution'],
-    menu: { label: 'Request release', order: 24 } },
+  { path: '/releases', element: <ReleaseCases />, roles: ['institution', 'officer', 'authority'],
+    menu: { label: 'Release cases', order: 24 } },
+  { path: '/releases/request', element: <ReleaseRequest />, roles: ['institution'] },
   { path: '/releases/:caseId', element: <ReleaseCase />, roles: ['institution', 'officer', 'authority', 'clearance'] },
   { path: '/clearance-tasks', element: <ClearanceQueue />, roles: ['clearance'],
     menu: { label: 'Clearance work', order: 25 } },

@@ -8,7 +8,7 @@ MAX_RECORDS = 5000
 def records_for(actor):
     if role(actor) not in {'institution', 'officer', 'authority'}:
         raise PermissionDenied('Institution, officer or authority access is required.')
-    records = list(scoped_instruments(actor).select_related('institution').prefetch_related(
+    records = list(scoped_instruments(actor).select_related('institution', 'obligation').prefetch_related(
         'documents', 'observations', 'audit_events', 'verification_evidence').order_by('pk')[:MAX_RECORDS + 1])
     if len(records) > MAX_RECORDS:
         raise ValidationError('This demo report supports at most 5000 visible records. No truncated export was produced.')

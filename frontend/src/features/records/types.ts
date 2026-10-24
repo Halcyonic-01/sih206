@@ -9,7 +9,7 @@ export type RecordItem = {
   verification_level: string; institution: {id: number; code: string; name: string};
   ifsc?: string; branch?: string; holder_names?: string; utr?: string;
   lien_marked?: boolean | null; obligation_id?: number | null;
-  actions?: Record<string, boolean>;
+  actions?: Record<string, boolean>; release_case_id?: number | null;
   documents?: {id: number; name: string; kind: string; page_count: number | null; sha256: string}[];
   observations?: {id: number; document_id: number; page_number: number | null; severity: string;
     comment: string; resolution: string; resolved_at: string | null}[];
@@ -19,6 +19,6 @@ export type RecordItem = {
 };
 export type Page = {count: number; page: number; page_size: number; results: RecordItem[]};
 export type DashboardData = {as_of: string; counts: Record<string, number>; coverage_available: boolean;
-  coverage?: {obligation_id: number; institution: string; required_paise: number | null; held_paise: number; shortfall_paise: number | null; term_gap: boolean}[];
+  coverage?: {obligation_id: number; institution: string; required_paise: number | null; held_paise: number; shortfall_paise: number | null; term_gap: boolean; policy_label?: string}[];
   interventions: {id: number; reference: string; kind: string; next_action: string}[];
   maturity_chart: {month: string; count: number}[]};
