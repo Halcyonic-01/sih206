@@ -17,6 +17,8 @@ if not SECRET_KEY:
     if not DEBUG:
         raise RuntimeError('Set DJANGO_SECRET_KEY when DJANGO_DEBUG=false.')
     SECRET_KEY = 'local-synthetic-demo-only-do-not-deploy'
+if not DEBUG and SECRET_KEY.startswith('replace-with'):
+    raise RuntimeError('DJANGO_SECRET_KEY still has the placeholder from .env.example. Generate a real one.')
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
                  if host.strip()]
 
