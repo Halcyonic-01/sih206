@@ -1,16 +1,23 @@
 # Owned S3/S4/S6 components — no separate React app
 
-These are standalone React/TypeScript feature components intended for K2's shared
-frontend. No package.json, Vite setup, router, auth provider, shared HTTP client,
-theme or AppShell is created. Native semantic controls can be mounted/styled in
-the shared Ant Design shell; its visual integration has not been tested here.
+**P3 update, 25 October 2026:** institution list/detail/calculator routes are now
+mounted through K2's feature registry, with shared auth and an owned adapter to
+its real HTTP client. See [P3 implementation and verification](../../../../docs/owned/P3_IMPLEMENTATION.md).
+Release/report/KPI/import components remain unmounted. The transport/document
+capability descriptions below still apply to their later integration.
+
+These React/TypeScript feature components now compile and test within K2's merged
+frontend. No package, Vite setup, replacement router/auth provider/shared HTTP
+client/theme/AppShell is created. Institution pages now use a shared Card and scoped
+responsive CSS; other components still need their later integration and visual review.
 
 ## Exports
 
 `index.ts` exports InstitutionList, InstitutionDetail, ObligationCard, Calculator,
 Reports, InstitutionImport, Kpis, ReleaseWizard, ReleaseCase, ClearanceQueue and
 PublicVerification. Navigation is injected (`onSelect`, `onCreated`), so there are
-no invented router imports or menu registrations. Components never load fixtures.
+no competing router is created. P3's route/page wrappers connect the institution
+components to real navigation and data. Components never load fixtures.
 
 K2 supplies one stable `Transport` object:
 
@@ -59,26 +66,40 @@ follow scoped `actions`/`can_decide`, require a reason and disable while pending
 After 409/503, saved state reloads without replaying the mutation. PublicVerification
 only accepts five public record fields and has no private case/document links.
 
-## Repeatable isolated checks
+## Repeatable checks in the shared frontend
 
-From repository root, with Node available, install test tooling into ignored data:
+Use Node 22.12 or newer and the committed frontend lock. From frontend/:
 
 ```powershell
-npm.cmd install --prefix data/saksham-ui-tools --no-audit --no-fund react@19.3.0 react-dom@19.3.0 typescript@7.0.2 @types/react@19.3.0 @types/react-dom@19.3.0 react-test-renderer@19.3.0
-.\.venv\Scripts\python.exe frontend/src/features/saksham/verify.py
+npm.cmd ci --no-audit --no-fund
+npm.cmd run typecheck
+npm.cmd test -- src/features/saksham/
+npm.cmd test
+npm.cmd run build
 ```
 
-On macOS/Linux use `npm` and `.venv/bin/python`. The Python checker creates only an
-ignored TypeScript config/build under data, invokes the compiler and runs 11 Node
-component tests. Missing tools fail explicitly. Nothing changes the shared frontend
-setup. react-test-renderer currently emits a deprecation notice; these are isolated
-component tests, not browser/layout/accessibility tests. Migrate them to K2/K3's
-agreed runner during integration rather than installing a second app test stack.
+On macOS/Linux use npm. From the repository root the existing compatibility entry
+point also works: `.\.venv\Scripts\python.exe frontend/src/features/saksham/verify.py`
+(or `.venv/bin/python` on macOS/Linux). It runs the shared type-check and owned
+Vitest tests, stopping on a failing command. It no longer generates a separate
+TypeScript configuration or imports tools from data/saksham-ui-tools.
 
-Checks cover exact money/nulls, minimal public data, approval versus completion,
-server action gating, failed services, old-identity response races, missing
-questionnaire, ignored mutation projections, public revocation/errors and an
-unspecified KPI cohort. The backend suites separately exercise real owned API views.
+client.test.ts covers exact paise/nulls, decimal parsing and boundaries, and the
+minimal public record allowlist. components.test.tsx renders the actual components
+with Testing Library, shared jsdom setup and explicitly fake injected sources.
+All 11 original test behaviors have been migrated, with additional money boundary
+cases. P3 adds transport and mounted-route coverage (63 owned cases in total).
+The obsolete tests.cjs runner
+is removed after equivalent migrated tests pass; react-test-renderer is not used.
+No dependency, shared setup, timeout or compiler option was changed.
+
+The original behaviors preserved are: integer money/nulls; public allowlist;
+approval versus completion; READY not granting actions; failed service without
+fallback; old identity response discarded; missing questionnaire blocking;
+mutation projection ignored in favor of saved state; revoked public record without
+private links; public 404 versus 503; and no KPI request without a selected cohort.
+The backend suites separately exercise real owned API views. These DOM unit tests
+do not verify routing, real auth/HTTP, browser layout, PDF viewing or accessibility.
 
 Still required in the merged app: route/client/auth integration, proper browser
 tests, 360px/desktop visual review, keyboard/screen-reader checks, target-browser

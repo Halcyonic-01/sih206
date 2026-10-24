@@ -30,9 +30,13 @@ function InstitutionDetailBody({client, identityKey, institutionId}: {client: Tr
   if (detail.error) return <ErrorBox error={detail.error}/>;
   if (!detail.data) return <Loading/>;
   return <section key={`${identityKey}:${institutionId}`}><h1>{detail.data.name}</h1><Notice/>
-    <p>{detail.data.profile ? `${detail.data.profile.aicte_id} · ${detail.data.profile.institution_type} · ${detail.data.profile.region}` : 'Institution profile unavailable.'}</p>
+    {detail.data.profile ? <dl><dt>AICTE ID</dt><dd>{detail.data.profile.aicte_id}</dd>
+      <dt>Trust</dt><dd>{detail.data.profile.trust_name}</dd><dt>Institution type</dt><dd>{detail.data.profile.institution_type}</dd>
+      <dt>Region / state</dt><dd>{detail.data.profile.region} / {detail.data.profile.state}</dd>
+      <dt>Contact email</dt><dd>{detail.data.profile.contact_email??'Unavailable'}</dd>
+      <dt>Profile status</dt><dd>{detail.data.profile.status??'Unavailable'}</dd></dl> : <p>Institution profile unavailable.</p>}
     <h2>Programme approvals</h2>{programmes.error ? <ErrorBox error={programmes.error}/> : !programmes.data ? <Loading/> :
-      <ul>{programmes.data.results.map(p=><li key={p.id}>{p.programme} · {p.level} · {p.loa_ref} · {p.approved_on}</li>)}</ul>}
+      programmes.data.results.length ? <ul>{programmes.data.results.map(p=><li key={p.id}>{p.programme} · {p.level} · {p.loa_ref} · {p.approved_on}</li>)}</ul> : <p>No programme approvals recorded.</p>}
     <h2>Obligations</h2>{obligations.error ? <ErrorBox error={obligations.error}/> : !obligations.data ? <Loading/> :
       obligations.data.results.length ? obligations.data.results.map(o=><ObligationCard key={o.id} client={client} identityKey={identityKey} obligationId={o.id}/>) : <p>No obligations recorded.</p>}
     <nav aria-label="Programme pages"><button disabled={programmePage===1} onClick={()=>setProgrammePage(programmePage-1)}>Previous programmes</button>
@@ -54,6 +58,7 @@ export function ObligationCard({client, identityKey, obligationId}: {client: Tra
       <tbody><tr><td>{item.term_start??'Unavailable'}</td><td>{item.term_end??'Unavailable'}</td><td>{coverage?.coverage_end??'Unavailable'}</td></tr></tbody></table>
     <p>Assessment date: {item.assessment.as_of}. {item.assessment.status === 'UNAVAILABLE' ? 'Coverage unavailable; source integration required.' : 'Draft assessment for human review.'}</p>
     <ul>{item.assessment.findings?.map(f=><li key={f.code}>{f.explanation}</li>)}</ul>
+    {item.assessment.findings?.length===0&&<p>No findings in the available draft assessment.</p>}
     <p>Proof receipt assessment: {item.assessment.proof_assessment??'Unavailable'}.</p>
     <table><caption>Scoped holding timeline</caption><thead><tr><th>Holding</th><th>Issue date</th><th>Maturity</th><th>Amount</th><th>Review state</th></tr></thead>
       <tbody>{item.assessment.holdings?.map(h=><tr key={h.id}><td>{h.id}</td><td>{h.issue_date}</td><td>{h.maturity_date}</td><td>{money(h.amount_paise)}</td><td>{h.status}</td></tr>)}</tbody></table>
@@ -83,7 +88,9 @@ function CalculatorBody({client, identityKey, institutionId}: {client:Transport;
     catch(error){if(current===generation.current) setError(error);} finally{setBusy(false);}
   }
   return <section><h1>Requirement calculator</h1><Notice/><p>Preview only; this does not save an obligation. Select each applicable programme and level once.</p>
-    {!!rules.error&&<ErrorBox error={rules.error}/>}<form onSubmit={calculate}><fieldset disabled={busy}><legend>Hypothetical programmes</legend>
+    {!!rules.error&&<ErrorBox error={rules.error}/>} {!rules.error&&!rules.data&&<Loading/>}
+    {rules.data?.results.length===0&&<p>No rule versions available. A preview cannot be calculated.</p>}
+    <form onSubmit={calculate}><fieldset disabled={busy}><legend>Hypothetical programmes</legend>
       <label>Rule version <select required value={rule} onChange={e=>{invalidate();setRule(e.target.value);}}><option value="">Select explicit rule</option>
         {rules.data?.results.map(r=><option key={r.id} value={r.id}>{r.code} v{r.version}</option>)}</select></label>
       {rows.map((row,index)=><fieldset key={index}><legend>Programme {index+1}</legend>

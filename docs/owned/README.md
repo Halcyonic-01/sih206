@@ -1,5 +1,19 @@
 # Saksham S1–S6 implementation checkpoint
 
+**P3 follow-up (25 October 2026):** institution list/detail/calculator screens now
+mount in the shared frontend and call the P2 APIs. Read
+[P3 implementation and verification](P3_IMPLEMENTATION.md) for live synthetic
+browser evidence and remaining boundaries. Release/report UI remains unmounted;
+holdings/proof integration remains unavailable and P4 is unstarted. Older
+checkpoint descriptions below are historical where superseded by P2/P3.
+
+**P2 follow-up (25 October 2026):** core institution/programme/obligation,
+calculator and rule APIs now register through the normal K1 extension and use
+shared auth/errors/pagination. Read [P2 implementation and verification](P2_IMPLEMENTATION.md)
+for current behavior. Release/report routes remain harness-only and the React
+components remain unmounted. The checkpoint below describes the earlier delivery;
+its K1/core-route limitations are superseded only for the P2 endpoints.
+
 This is local implementation against **provisional integration interfaces**,
 following checkpoint `d36720a`. It preserves the original Django workflow and all
 previous labeled datasets. Nothing is pushed or merged. S7/AI work is not started.

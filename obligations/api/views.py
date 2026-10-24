@@ -1,55 +1,51 @@
-"""Thin owned endpoints; provisional integration surface, not K1 replacement."""
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import DatabaseError, IntegrityError
+"""Owned endpoints using the shared K1 authentication, errors and pagination."""
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.db.models import Q
-from django.http import Http404
 from django.shortcuts import get_object_or_404
-from rest_framework.authentication import SessionAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
+
+from access.logging import log_access
+from access.models import AccessLog
+from portal.api.pagination import StandardPagination
 
 from portal.permissions import role
 from portal.services import WorkflowError
 from obligations import services
 from obligations.models import DepositObligation, InstitutionProfile, ProgrammeApproval, RuleSet
 from obligations.rules import RuleInputError
+from . import schemas
 
 
 class OwnedView(APIView):
-    # TODO(K1): consume the agreed shared base/auth/error adapters when supplied.
-    authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
-
     def handle_exception(self, exc):
-        status, code, fields = None, None, None
+        # Normalize only owned domain exceptions, then use K1's single handler.
+        # DependencyUnavailable subclasses WorkflowError but is not a 409 conflict.
         if isinstance(exc, services.DependencyUnavailable):
-            status, code = 503, 'DEPENDENCY_UNAVAILABLE'
-        elif isinstance(exc, (ValidationError, RuleInputError)):
-            status, code = 400, 'VALIDATION_ERROR'
-            if isinstance(exc, ValidationError):
-                fields = getattr(exc, 'message_dict', None)
-                errors = [e for group in getattr(exc, 'error_dict', {}).values() for e in group]
-                if any(e.code in {'unique','unique_together'} for e in errors):
-                    status, code, fields = 409, 'IDENTITY_CONFLICT', None
-        elif isinstance(exc, WorkflowError):
-            status, code = 409, 'WORKFLOW_CONFLICT'
+            exc = Unavailable()
+        elif isinstance(exc, RuleInputError):
+            exc = ValidationError({'non_field_errors': [str(exc)]})
         elif isinstance(exc, IntegrityError):
-            status, code = 409, 'IDENTITY_CONFLICT'
-        elif isinstance(exc, (DatabaseError, OSError)):
-            status, code = 503, 'SERVICE_UNAVAILABLE'
-        elif isinstance(exc, Http404):
-            status, code = 404, 'NOT_FOUND'
-        elif isinstance(exc, PermissionDenied):
-            status, code = 403, 'PERMISSION_DENIED'
-        if status is not None:
-            return Response({'error': {'code': code, 'fields': fields}}, status=status)
+            exc = WorkflowError('Identity conflict. Reload and check the existing record.')
+        elif isinstance(exc, ValidationError):
+            errors = [e for group in getattr(exc, 'error_dict', {}).values() for e in group]
+            if any(e.code in {'unique', 'unique_together'} for e in errors):
+                exc = WorkflowError('Identity conflict. Reload and check the existing record.')
         return super().handle_exception(exc)
 
     def finalize_response(self, request, response, *args, **kwargs):
         response = super().finalize_response(request, response, *args, **kwargs)
         response['Cache-Control'] = 'no-store'
         return response
+
+
+class Unavailable(APIException):
+    status_code = 503
+    default_detail = 'Required source integration unavailable. Reload saved state before retrying.'
+    default_code = 'unavailable'
 
 
 def body(request, allowed):
@@ -70,10 +66,9 @@ def pagination(request):
 
 
 def page(request, query, serializer):
-    number, size = pagination(request)
-    start = (number - 1) * size
-    return Response({'count': query.count(), 'page': number, 'page_size': size,
-                     'results': [serializer(item) for item in query.order_by('pk')[start:start + size]]})
+    paginator = StandardPagination()
+    records = paginator.paginate_queryset(query.order_by('pk'), request)
+    return paginator.get_paginated_response([serializer(item) for item in records])
 
 
 def institution_json(item, actor):
@@ -84,6 +79,14 @@ def institution_json(item, actor):
         'actions': {'can_edit': role(actor) == 'officer' and profile is not None}}
 
 
+PAGE_PARAMETERS = [OpenApiParameter('page', int), OpenApiParameter('page_size', int)]
+
+
+@extend_schema_view(
+    get=extend_schema(operation_id='s2_institutions_list', parameters=PAGE_PARAMETERS + [OpenApiParameter('q', str)],
+        responses=schemas.responses(schemas.InstitutionPage)),
+    post=extend_schema(request=schemas.InstitutionCreate,
+        responses=schemas.responses(schemas.InstitutionRead, created=True)))
 class Institutions(OwnedView):
     def get(self, request):
         query = services.scoped_institutions(request.user)
@@ -91,7 +94,11 @@ class Institutions(OwnedView):
         if len(q) > 100:
             raise ValidationError({'q': 'Search text is limited to 100 characters.'})
         query = query.filter(Q(name__icontains=q) | Q(code__icontains=q) | Q(deposit_profile__aicte_id__icontains=q))
-        return page(request, query, lambda i: institution_json(i, request.user))
+        response = page(request, query, lambda i: institution_json(i, request.user))
+        if role(request.user) in {'officer', 'authority'}:
+            log_access(request, AccessLog.SEARCH, object_type='institution',
+                       detail='Scoped institution master search')
+        return response
 
     def post(self, request):
         data = body(request, services.PROFILE_FIELDS | {'code', 'name', 'reason'})
@@ -100,6 +107,10 @@ class Institutions(OwnedView):
         return Response(institution_json(profile.institution, request.user), status=201)
 
 
+@extend_schema_view(
+    get=extend_schema(responses=schemas.responses(schemas.InstitutionRead)),
+    patch=extend_schema(request=schemas.InstitutionUpdate,
+        responses=schemas.responses(schemas.InstitutionRead)))
 class InstitutionDetail(OwnedView):
     def get(self, request, pk):
         return Response(institution_json(services.institution(request.user, pk), request.user))
@@ -111,6 +122,10 @@ class InstitutionDetail(OwnedView):
         return Response(institution_json(profile.institution, request.user))
 
 
+@extend_schema_view(
+    get=extend_schema(parameters=PAGE_PARAMETERS, responses=schemas.responses(schemas.ApprovalPage)),
+    post=extend_schema(request=schemas.ApprovalCreate,
+        responses=schemas.responses(schemas.ApprovalRead, created=True)))
 class Children(OwnedView):
     model = ProgrammeApproval
 
@@ -125,10 +140,18 @@ class Children(OwnedView):
         return Response(services.snapshot(record), status=201)
 
 
+@extend_schema_view(
+    get=extend_schema(parameters=PAGE_PARAMETERS, responses=schemas.responses(schemas.ObligationPage)),
+    post=extend_schema(request=schemas.ObligationCreate,
+        responses=schemas.responses(schemas.ObligationRead, created=True)))
 class Obligations(Children):
     model = DepositObligation
 
 
+@extend_schema_view(
+    get=extend_schema(responses=schemas.responses(schemas.ApprovalRead)),
+    patch=extend_schema(request=schemas.ApprovalUpdate,
+        responses=schemas.responses(schemas.ApprovalRead)))
 class ChildDetail(OwnedView):
     model = ProgrammeApproval
 
@@ -147,10 +170,16 @@ class ChildDetail(OwnedView):
         return Response(services.snapshot(record))
 
 
+@extend_schema_view(
+    get=extend_schema(responses=schemas.responses(schemas.ObligationDetailRead)),
+    patch=extend_schema(request=schemas.ObligationUpdate,
+        responses=schemas.responses(schemas.ObligationRead)))
 class ObligationDetail(ChildDetail):
     model = DepositObligation
 
 
+@extend_schema_view(post=extend_schema(request=schemas.CalculatorRequest,
+    responses=schemas.responses(schemas.CalculatorRead)))
 class Calculator(OwnedView):
     def post(self, request):
         data = body(request, {'institution_id', 'rule_set_id', 'approvals'})
@@ -161,6 +190,8 @@ class Calculator(OwnedView):
                         data['rule_set_id'], data.get('approvals')))
 
 
+@extend_schema_view(get=extend_schema(parameters=PAGE_PARAMETERS,
+    responses=schemas.responses(schemas.RulePage)))
 class Rules(OwnedView):
     def get(self, request):
         services.scoped_institutions(request.user)

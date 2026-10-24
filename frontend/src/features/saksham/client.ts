@@ -25,15 +25,17 @@ export function money(value: number | string | null | undefined): string {
 export function paise(text: string): number {
   if (!/^\d+(\.\d{1,2})?$/.test(text)) throw new Error('Use a positive INR amount with at most two decimals.');
   const [whole, fraction = ''] = text.split('.');
+  if (whole === undefined) throw new Error('Use a positive INR amount with at most two decimals.');
   const amount = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
   if (amount <= 0n || amount > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('Amount is outside the supported range.');
   return Number(amount);
 }
 
-export interface Page<T> { count?: number; results: T[] }
+export interface Page<T> { count?: number; page?: number; page_size?: number; total_pages?: number; results: T[] }
 export type Paise = number | string;
 export interface Institution { id: number; name: string; code: string; version: number | null; profile: null | {
   aicte_id: string; trust_name: string; region: string; state: string; institution_type: string;
+  contact_email?: string; status?: string;
 } }
 export interface Approval { id: number; programme: string; level: string; approved_on: string; loa_ref: string }
 export interface Obligation { id: number; required_paise: Paise | null; term_start: string | null;

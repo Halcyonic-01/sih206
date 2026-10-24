@@ -1,4 +1,4 @@
-"""Owned S2 audited services. K1/K4 adapters remain explicit integration points."""
+"""Owned audited master services; actual holding/proof sources remain separate."""
 import json
 from datetime import date
 
@@ -25,7 +25,9 @@ class DependencyUnavailable(WorkflowError):
 
 
 def scoped_institutions(actor):
-    # TODO(K4): replace existing staff scope with K4's reviewed bureau/region scope.
+    # K4 has no geographic master helper. Preserve conservative existing access:
+    # own institution; officer/authority reads; clearance/auditor denied. Instrument
+    # history access does not grant access to unsubmitted institution master data.
     current = role(actor)
     if current == 'institution':
         return Institution.objects.filter(pk=institution_for(actor).pk)
