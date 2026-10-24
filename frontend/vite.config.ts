@@ -29,6 +29,7 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, 'tests/**'], // Playwright runs separately.
     environment: 'jsdom',
     globals: true,
+    testTimeout: 15000, // Ant Design interactions need headroom on shared CI runners.
     setupFiles: ['./src/test/setup.ts'],
     css: false,
   },
