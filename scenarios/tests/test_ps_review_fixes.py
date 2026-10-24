@@ -97,6 +97,11 @@ class ReleaseCaseEndToEnd(StaffTestCase):
         self.assertEqual(created['status'], 'PENDING')
         self.assertEqual({t['unit'] for t in created['clearances']}, {'PGRC', 'VIGILANCE', 'GRANTS'})
         self.assertEqual(self.as_user(self.a).get(f'/api/instruments/{self.record.pk}/').json()['release_case_id'], pk)
+        # Each task has an SLA due date and is visible to the scheduler's clearance SLA rule (K6).
+        from notifications.rules import open_clearance_tasks
+        tasks = open_clearance_tasks(timezone.localdate())
+        self.assertEqual({(t['unit'], t['case_id']) for t in tasks}, {('PGRC', pk), ('VIGILANCE', pk), ('GRANTS', pk)})
+        self.assertTrue(all(task['due_date'] for task in self.as_user(self.pgrc).get('/api/clearance-tasks').json()['results']))
 
         # The authority cannot decide while clearances are open; a stale clearance version is a conflict.
         self.assertFalse(self.case(pk, self.authority)['actions']['can_approve'])
@@ -109,6 +114,7 @@ class ReleaseCaseEndToEnd(StaffTestCase):
             self.act(user, f'/api/releases/{pk}/clearances/{unit}', {'version': version, 'status': 'CLEARED',
                      'reason': f'{unit} has no objection', 'evidence_ref': f'{unit}/2026/17'})
         self.assertFalse(self.case(pk, self.authority)['actions']['can_approve'])  # officer review still pending
+        self.assertEqual(open_clearance_tasks(timezone.localdate()), [])
         version = self.case(pk, self.officer)['version']
         self.act(self.officer, f'/api/releases/{pk}/penalties', {'version': version, 'reason': 'Checklist reviewed; no penalty'})
 

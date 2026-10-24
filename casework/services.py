@@ -203,10 +203,15 @@ def request_case(actor, *, instrument_id, obligation_id, instrument_version, pat
     units = facts.get('required_units')
     if type(units) is not list or not all(type(u) is str for u in units) or not {'PGRC','VIGILANCE','GRANTS'} <= set(units) or len(units) != len(set(units)):
         raise DependencyUnavailable('Complete applicable clearance units unavailable.')
+    # Due date from the escalation matrix's clearance SLA (working days), the same figure run_due_rules alerts on.
+    from notifications.rules import add_working_days, load_config
+    today = timezone.localdate()
+    sla = load_config(today)
+    due = add_working_days(today, sla['sla']['clearance_working_days'][0], sla['holidays'])
     for unit in units:
         if type(unit) is not str or not unit.strip() or len(unit) > 40:
             raise ValidationError('Invalid clearance unit.')
-        ClearanceTask.objects.create(case=case, unit=unit)
+        ClearanceTask.objects.create(case=case, unit=unit, due_date=due)
     result = assessment(actor, case, 'REQUEST', reason=reason)
     require_gate(result, 'REQUEST_PREREQUISITES_MET_IN_DEMO')
     record(case, actor, 'RELEASE_CASE_REQUESTED', reason)

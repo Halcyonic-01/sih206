@@ -222,34 +222,28 @@ def sla_rules(as_of, config, result, dry_run, institution=None, clearance_provid
                 _dispatch(result, dry_run, 'sla-clearance', f'{task["unit"]} task {task["id"]} open {waited} working days',
                           _recipients(group), 'sla_clearance_pending',
                           {'reference': task['reference'], 'unit': task['unit'], 'days': waited, 'limit': limit,
-                           'url': f'/records/{task["instrument_id"]}'},
+                           'url': f'/releases/{task["case_id"]}'},
                           f'clearance:{task["id"]}:sla:{limit}:{task["opened_on"]}')
 
 
-def open_clearance_tasks(as_of):
-    """Open clearance tasks as dicts {id, unit, opened_on, reference, instrument_id}.
+def add_working_days(start, days, holidays=()):
+    """The date `days` working days (Mon-Fri, excluding holidays) after `start`."""
+    closed = {date.fromisoformat(day) if isinstance(day, str) else day for day in holidays}
+    day = start
+    while days > 0:
+        day += timedelta(days=1)
+        if day.weekday() < 5 and day not in closed:
+            days -= 1
+    return day
 
-    TODO(S5): casework.ClearanceTask does not exist yet. This adapter assumes the fields the plan names (unit,
-    status or decision, created_at, a release/instrument link) and returns nothing if they are not there, so the
-    rule switches itself on once S5 merges. Adjust the field names here if S5 chose different ones.
-    """
-    try:
-        from casework.models import ClearanceTask
-    except ImportError:
-        return []
-    tasks = []
-    try:
-        for task in ClearanceTask.objects.select_related('release__instrument'):
-            status = str(getattr(task, 'status', 'OPEN')).upper()
-            if status not in ('OPEN', 'PENDING', 'IN_PROGRESS', 'ASSIGNED'):
-                continue
-            instrument = task.release.instrument
-            tasks.append({'id': task.pk, 'unit': task.unit, 'opened_on': business_date(task.created_at),
-                          'reference': instrument.reference, 'instrument_id': instrument.pk})
-    except Exception as exc:  # field names differ from the assumption: skip, do not break the other rules
-        logger.warning('Clearance SLA rule skipped: %s', type(exc).__name__)
-        return []
-    return tasks
+
+def open_clearance_tasks(as_of):
+    """Open clearance tasks of pending release cases (S5) as dicts {id, unit, opened_on, reference, case_id}."""
+    from obligations.models import ClearanceTask
+    return [{'id': task.pk, 'unit': task.unit, 'opened_on': business_date(task.case.created_at),
+             'reference': task.case.release.instrument.reference, 'case_id': task.case_id}
+            for task in ClearanceTask.objects.filter(status='OPEN', case__release__status='PENDING')
+            .select_related('case__release__instrument').order_by('pk')]
 
 
 RULES = ('maturity', 'proof', 'sla')
