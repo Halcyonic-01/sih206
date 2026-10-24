@@ -17,6 +17,8 @@ import uuid
 
 ROOT = Path(__file__).resolve().parent.parent
 BASE = 'http://127.0.0.1:8000'
+# The Django-template interface moved under /legacy/ when the React app took over the root.
+LEGACY = '/legacy'
 RESULT = ROOT / 'data' / 'live-smoke-result.json'
 
 
@@ -37,6 +39,8 @@ class Browser:
         self.opener = build_opener(HTTPCookieProcessor(CookieJar()))
 
     def request(self, path, data=None, headers=None):
+        if not path.startswith((LEGACY + '/', '/api/')):
+            path = LEGACY + path
         request = Request(BASE + path, data=data, headers=headers or {})
         try:
             response = self.opener.open(request, timeout=15)
@@ -145,7 +149,7 @@ def main():
     assert reference not in other.page('/')
     assert other.request(detail)[0] == 404
     assert other.request(documents[0])[0] == 404
-    assert Browser().request(documents[0])[2].startswith(BASE + '/accounts/login/')
+    assert Browser().request(documents[0])[2].startswith(BASE + LEGACY + '/accounts/login/')
     assert institution.request(detail + 'review/', b'decision=accept')[0] == 403
     RESULT.write_text(json.dumps({'detail': detail, 'reference': reference,
                                  'documents': documents, 'hash': digest}, indent=2))

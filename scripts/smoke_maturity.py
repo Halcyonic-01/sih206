@@ -72,7 +72,7 @@ def verify(institution, other, officer, saved):
         assert saved['records'][key]['reference'] + '\t' in first
     for key in ('later', 'pending', 'draft'):
         assert saved['records'][key]['reference'] + '\t' not in first
-    assert http.Browser().request('/dashboard/')[2].startswith(http.BASE + '/accounts/login/')
+    assert http.Browser().request('/dashboard/')[2].startswith(http.BASE + http.LEGACY + '/accounts/login/')
     assert institution.request('/dashboard/?as_of=not-a-date')[0] == 400
     assert institution.request('/?category=unknown')[0] == 400
 
