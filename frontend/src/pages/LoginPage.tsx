@@ -37,9 +37,9 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <Card className="login-card">
-        <Typography.Title level={3} style={{ marginTop: 0 }}>Security Deposit Portal</Typography.Title>
+        <Typography.Title level={3} style={{ marginTop: 0 }}>Pramaan</Typography.Title>
         <Typography.Paragraph type="secondary">
-          AICTE Regulation Bureau · sign in with the account issued to you.
+          Trust Backed by Evidence · AICTE security deposit portal. Sign in with the account issued to you.
         </Typography.Paragraph>
         {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} role="alert" />}
         <Form form={form} layout="vertical" onFinish={submit} requiredMark={false} disabled={busy}>

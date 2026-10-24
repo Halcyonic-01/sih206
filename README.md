@@ -1,4 +1,6 @@
-# AICTE Security Deposit / FDR Portal
+# Pramaan — Trust Backed by Evidence
+
+AICTE Security Deposit / FDR Portal (SIH 2026, problem statement 26265).
 
 A localhost, synthetic-data MVP for **institution submission → protected PDFs → manual scrutiny/corrections → officer acceptance → maturity monitoring → linked renewal or authority-controlled release**.
 

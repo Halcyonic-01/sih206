@@ -1,6 +1,6 @@
 # AGENTS.md: instructions for the AI coding agents of Yash and Saksham
 
-This file is for the AI coding agent working for **Yash** or **Saksham** on the Security Deposit / FDR portal (SIH problem statement 26265, AICTE Regulation Bureau). Read all of it before your first change, and again at the start of every new session.
+This file is for the AI coding agent working for **Yash** or **Saksham** on **Pramaan — Trust Backed by Evidence**, the Security Deposit / FDR portal (SIH problem statement 26265, AICTE Regulation Bureau). Read all of it before your first change, and again at the start of every new session.
 
 The third team member, **Kushagra**, owns the platform and DevOps work. Do not implement Kushagra's tasks unless your human explicitly tells you to.
 

@@ -177,7 +177,7 @@ REST_FRAMEWORK = {
     'UNAUTHENTICATED_USER': 'django.contrib.auth.models.AnonymousUser',
 }
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'AICTE Security Deposit / FDR Portal API',
+    'TITLE': 'Pramaan — Trust Backed by Evidence (AICTE Security Deposit / FDR Portal API)',
     'DESCRIPTION': 'Session-authenticated JSON API for the React app. Writes need the X-CSRFToken header '
                    'and the record `version` (stale versions return 409). SIH problem statement 26265.',
     'VERSION': '1.0.0',
@@ -202,7 +202,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', True)
 EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', False)
 EMAIL_TIMEOUT = env_int('EMAIL_TIMEOUT', 10, minimum=1)
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'AICTE Deposit Portal <no-reply@localhost>')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Pramaan <no-reply@localhost>')
 # Used to build links inside emails. Set to the public https address when deployed.
 PORTAL_BASE_URL = os.environ.get('PORTAL_BASE_URL', 'http://127.0.0.1:8010')
 # Try to send emails right after the event commits (the scheduled send_notifications command retries failures).

@@ -85,7 +85,7 @@ def _email_text(row):
     link = f'{settings.PORTAL_BASE_URL.rstrip("/")}{row.link}' if row.link else settings.PORTAL_BASE_URL
     return (f'{row.body}\n\nOpen the portal: {link}\n\n'
             'This message contains no account or deposit details. Sign in to the portal to see them.\n'
-            'AICTE Security Deposit Portal (prototype, synthetic data).')
+            'Pramaan — Trust Backed by Evidence, the AICTE Security Deposit Portal (prototype, synthetic data).')
 
 
 LEASE_MINUTES = 10

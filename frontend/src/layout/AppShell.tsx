@@ -47,7 +47,7 @@ export function AppShell() {
       <Sider breakpoint="lg" collapsedWidth={0} collapsed={collapsed} onCollapse={setCollapsed}
              width={232} theme="dark" aria-label="Primary navigation">
         <div className="brand">
-          <Link to="/"><strong>AICTE</strong> Security Deposit</Link>
+          <Link to="/"><strong>Pramaan</strong> · AICTE</Link>
         </div>
         <Menu theme="dark" mode="inline" selectedKeys={selectedKey(entries, location.pathname)}
               items={entries.map((entry) => ({

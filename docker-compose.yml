@@ -21,7 +21,7 @@ services:
       EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
       EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
       EMAIL_USE_TLS: ${EMAIL_USE_TLS:-true}
-      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-AICTE Deposit Portal <no-reply@localhost>}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-Pramaan <no-reply@localhost>}
     volumes:
       - portal-data:/app/data
     restart: unless-stopped
