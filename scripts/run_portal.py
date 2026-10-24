@@ -26,6 +26,7 @@ FRONTEND = ROOT / 'frontend'
 VENV = ROOT / '.venv'
 VENV_PYTHON = VENV / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
 CREDENTIALS = ROOT / 'data' / 'demo-credentials.txt'
+STAFF_CREDENTIALS = ROOT / 'data' / 'staff-credentials.txt'
 
 
 def say(message):
@@ -114,15 +115,19 @@ def manage(*args, env, check=True):
 
 def prepare_database(env, force_seed, prod):
     manage('migrate', '--noinput', env=env)
-    first_run = not CREDENTIALS.exists()
-    if first_run or force_seed:
+    seed_env = {**env, 'DJANGO_DEBUG': 'true'}  # generated credentials are allowed in local DEBUG only
+    steps = []
+    if force_seed or not CREDENTIALS.exists():
+        steps += [('seed_demo', '--generate-password'), ('seed_demo', '--authority-only', '--generate-password'),
+                  ('seed_scenarios',)]
+    if force_seed or not STAFF_CREDENTIALS.exists():
+        steps.append(('seed_staff', '--generate-password'))
+    if steps:
         say('Creating synthetic demo accounts and scenario records')
-        seed_env = {**env, 'DJANGO_DEBUG': 'true'}  # generated credentials are allowed in local DEBUG only
-        for args in (('seed_demo', '--generate-password'), ('seed_demo', '--authority-only', '--generate-password'),
-                     ('seed_scenarios',)):
-            result = manage(*args, env=seed_env, check=False)
-            if result.returncode:
-                say(f'{" ".join(args)} did not run (already seeded?); continuing')
+    for args in steps:
+        result = manage(*args, env=seed_env, check=False)
+        if result.returncode:
+            say(f'{" ".join(args)} did not run (already seeded?); continuing')
     if prod:
         manage('collectstatic', '--noinput', '-v', '0', env=env)
 
@@ -200,7 +205,7 @@ def main():
             vite = subprocess.Popen([npm, 'run', 'dev'], cwd=FRONTEND,
                                     env={**env, 'DJANGO_URL': f'http://{address}'})
         say(f'Ready: open http://{address}/  (sign-in accounts: {CREDENTIALS.relative_to(ROOT)} , '
-            'data/authority-credentials.txt). Ctrl+C stops.')
+            'data/authority-credentials.txt , data/staff-credentials.txt). Ctrl+C stops.')
         while server.poll() is None and (vite is None or vite.poll() is None):
             time.sleep(0.5)
     except KeyboardInterrupt:
