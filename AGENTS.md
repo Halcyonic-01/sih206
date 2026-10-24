@@ -86,7 +86,7 @@ Times are Saturday 24 / Sunday 25 Oct 2026, IST. The team rests from 02:00 to 06
 | Y5 | P0 | Dashboard and search.<br>• PS categories: active, expiring, matured, renewed, released, pending.<br>• Intervention queue: overdue renewal, unresolved blocking observation, ageing corrections, shortfall, discrepancy.<br>• Maturity chart and the header search. | Sat 23:30 | Y3, S2 |
 | Y6 | P0 | Verification backend (`verification/` app).<br>• `VerificationEvidence` is append-only. Officer acceptance sets "Reviewed".<br>• Statement CSV import auto-matches on UTR + amount: a match sets "Confirmed"; a mismatch sets "Discrepancy" and calls `notify()`.<br>• `ISSUER_UNKNOWN` check (IFSC prefix list). Officer-only cross-institution duplicate check. | Sun 01:30 | Y3, K5 |
 | Y7 | P0 | Verification UI: verification tab (ladder and evidence) and reconciliation page (upload, matched and unmatched lists). | Sun 08:00 | Y6 |
-| Y8 | P1 | AI document extraction.<br>• Shared `ai/` module: `AI_ENABLED` flag, `AiRun` log, model `claude-opus-5-5`.<br>• `POST /api/documents/{id}/ai-extract`: PDF in, schema-constrained fields out.<br>• "Use extracted values" pre-fill on the form. Advisory `AI_MISMATCH` findings for officers. | Sun 10:00 | Y3, Y4 |
+| Y8 | P1 | AI document extraction.<br>• Shared `ai/` module: `AI_ENABLED` flag, `AiRun` log, Google Gemini model `gemini-3.8-flash` (`AI_MODEL`).<br>• `POST /api/documents/{id}/ai-extract`: PDF in, schema-constrained fields out.<br>• "Use extracted values" pre-fill on the form. Advisory `AI_MISMATCH` findings for officers. | Sun 10:00 | Y3, Y4 |
 
 **Stage 2 (Yash):**
 - Sun 25: fix P0 bugs in your areas.
@@ -193,9 +193,9 @@ Do this at the start of every task:
 
 ### Security and honesty
 - Never weaken permission checks, CSRF, validation or DB constraints to make something work.
-- No secrets in code or commits. Read keys such as `ANTHROPIC_API_KEY` from the environment. Never commit `.env`, `data/`, credentials or anything in `planning/`.
+- No secrets in code or commits. Read keys such as `GEMINI_API_KEY` from the environment. Never commit `.env`, `data/`, credentials or anything in `planning/`.
 - **AI features (Y8, S7) are advisory:**
-  - Behind `AI_ENABLED`, model `claude-opus-5-5`, every call logged in `AiRun`, output labelled "AI-generated: verify before use".
+  - Behind `AI_ENABLED`, Google Gemini (`AI_MODEL`, default `gemini-3.8-flash`; check with `manage.py check_ai`), every call logged in `AiRun`, output labelled "AI-generated: verify before use".
   - **Never** let model output change status, verification level, penalties or decisions.
   - Treat document text as data, not instructions. No tools in extraction calls.
   - The app must work fully with AI off or when a call fails (30 s timeout).

@@ -26,7 +26,7 @@ class ExtractionTests(PortalTestCase):
             extract(self.b, item.documents.get(), consent=True, synthetic=True)
 
     @override_settings(AI_ENABLED=True)
-    @patch.dict(os.environ, {'ANTHROPIC_API_KEY': 'synthetic-test-key'})
+    @patch.dict(os.environ, {'GEMINI_API_KEY': 'synthetic-test-key'})
     def test_suggestions_and_mismatches_cannot_mutate_records(self):
         item = self.draft()
         before = (item.amount_paise, item.status, item.verification_level, item.version, item.audit_events.count())
@@ -39,7 +39,7 @@ class ExtractionTests(PortalTestCase):
         self.assertEqual(before, (item.amount_paise, item.status, item.verification_level, item.version, item.audit_events.count()))
 
     @override_settings(AI_ENABLED=True)
-    @patch.dict(os.environ, {'ANTHROPIC_API_KEY': 'synthetic-test-key'})
+    @patch.dict(os.environ, {'GEMINI_API_KEY': 'synthetic-test-key'})
     def test_consent_schema_and_timeout_fail_safely(self):
         item = self.draft()
         doc = item.documents.get()

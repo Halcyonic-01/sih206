@@ -126,7 +126,7 @@ complete regulatory checks/escalations still require the rules owner's work.
 ## External AI smoke check
 
 The existing provider adapter remains disabled unless `AI_ENABLED=true` and an
-`ANTHROPIC_API_KEY` are present in the server process environment. Once configured,
+`GEMINI_API_KEY` are present in the server process environment (`.env` is enough). Once configured,
 an operator can explicitly authorize the seeded synthetic scan:
 
 ```powershell
@@ -134,7 +134,7 @@ an operator can explicitly authorize the seeded synthetic scan:
 ```
 
 This sends the synthetic PDF externally and logs the call. Do not run it with real
-documents. The development session could not see an Anthropic key, SMTP variables
+documents. Check the key first with `manage.py check_ai` (synthetic data only). The development session could not see a Gemini key, SMTP variables
 or bank directory in its process/Windows user/machine environment. No live AI,
 SMTP or bank result is claimed. The user must identify the configuration location
 and approved bank API/contact source to finish that connection.
