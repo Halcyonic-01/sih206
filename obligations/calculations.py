@@ -15,7 +15,7 @@ class ApprovalInput:
 
 def required_amount(approvals, ruleset, *, as_of, institution_type='PRIVATE'):
     rule = rule_snapshot(ruleset, as_of)
-    if institution_type not in {'PRIVATE', 'GOVERNMENT', 'AIDED', 'UNIVERSITY'}:
+    if not isinstance(institution_type, str) or institution_type not in {'PRIVATE', 'GOVERNMENT', 'AIDED', 'UNIVERSITY'}:
         raise RuleInputError('Unknown institution type.')
     approvals = tuple(approvals)
     if not approvals:
@@ -24,6 +24,9 @@ def required_amount(approvals, ruleset, *, as_of, institution_type='PRIVATE'):
     # Leased land OR building doubles the aggregate once, not once per asset.
     leased = False
     for approval in approvals:
+        if not all(isinstance(value, str) for value in (
+                approval.programme, approval.level, approval.land_tenure, approval.building_tenure)):
+            raise RuleInputError('Programme, level and both tenures must be text codes.')
         key = (approval.programme, approval.level)
         if key in seen:
             raise RuleInputError('Duplicate programme/level; select the applicable approval once.')
@@ -99,7 +102,7 @@ def coverage(obligation, as_of, *, holdings):
         day(holding.maturity_date, 'maturity_date')
         if holding.maturity_date < holding.issue_date:
             raise RuleInputError('Holding maturity precedes issue.')
-        if holding.status not in {'DRAFT', 'SUBMITTED', 'CHANGES_REQUESTED', 'ACCEPTED'}:
+        if not isinstance(holding.status, str) or holding.status not in {'DRAFT', 'SUBMITTED', 'CHANGES_REQUESTED', 'ACCEPTED'}:
             raise RuleInputError('Unknown holding review status.')
         if type(holding.superseded) is not bool or type(holding.released) is not bool:
             raise RuleInputError('Lifecycle flags must be booleans.')
@@ -152,6 +155,8 @@ def penalty_proposal(kind, base_paise, ruleset, *, as_of, intimation_date=None,
                      proof_completed_on=None, cycle_year=None):
     rule = rule_snapshot(ruleset, as_of)
     integer(base_paise, 'penalty base', 1)
+    if not isinstance(kind, str):
+        raise RuleInputError('Penalty kind must be a text code.')
     rates = rule.payload['penalties_bps']
     if kind == 'late_proof':
         day(intimation_date, 'intimation_date')
