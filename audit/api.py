@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.http import HttpResponse
-from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_field, inline_serializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -53,6 +53,29 @@ def positive_int(params, name):
     return int(value)
 
 
+class InstrumentRefSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    reference = serializers.CharField()
+    institution = serializers.CharField(help_text='Institution code')
+
+
+class ActorRefSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    username = serializers.CharField()
+
+
+class ChangeSerializer(serializers.Serializer):
+    field = serializers.CharField()
+    before = serializers.JSONField(allow_null=True)
+    after = serializers.JSONField(allow_null=True)
+
+
+class SealSerializer(serializers.Serializer):
+    hash = serializers.CharField()
+    prev_hash = serializers.CharField(allow_blank=True)
+    backfilled = serializers.BooleanField()
+
+
 class AuditEventSerializer(serializers.ModelSerializer):
     instrument = serializers.SerializerMethodField()
     actor = serializers.SerializerMethodField()
@@ -61,10 +84,12 @@ class AuditEventSerializer(serializers.ModelSerializer):
         model = AuditEvent
         fields = ['id', 'created_at', 'action', 'reason', 'instrument', 'actor']
 
+    @extend_schema_field(InstrumentRefSerializer)
     def get_instrument(self, event):
         item = event.instrument
         return {'id': item.pk, 'reference': item.reference, 'institution': item.institution.code}
 
+    @extend_schema_field(ActorRefSerializer)
     def get_actor(self, event):
         return {'id': event.actor_id, 'username': event.actor.get_username()}
 
@@ -83,10 +108,12 @@ class AuditEventDetailSerializer(AuditEventSerializer):
     class Meta(AuditEventSerializer.Meta):
         fields = AuditEventSerializer.Meta.fields + ['before', 'after', 'changes', 'seal']
 
+    @extend_schema_field(SealSerializer(allow_null=True))
     def get_seal(self, event):
         seal = getattr(event, 'seal', None)
         return {'hash': seal.hash, 'prev_hash': seal.prev_hash, 'backfilled': seal.backfilled} if seal else None
 
+    @extend_schema_field(ChangeSerializer(many=True))
     def get_changes(self, event):
         return changes(event.before, event.after)
 
@@ -142,11 +169,22 @@ class AuditEventDetail(RetrieveAPIView):
         return scoped_audit_events(self.request.user).select_related('instrument__institution', 'actor')
 
 
+class AuditFacetsSerializer(serializers.Serializer):
+    actions = serializers.ListField(child=serializers.CharField())
+    actors = ActorRefSerializer(many=True)
+    institutions = serializers.ListField(child=serializers.CharField())
+
+
+class AccessFacetsSerializer(serializers.Serializer):
+    actions = serializers.ListField(child=serializers.CharField())
+    object_types = serializers.ListField(child=serializers.CharField())
+
+
 class AuditFacets(APIView):
     """Values for the filter drop-downs."""
     permission_classes = [has_role('auditor')]
 
-    @extend_schema(responses=serializers.DictField())
+    @extend_schema(responses=AuditFacetsSerializer)
     def get(self, request):
         events = scoped_audit_events(request.user)
         actors = events.order_by('actor__username').values('actor_id', 'actor__username').distinct()
@@ -207,7 +245,7 @@ class AccessLogList(ListAPIView):
 class AccessLogFacets(APIView):
     permission_classes = [has_role('auditor')]
 
-    @extend_schema(responses=serializers.DictField())
+    @extend_schema(responses=AccessFacetsSerializer)
     def get(self, request):
         rows = scoped_access_logs(request.user)
         return Response({

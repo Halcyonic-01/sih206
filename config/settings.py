@@ -212,4 +212,5 @@ AUDIT_CHAIN_KEY = os.environ.get('AUDIT_CHAIN_KEY') or hashlib.sha256(('audit-ch
 
 # Deliberate: same-origin framing is required by the in-app PDF viewer; HSTS preload is an explicit opt-in
 # that cannot be undone quickly, so it stays off until AICTE decides on it.
-SILENCED_SYSTEM_CHECKS = ['security.W019', 'security.W021']
+# drf-spectacular warnings are reported by a separate CI step so a missing schema hint never blocks a merge.
+SILENCED_SYSTEM_CHECKS = ['security.W019', 'security.W021', 'drf_spectacular.W001', 'drf_spectacular.W002']

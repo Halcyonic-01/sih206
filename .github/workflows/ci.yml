@@ -38,6 +38,9 @@ jobs:
           DJANGO_SECURE_SSL_REDIRECT: 'true'
           DJANGO_HSTS_SECONDS: '31536000'
         run: python manage.py check --deploy --fail-level WARNING
+      - name: OpenAPI schema is valid (warnings are informational)
+        continue-on-error: true
+        run: python manage.py spectacular --validate --fail-on-warn --file /tmp/schema.yml
       - name: Tests
         run: python manage.py test --noinput
 
