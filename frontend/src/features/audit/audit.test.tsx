@@ -65,7 +65,7 @@ describe('AuditPage', () => {
     route()
     mount()
     const user = userEvent.setup()
-    await user.type(await screen.findByPlaceholderText('Contains…'), 'FDR-3')
+    await user.type(await screen.findByLabelText('Reference'), 'FDR-3')
     await user.click(screen.getByRole('button', { name: /Filter/ }))
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url).includes('q=FDR-3'))).toBe(true))
   })

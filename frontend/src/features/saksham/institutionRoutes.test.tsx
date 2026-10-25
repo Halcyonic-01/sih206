@@ -75,13 +75,13 @@ describe('institution feature registered in shared auth and routing', () => {
     await browser.selectOptions(screen.getByLabelText('Rule version'), '1');
     await browser.selectOptions(screen.getByLabelText('Building tenure'), 'LEASED');
     await browser.click(screen.getByRole('button', { name: 'Calculate preview' }));
-    expect(await screen.findByText('INR 30,00,000.00')).toBeInTheDocument();
+    expect(await screen.findByText('₹30,00,000.00')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith('/api/calculator', expect.objectContaining({
       body: JSON.stringify({ institution_id: 1, rule_set_id: 1, approvals: [
         { programme: 'MANAGEMENT', level: 'PG', land_tenure: 'OWNED', building_tenure: 'LEASED' }] }),
     }));
     fireEvent.change(screen.getByLabelText('Building tenure'), { target: { value: 'OWNED' } });
-    expect(screen.queryByText('INR 30,00,000.00')).not.toBeInTheDocument();
+    expect(screen.queryByText('₹30,00,000.00')).not.toBeInTheDocument();
   });
 
   it.each([400, 403, 404, 409, 503])('shows safe list error %i without fallback data', async status => {

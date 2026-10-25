@@ -7,7 +7,7 @@ import IntegrityTab from './IntegrityTab'
 export default function AuditPage() {
   return (
     <>
-      <PageHeader title="Audit and access" subtitle="Read-only. Every change to a record and every sign-in, download and export." />
+      <PageHeader title="Audit and access" subtitle="Every change to a record, and every sign-in, download and export. Read-only." />
       <Card>
         <Tabs destroyInactiveTabPane items={[
           { key: 'trail', label: 'Audit trail', children: <AuditTrailTab /> },

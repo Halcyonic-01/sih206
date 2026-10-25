@@ -52,7 +52,7 @@ function EventDrawer({ id, onClose }: { id: number | null; onClose: () => void }
               </Typography.Paragraph>
             )}
             <Typography.Title level={5} style={{ marginTop: 16 }}>Full snapshot after the event</Typography.Title>
-            <pre style={{ maxHeight: 320, overflow: 'auto', background: '#f4f6fa', padding: 12 }}>
+            <pre style={{ maxHeight: 320, overflow: 'auto', background: '#f3f5f9', padding: 12, borderRadius: 8 }}>
               {JSON.stringify(event.data.after, null, 2)}
             </pre>
           </>
@@ -84,21 +84,21 @@ export default function AuditTrailTab() {
 
   return (
     <>
-      <Form form={form} layout="inline" style={{ rowGap: 12, marginBottom: 16 }}
+      <Form form={form} layout="vertical" className="filter-form"
             onFinish={(values) => { setFilters(toFilters(values)); setPage(1) }}>
-        <Form.Item name="q" label="Reference"><Input allowClear placeholder="Contains…" /></Form.Item>
+        <Form.Item name="q" label="Reference"><Input allowClear  /></Form.Item>
         <Form.Item name="institution" label="Institution">
-          <Select allowClear style={{ width: 140 }} loading={facets.isPending} options={(facets.data?.institutions ?? []).map((value) => ({ value, label: value }))} />
+          <Select allowClear loading={facets.isPending} options={(facets.data?.institutions ?? []).map((value) => ({ value, label: value }))} />
         </Form.Item>
         <Form.Item name="actor" label="Actor">
-          <Select allowClear showSearch optionFilterProp="label" style={{ width: 170 }}
+          <Select allowClear showSearch optionFilterProp="label"
                   options={(facets.data?.actors ?? []).map((actor) => ({ value: actor.id, label: actor.username }))} />
         </Form.Item>
         <Form.Item name="action" label="Action">
-          <Select mode="multiple" allowClear style={{ minWidth: 200 }} options={(facets.data?.actions ?? []).map((value) => ({ value, label: value }))} />
+          <Select mode="multiple" allowClear options={(facets.data?.actions ?? []).map((value) => ({ value, label: value }))} />
         </Form.Item>
         <Form.Item name="range" label="Dates"><DatePicker.RangePicker /></Form.Item>
-        <Flex gap={8}>
+        <Flex gap={8} className="filter-form__actions" wrap>
           <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>Filter</Button>
           <Button onClick={() => { form.resetFields(); setFilters({}); setPage(1) }}>Reset</Button>
           <Button icon={<DownloadOutlined />} loading={exporting} onClick={() => void exportCsv()}>Export CSV</Button>

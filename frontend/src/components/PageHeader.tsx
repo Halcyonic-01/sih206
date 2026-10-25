@@ -1,26 +1,34 @@
-import { Breadcrumb, Flex, Typography } from 'antd'
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useInRouterContext } from 'react-router-dom'
 
+/** The single page title block: breadcrumb, h1, one-line description and the page's primary actions. */
 export function PageHeader({ title, subtitle, extra, breadcrumb }: {
   title: ReactNode
   subtitle?: ReactNode
   extra?: ReactNode
   breadcrumb?: { label: string; to?: string }[]
 }) {
+  // Feature components can render without a router (they take navigation as props); then crumbs are plain text.
+  const routed = useInRouterContext()
   return (
-    <header style={{ marginBottom: 16 }}>
+    <header className="page-header">
       {breadcrumb && (
-        <Breadcrumb style={{ marginBottom: 8 }}
-                    items={breadcrumb.map((item) => ({ title: item.to ? <Link to={item.to}>{item.label}</Link> : item.label }))} />
+        <nav aria-label="Breadcrumb" className="breadcrumb">
+          <ol>
+            {breadcrumb.map((item, index) => (
+              <li key={item.label}>{item.to && routed ? <Link to={item.to}>{item.label}</Link>
+                : <span aria-current={index === breadcrumb.length - 1 ? 'page' : undefined}>{item.label}</span>}</li>
+            ))}
+          </ol>
+        </nav>
       )}
-      <Flex justify="space-between" align="start" gap={16} wrap>
-        <div>
-          <Typography.Title level={2} style={{ margin: 0 }}>{title}</Typography.Title>
-          {subtitle && <Typography.Paragraph type="secondary" style={{ margin: '4px 0 0' }}>{subtitle}</Typography.Paragraph>}
+      <div className="page-header__row">
+        <div className="page-header__text">
+          <h1 className="page-title">{title}</h1>
+          {subtitle && <p className="page-subtitle">{subtitle}</p>}
         </div>
-        {extra && <Flex gap={8} wrap>{extra}</Flex>}
-      </Flex>
+        {extra && <div className="page-actions">{extra}</div>}
+      </div>
     </header>
   )
 }

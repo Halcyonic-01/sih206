@@ -15,8 +15,8 @@ export default function IntegrityTab() {
   return (
     <>
       <Typography.Paragraph>
-        Every audit event is sealed into a keyed hash chain when it is written. Verifying recomputes the whole chain:
-        an event that was edited, removed or slipped in behind the application shows up as broken.
+        Each audit event is sealed into a keyed hash chain when it is written. Verifying recomputes the whole chain, so an
+        event that was edited, removed or added outside the application shows up as broken.
       </Typography.Paragraph>
       <Button type="primary" icon={<SafetyCertificateOutlined />} loading={verify.isPending} onClick={() => verify.mutate()}>
         Verify chain
