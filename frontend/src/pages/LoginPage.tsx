@@ -1,10 +1,11 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Form, Input, Typography } from 'antd'
+import { Alert, Button, Form, Input } from 'antd'
 import { useState } from 'react'
 import { matchPath, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '@/api/client'
 import { applyFieldErrors } from '@/api/forms'
 import { useAuth } from '@/auth/AuthProvider'
+import { Brand } from '@/components/Logo'
 import { appRoutes } from '@/routes/registry'
 
 interface LoginValues { username: string; password: string }
@@ -45,26 +46,39 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="login-page">
-      <Card className="login-card">
-        <Typography.Title level={3} style={{ marginTop: 0 }}>Pramaan</Typography.Title>
-        <Typography.Paragraph type="secondary">
-          Trust Backed by Evidence · AICTE security deposit portal. Sign in with the account issued to you.
-        </Typography.Paragraph>
-        {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} role="alert" />}
-        <Form form={form} layout="vertical" onFinish={submit} requiredMark={false} disabled={busy}>
-          <Form.Item name="username" label="Username" rules={[{ required: true, message: 'Enter your username.' }]}>
-            <Input prefix={<UserOutlined />} autoComplete="username" autoFocus />
-          </Form.Item>
-          <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Enter your password.' }]}>
-            <Input.Password prefix={<LockOutlined />} autoComplete="current-password" />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" block loading={busy}>Sign in</Button>
-        </Form>
-        <Typography.Paragraph type="secondary" style={{ margin: '16px 0 0', fontSize: 12 }}>
-          After five failed attempts the account is locked for a short time.
-        </Typography.Paragraph>
-      </Card>
+    <main className="auth-page">
+      <aside className="auth-aside" aria-label="About the portal">
+        <Brand inverse size={44} />
+        <div>
+          <h2>Security deposits, tracked from submission to release</h2>
+          <p>One place for institutions and AICTE officers to record, review and follow every deposit.</p>
+          <ul className="auth-points">
+            <li>FDR, RTGS and RPGF deposits with their supporting documents</li>
+            <li>Reminders before maturity and follow-up on overdue items</li>
+            <li>A complete, tamper-evident record of every change</li>
+          </ul>
+        </div>
+        <small>All India Council for Technical Education</small>
+      </aside>
+      <div className="auth-main">
+        <div className="auth-mobile-brand"><Brand size={42} /></div>
+        <div className="auth-card">
+          <h1>Sign in</h1>
+          <p className="muted">Use the account issued to your institution or office.</p>
+          {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} role="alert" />}
+          <Form form={form} layout="vertical" size="large" onFinish={submit} requiredMark={false} disabled={busy}>
+            <Form.Item name="username" label="Username" rules={[{ required: true, message: 'Enter your username.' }]}>
+              <Input prefix={<UserOutlined aria-hidden />} autoComplete="username" autoFocus />
+            </Form.Item>
+            <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Enter your password.' }]}>
+              <Input.Password prefix={<LockOutlined aria-hidden />} autoComplete="current-password" />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" block loading={busy}>Sign in</Button>
+          </Form>
+          <p className="auth-help">After five failed attempts the account is locked for a few minutes.</p>
+        </div>
+        <p className="auth-foot">Acceptance of a deposit record is for tracking and is not verification by the bank.</p>
+      </div>
     </main>
   )
 }

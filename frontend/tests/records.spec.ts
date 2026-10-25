@@ -7,19 +7,21 @@ const passwords = Object.fromEntries(readFileSync(process.env.DEMO_CREDENTIALS_F
   .split(/\r?\n/).filter(line => line.includes(': ')).map(line => line.split(': ')));
 
 async function login(page: Page, username: string) {
-  await page.goto('/legacy/accounts/login/?next=/workspace/');
-  await page.getByLabel('Username:').fill(username);
-  await page.getByLabel('Password:').fill(passwords[username]);
+  await page.goto('/login');
+  await page.getByLabel('Username').fill(username);
+  await page.getByLabel('Password').fill(passwords[username]);
   await page.getByRole('button', {name: 'Sign in', exact: true}).click();
-  await expect(page.getByRole('heading', {name: 'Deposit records'})).toBeVisible();
+  await expect(page.getByRole('heading', {level: 1, name: /^Welcome/})).toBeVisible();
+  await page.goto('/records');
+  await expect(page.getByRole('heading', {level: 1, name: 'Deposit records'})).toBeVisible();
 }
 
 async function openRecord(page: Page, reference: string) {
-  await page.goto('/workspace/');
-  await page.getByRole('searchbox', {name: 'Search deposit records'}).fill(reference);
-  await page.getByRole('searchbox', {name: 'Search deposit records'}).press('Enter');
+  await page.goto('/records');
+  await page.getByRole('searchbox', {name: 'Global record search'}).fill(reference);
+  await page.getByRole('searchbox', {name: 'Global record search'}).press('Enter');
   await page.getByRole('button', {name: reference, exact: true}).click();
-  await expect(page.getByRole('heading', {name: reference, exact: true})).toBeVisible();
+  await expect(page.getByRole('heading', {level: 1, name: reference, exact: true})).toBeVisible();
 }
 
 test('submission, PDF review, discrepancy, correction, acceptance and renewal', async ({browser}) => {

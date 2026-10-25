@@ -4,11 +4,11 @@ import { money, paise, publicRecord } from './client';
 describe('exact paise and unknown money', () => {
   it('preserves the original money formatting and parsing behavior', () => {
     expect(money(null)).toBe('Unavailable');
-    expect(money(0)).toBe('INR 0.00');
-    expect(money(50000025)).toBe('INR 5,00,000.25');
+    expect(money(0)).toBe('₹0.00');
+    expect(money(50000025)).toBe('₹5,00,000.25');
     expect(money(1.5)).toBe('Unavailable');
     expect(paise('123.45')).toBe(12345);
-    expect(money('9007199254740993')).toBe('INR 9,00,71,99,25,47,409.93');
+    expect(money('9007199254740993')).toBe('₹9,00,71,99,25,47,409.93');
   });
 
   it.each([

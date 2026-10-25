@@ -1,6 +1,0 @@
-.workspace-section {display: none;}
-@media (max-width: 600px) {
-  .workspace-tabs > .ant-tabs-nav {display: none;}
-  .workspace-section {display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px;}
-  .workspace-section select {max-width: 100%; padding: 8px; border: 1px solid #b8c7d6; border-radius: 6px; background: white;}
-}

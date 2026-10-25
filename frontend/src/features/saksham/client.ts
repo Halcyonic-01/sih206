@@ -20,7 +20,7 @@ export function money(value: number | string | null | undefined): string {
   if (typeof value === 'number' && (!Number.isSafeInteger(value) || value < 0)) return 'Unavailable';
   if (typeof value === 'string' && (!/^\d+$/.test(value) || value.length > 19)) return 'Unavailable';
   const exact = BigInt(value);
-  return `INR ${(exact / 100n).toLocaleString('en-IN')}.${String(exact % 100n).padStart(2, '0')}`;
+  return `₹${(exact / 100n).toLocaleString('en-IN')}.${String(exact % 100n).padStart(2, '0')}`;
 }
 export function paise(text: string): number {
   if (!/^\d+(\.\d{1,2})?$/.test(text)) throw new Error('Use a positive INR amount with at most two decimals.');

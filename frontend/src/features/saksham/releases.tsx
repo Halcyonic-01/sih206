@@ -1,134 +1,254 @@
 import * as React from 'react';
+import { Alert, Table, Timeline } from 'antd';
+import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
+import { PageHeader } from '@/components/PageHeader';
+import { Panel, SummaryList } from '@/components/Panel';
+import { StatusTag } from '@/components/StatusTag';
+import { formatDate, formatDateTime } from '@/lib/format';
+import { humanize, RELEASE_PATH_LABELS } from '@/lib/labels';
 import {api, Case, Page, PublicRecord, publicRecord, Transport, money, paise, Failure} from './client';
 import {ErrorBox, Loading, Notice, Readiness, useRemote} from './shared';
 
 export interface ReleaseInputs {
-  instrumentId:number; obligationId:number; instrumentVersion:number;
-  // TODO(Y2/Y3/S5-D04/K4): supplied from authorized server capabilities, never fixtures.
-  canRequest:boolean;
-  questionnaire?:{version:string;questions:{id:string;label:string}[]};
-  documentPath?:string; onPathChange?:(path:string)=>void;
-  documentsReady:boolean; documents:React.ReactNode;
-}
-export function ReleaseWizard({client,identityKey,inputs,onCreated}:{client:Transport;identityKey:string;inputs:ReleaseInputs;onCreated:(id:number)=>void}){
-  return <WizardBody key={`${identityKey}:${inputs.instrumentId}:${inputs.instrumentVersion}:${inputs.questionnaire?.version??''}`} client={client} inputs={inputs} onCreated={onCreated}/>;
-}
-function WizardBody({client,inputs,onCreated}:{client:Transport;inputs:ReleaseInputs;onCreated:(id:number)=>void}){
-  const [step,setStep]=React.useState(0);const [path,setPath]=React.useState('TERM_COMPLETE');
-  const [answers,setAnswers]=React.useState<Record<string,boolean|null>>({});const [reason,setReason]=React.useState('');
-  const [busy,setBusy]=React.useState(false);const [error,setError]=React.useState<unknown>();
-  const title=React.useRef<HTMLHeadingElement>(null);
-  React.useEffect(()=>{title.current?.focus();},[step]);
-  const questionnaire=inputs.questionnaire;
-  const answered=!!questionnaire?.questions.length&&questionnaire.questions.every(q=>typeof answers[q.id]==='boolean');
-  const documentsReady=inputs.documentsReady&&inputs.documentPath===path;
-  const nextAllowed=step===0?!!reason.trim():step===1?answered:documentsReady;
-  async function submit(){if(!inputs.canRequest||!answered||!documentsReady||!reason.trim())return;setBusy(true);setError(undefined);
-    try{const result=await client.post<Case>(api('releases'),{instrument_id:inputs.instrumentId,obligation_id:inputs.obligationId,
-      instrument_version:inputs.instrumentVersion,path,declarations:answers,reason,template_ref:questionnaire?.version});onCreated(result.id);}catch(e){setError(e);}finally{setBusy(false);}}
-  return <section><h1>Request release</h1><Notice/><ol aria-label="Release request steps">{['Path','Declarations','Documents','Review'].map((s,i)=><li key={s} aria-current={i===step?'step':undefined}>{s}</li>)}</ol>
-    <h2 ref={title} tabIndex={-1}>{['Select path','Record declarations','Review documents','Review and submit'][step]}</h2>
-    {!!error&&<ErrorBox error={error}/>}<fieldset disabled={busy}><legend>Release request</legend>
-    {step===0&&<><label>Path <select value={path} onChange={e=>{setPath(e.target.value);setAnswers({});inputs.onPathChange?.(e.target.value);}}>{[
-      ['TERM_COMPLETE','Term complete'],['PROGRESSIVE_CLOSURE','Progressive closure'],['MERGER','Merger'],
-      ['CONVERSION_TO_UNIVERSITY','Conversion to university'],['CLOSURE_BY_AICTE','Closure by AICTE']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
-      <label>Reason <textarea required maxLength={2000} value={reason} onChange={e=>setReason(e.target.value)}/></label></>}
-    {step===1&&(!questionnaire?<p role="alert">Declaration template unavailable. Obtain the approved Affidavit-6 questionnaire; no questions have been invented.</p>:<>
-      <p>Questionnaire version: {questionnaire.version}</p>{questionnaire.questions.map(q=><label key={q.id}>{q.label}<select value={answers[q.id]==null?'':String(answers[q.id])}
-      onChange={e=>setAnswers({...answers,[q.id]:e.target.value===''?null:e.target.value==='true'})}><option value="">Not answered</option><option value="true">Yes</option><option value="false">No</option></select></label>)}</>)}
-    {step===2&&<><p>Path: {path.replaceAll('_',' ').toLowerCase()}. Required document and exception checks must come from the authorized source.</p>
-      {inputs.documents??<p role="alert">Scoped document upload/viewing integration unavailable.</p>}
-      {!documentsReady&&<p role="alert">Required document review is incomplete, stale for this path or unavailable.</p>}</>}
-    {step===3&&<><p>Path: {path.replaceAll('_',' ').toLowerCase()}</p><p>Reason: {reason}</p><p>Submission requests human review. Clearances, penalties, approval, letters and completion remain separate.</p>
-      {!inputs.canRequest&&<p role="alert">Submission permission or source context unavailable.</p>}
-      <button disabled={!inputs.canRequest||!answered||!documentsReady} onClick={submit}>Submit release request</button></>}
-    <button disabled={step===0} onClick={()=>setStep(step-1)}>Back</button>{step<3&&<button disabled={!nextAllowed} onClick={()=>setStep(step+1)}>Next</button>}
-    </fieldset></section>;
+  instrumentId: number; obligationId: number; instrumentVersion: number;
+  // Supplied by the server (eligibility, questionnaire, document checklist); never invented in the browser.
+  canRequest: boolean;
+  questionnaire?: {version: string; questions: {id: string; label: string}[]};
+  documentPath?: string; onPathChange?: (path: string) => void;
+  documentsReady: boolean; documents: React.ReactNode;
 }
 
-export function ReleaseCase({client,identityKey,caseId}:{client:Transport;identityKey:string;caseId:number}){
-  return <CaseBody key={`${identityKey}:${caseId}`} client={client} identityKey={identityKey} caseId={caseId}/>;
-}
-function CaseBody({client,identityKey,caseId}:{client:Transport;identityKey:string;caseId:number}){
-  const remote=useRemote<Case>(client,`releases/${caseId}`,identityKey);
-  const [busy,setBusy]=React.useState(false);const [error,setError]=React.useState<unknown>();
-  const [reason,setReason]=React.useState('');const [file,setFile]=React.useState<File>();const [refund,setRefund]=React.useState('');
-  const [penalty,setPenalty]=React.useState('premature_encashment');const [base,setBase]=React.useState('');
-  const [summary,setSummary]=React.useState<{status:string;cached:boolean;label:string;summary?:string;risk_flags?:{field:string;severity:string;message:string}[];detail?:string}>();
-  async function mutate(action:string,extra:Record<string,unknown>={},multipart?:FormData){if(!remote.data||!reason.trim()||busy)return;
-    setBusy(true);setError(undefined);const current=remote.data;
-    try{const payload=multipart??{version:current.version,reason,
-      ...(['approve','reject'].includes(action)?{instrument_version:current.instrument_version}:{}),...extra};
-      await client.post(api(`releases/${caseId}/${action}`),payload);setReason('');setFile(undefined);}
-    catch(e){setError(e);}finally{remote.reload();setBusy(false);}}
-  if(remote.error)return <ErrorBox error={remote.error}/>;if(!remote.data)return <Loading/>;
-  const item=remote.data;
-  async function getSummary(){if(busy)return;setBusy(true);setError(undefined);try{setSummary(await client.post(api(`releases/${caseId}/ai-summary`),{version:item.version}));}catch(e){setError(e);}finally{setBusy(false);}}
-  return <section><h1>Release case {item.id}</h1><Notice/><p>Saved status: {item.status}. {item.status==='APPROVED'?'Release authorized; completion pending.':''}</p>
-    <p>Monitoring: {item.monitoring_active?'Active':'Ended by recorded completion'}</p><p role="status">Next action: {item.next_action}</p>
-    <p>Responsible party: {item.responsible_party??'Unavailable'}</p><p>Application reason: {item.application_reason??'Unavailable'}</p>
-    {item.decision_reason&&<p>Recorded decision reason: {item.decision_reason}</p>}
-    <h2>Protected documents</h2>{item.documents?<ul>{item.documents.map(d=><li key={d.id}>{d.name} · {d.kind} · {d.page_count==null?'Page count unavailable':`${d.page_count} pages`}
-      {/^\/(?!\/)/.test(d.download_path)&&<button disabled={busy} onClick={()=>client.download(d.download_path).catch(setError)}>Download {d.name}</button>}</li>)}</ul>:<p>Document metadata unavailable.</p>}
-    <Readiness value={item.readiness}/>{!!error&&<ErrorBox error={error}/>}
-    <h2>AI advisory summary</h2>{item.actions.can_ai_summary?<><p>This is advisory only and cannot approve, reject, or alter this case.</p>
-      {item.ai_summary_enabled===false?<p>AI summary is off. Continue manual release review.</p>:<button disabled={busy} onClick={()=>void getSummary()}>Generate AI summary</button>}</>:<p>Available to assigned clearance units and the independent authority.</p>}
-    {summary&&<div role="status"><p>{summary.label}</p>{summary.status==='success'?<><p>{summary.summary}</p>{summary.cached&&<p>Saved result for this case version.</p>}<ul>{summary.risk_flags?.map((flag,i)=><li key={i}><strong>{flag.severity}</strong> · {flag.field}: {flag.message}</li>)}</ul></>:<p>{summary.detail}</p>}</div>}
-    <h2>Clearances</h2><ul>{item.clearances.map(t=><li key={t.unit}>{t.unit}: {t.status} {t.reason}</li>)}</ul>
-    <h2>Penalties</h2><ul>{item.penalties.map(p=><li key={p.id}>{p.kind.replaceAll('_',' ')}: {money(p.amount_paise)} · {p.status} · clause {p.clause}
-      {item.actions.can_review_penalties&&p.status==='PROPOSED'&&<button disabled={busy||!reason.trim()} onClick={()=>mutate('penalties',{confirm_id:p.id})}>Confirm reviewed proposal</button>}</li>)}</ul>
-    <p>Review complete: {item.penalty_review_complete?'Yes':'No'}. Confirmation does not prove payment or authorize deduction.</p>
-    <fieldset disabled={busy}><legend>Human action and reason</legend><label>Reason / completion notes <textarea required maxLength={2000} value={reason} onChange={e=>setReason(e.target.value)}/></label>
-    {item.actions.can_review_penalties&&<><label>Penalty kind <select value={penalty} onChange={e=>setPenalty(e.target.value)}>{['premature_encashment','closure_lapsed','closure_six_years'].map(k=><option key={k} value={k}>{k.replaceAll('_',' ')}</option>)}</select></label>
-      <label>Reviewed penalty base (INR) <input inputMode="decimal" value={base} onChange={e=>setBase(e.target.value)}/></label>
-      <button disabled={!reason.trim()||!base} onClick={()=>{try{void mutate('penalties',{kind:penalty,base_paise:paise(base)});}catch(e){setError(e);}}}>Propose penalty for review</button>
-      <button disabled={!reason.trim()} onClick={()=>mutate('penalties')}>Record officer checklist and penalty review complete</button></>}
-    {item.actions.can_approve&&<button disabled={!reason.trim()} onClick={()=>mutate('approve')}>Record authority authorization</button>}
-    {item.actions.can_reject&&<button disabled={!reason.trim()} onClick={()=>mutate('reject')}>Record authority rejection</button>}
-    {item.actions.can_issue&&<button disabled={!reason.trim()} onClick={()=>mutate('issue')}>Generate unsigned demo letter</button>}
-    <h2>Letter</h2>{item.letter?<><p>{item.letter.kind}: {item.letter.serial} · {item.letter.revoked?'Revoked':'Issued demo record'} · Unsigned</p>
-      <button onClick={()=>client.download(api(`releases/${caseId}/letter`)).catch(setError)}>Download protected letter</button></>:<p>Not issued.</p>}
-    {item.actions.can_revoke&&<button disabled={!reason.trim()} onClick={()=>mutate('revoke')}>Revoke demo letter</button>}
-    <h2>Separate completion</h2>{item.actions.can_complete?<><label>New completion PDF <input type="file" accept="application/pdf,.pdf" onChange={e=>setFile(e.target.files?.[0])}/></label>
-      {item.mode==='RTGS'&&<label>Recorded bank/PFMS refund reference <input maxLength={200} value={refund} onChange={e=>setRefund(e.target.value)}/></label>}
-      <button disabled={!file||!reason.trim()||(item.mode==='RTGS'&&!refund.trim())} onClick={()=>{if(!file)return;const data=new FormData();
-        data.set('version',String(item.version));data.set('instrument_version',String(item.instrument_version));data.set('notes',reason);data.set('refund_reference',refund);data.set('document',file);
-        void mutate('complete',{},data);}}>Record evidence-backed completion</button></>:<p>Completion action unavailable for this saved state or source context.</p>}
-    </fieldset>{item.completion_notes&&<p>Recorded completion notes: {item.completion_notes}</p>}
-    <h2>Recorded case history</h2><ol>{item.history?.map((h,i)=><li key={i}>{h.action.replaceAll('_',' ').toLowerCase()} · {new Date(h.at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})} IST · {h.reason}</li>)}</ol>
-    {item.history_has_more&&<p>Latest 100 events shown; additional history exists.</p>}
-    <button disabled={busy} onClick={remote.reload}>Reload saved case</button></section>;
-}
+const PATHS = Object.entries(RELEASE_PATH_LABELS);
 
-interface Task {case_id:number;version:number;unit:string;status:string;can_decide:boolean;due_date:string|null}
-export function ClearanceQueue({client,identityKey,onSelect}:{client:Transport;identityKey:string;onSelect:(id:number)=>void}){
-  return <QueueBody key={identityKey} client={client} identityKey={identityKey} onSelect={onSelect}/>;
+export function ReleaseWizard({client, identityKey, inputs, onCreated}: {client: Transport; identityKey: string; inputs: ReleaseInputs; onCreated: (id: number) => void}) {
+  return <WizardBody key={`${identityKey}:${inputs.instrumentId}:${inputs.instrumentVersion}:${inputs.questionnaire?.version ?? ''}`} client={client} inputs={inputs} onCreated={onCreated} />;
 }
-function QueueBody({client,identityKey,onSelect}:{client:Transport;identityKey:string;onSelect:(id:number)=>void}){
-  const [page,setPage]=React.useState(1);
-  const remote=useRemote<Page<Task>>(client,`clearance-tasks?page=${page}`,identityKey);
-  const [reason,setReason]=React.useState('');const [evidence,setEvidence]=React.useState('');
-  const [error,setError]=React.useState<unknown>();const [busy,setBusy]=React.useState(false);
-  async function decide(task:Task,status:string){setBusy(true);setError(undefined);try{await client.post(api(`releases/${task.case_id}/clearances/${task.unit}`),
-    {version:task.version,status,reason,evidence_ref:evidence});setReason('');setEvidence('');}catch(e){setError(e);}finally{remote.reload();setBusy(false);}}
-  return <section><h1>Assigned clearance work</h1><Notice/>{!!remote.error&&<ErrorBox error={remote.error}/>} {!!error&&<ErrorBox error={error}/>}
-    {!remote.error&&!remote.data&&<Loading/>}{remote.data?.results.length===0&&<p>No assigned clearance work. This does not mean all cases are cleared.</p>}
-    <fieldset disabled={busy}><legend>Clearance reason and evidence</legend><label>Reason <textarea maxLength={2000} value={reason} onChange={e=>setReason(e.target.value)}/></label>
-      <label>Reviewed evidence reference <input maxLength={200} value={evidence} onChange={e=>setEvidence(e.target.value)}/></label>
-      <ul>{remote.data?.results.map(t=><li key={`${t.case_id}:${t.unit}`}><button onClick={()=>onSelect(t.case_id)}>Case {t.case_id}</button> · {t.unit} · {t.status} · Due {t.due_date??'Unavailable'}
-        {t.can_decide&&['CLEARED','OBJECTION','HOLD'].map(s=><button key={s} disabled={!reason.trim()||!evidence.trim()} onClick={()=>decide(t,s)}>{s.toLowerCase()}</button>)}</li>)}</ul></fieldset>
-    <button disabled={page===1||busy} onClick={()=>setPage(page-1)}>Previous tasks</button>
-    <button disabled={page*25>=(remote.data?.count??0)||busy} onClick={()=>setPage(page+1)}>Next tasks</button>
+function WizardBody({client, inputs, onCreated}: {client: Transport; inputs: ReleaseInputs; onCreated: (id: number) => void}) {
+  const [step, setStep] = React.useState(0);
+  const [path, setPath] = React.useState('TERM_COMPLETE');
+  const [answers, setAnswers] = React.useState<Record<string, boolean | null>>({});
+  const [reason, setReason] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<unknown>();
+  const title = React.useRef<HTMLHeadingElement>(null);
+  React.useEffect(() => {title.current?.focus();}, [step]);
+  const questionnaire = inputs.questionnaire;
+  const answered = !!questionnaire?.questions.length && questionnaire.questions.every(q => typeof answers[q.id] === 'boolean');
+  const documentsReady = inputs.documentsReady && inputs.documentPath === path;
+  const nextAllowed = step === 0 ? !!reason.trim() : step === 1 ? answered : documentsReady;
+  async function submit() {
+    if (!inputs.canRequest || !answered || !documentsReady || !reason.trim()) return;
+    setBusy(true); setError(undefined);
+    try {
+      const result = await client.post<Case>(api('releases'), {instrument_id: inputs.instrumentId, obligation_id: inputs.obligationId,
+        instrument_version: inputs.instrumentVersion, path, declarations: answers, reason, template_ref: questionnaire?.version});
+      onCreated(result.id);
+    } catch (e) {setError(e);} finally {setBusy(false);}
+  }
+  const pathLabel = RELEASE_PATH_LABELS[path] ?? humanize(path);
+  return <section>
+    <PageHeader title="Request release" subtitle="Four steps: choose the path, answer the declarations, check the documents, then submit." />
+    <Notice />
+    <ol aria-label="Release request steps">{['Path', 'Declarations', 'Documents', 'Review'].map((s, i) => <li key={s} aria-current={i === step ? 'step' : undefined}>{s}</li>)}</ol>
+    <Panel>
+      <h2 ref={title} tabIndex={-1} style={{marginTop: 0}}>{['Select path', 'Record declarations', 'Review documents', 'Review and submit'][step]}</h2>
+      {!!error && <ErrorBox error={error} />}
+      <fieldset disabled={busy} style={{border: 0, padding: 0}}><legend className="sr-only">Release request</legend>
+        {step === 0 && <>
+          <label>Path <select value={path} onChange={e => {setPath(e.target.value); setAnswers({}); inputs.onPathChange?.(e.target.value);}}>
+            {PATHS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+          <label>Reason <textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label></>}
+        {step === 1 && (!questionnaire ? <p role="alert">Declaration template unavailable. Obtain the approved Affidavit-6 questionnaire; no questions have been invented.</p> : <>
+          <p className="muted">Affidavit-6 questionnaire, version {questionnaire.version}. Answer every question.</p>
+          {questionnaire.questions.map(q => <label key={q.id}>{q.label}<select value={answers[q.id] == null ? '' : String(answers[q.id])}
+            onChange={e => setAnswers({...answers, [q.id]: e.target.value === '' ? null : e.target.value === 'true'})}>
+            <option value="">Not answered</option><option value="true">Yes</option><option value="false">No</option></select></label>)}</>)}
+        {step === 2 && <>
+          <p>Path: {pathLabel}. The documents below must be uploaded and readable before you can continue.</p>
+          {inputs.documents ?? <p role="alert">Document upload is unavailable.</p>}
+          {!documentsReady && <p role="alert">Required documents are incomplete, out of date for this path, or unavailable.</p>}</>}
+        {step === 3 && <>
+          <SummaryList items={[{label: 'Path', value: pathLabel}, {label: 'Reason', value: reason}]} />
+          <p className="muted">Submitting asks for human review. Clearances, penalties, approval, the letter and completion are separate steps.</p>
+          {!inputs.canRequest && <p role="alert">You cannot submit this request: the record is not eligible or the source is unavailable.</p>}
+          <button className="primary" disabled={!inputs.canRequest || !answered || !documentsReady} onClick={submit}>Submit release request</button></>}
+        <div style={{marginTop: 16}}>
+          <button disabled={step === 0} onClick={() => setStep(step - 1)}>Back</button>
+          {step < 3 && <button className="primary" disabled={!nextAllowed} onClick={() => setStep(step + 1)}>Next</button>}
+        </div>
+      </fieldset>
+    </Panel>
   </section>;
 }
 
-export function PublicVerification({client,token}:{client:Transport;token:string}){
-  const remote=useRemote<unknown>(client,`public/verify/${encodeURIComponent(token)}`,token);
-  if(remote.error){const status=(remote.error as Failure)?.status;return <section><h1>Verify demo letter</h1><Notice/>
-    <p role="alert">{status===404||status===400?'Verification record unavailable.':'Verification service temporarily unavailable.'}</p><button onClick={remote.reload}>Retry</button></section>;}
-  if(!remote.data)return <Loading/>;
-  let record:PublicRecord;try{record=publicRecord(remote.data);}catch{return <p role="alert">Verification response unavailable.</p>;}
-  return <section><h1>{record.status==='REVOKED'?'Revoked — do not rely on this letter':'Issued demo record found'}</h1><Notice/>
-    <dl><dt>Serial</dt><dd>{record.serial}</dd><dt>Issue date</dt><dd>{record.issue_date}</dd><dt>Institution</dt><dd>{record.institution_name}</dd><dt>Kind</dt><dd>{record.kind}</dd></dl>
-    <p>Record lookup only; no independent bank confirmation or digital signature.</p></section>;
+export function ReleaseCase({client, identityKey, caseId}: {client: Transport; identityKey: string; caseId: number}) {
+  return <CaseBody key={`${identityKey}:${caseId}`} client={client} identityKey={identityKey} caseId={caseId} />;
+}
+function CaseBody({client, identityKey, caseId}: {client: Transport; identityKey: string; caseId: number}) {
+  const remote = useRemote<Case>(client, `releases/${caseId}`, identityKey);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<unknown>();
+  const [reason, setReason] = React.useState('');
+  const [file, setFile] = React.useState<File>();
+  const [refund, setRefund] = React.useState('');
+  const [penalty, setPenalty] = React.useState('premature_encashment');
+  const [base, setBase] = React.useState('');
+  const [summary, setSummary] = React.useState<{status: string; cached: boolean; label: string; summary?: string; risk_flags?: {field: string; severity: string; message: string}[]; detail?: string}>();
+  async function mutate(action: string, extra: Record<string, unknown> = {}, multipart?: FormData) {
+    if (!remote.data || !reason.trim() || busy) return;
+    setBusy(true); setError(undefined); const current = remote.data;
+    try {
+      const payload = multipart ?? {version: current.version, reason,
+        ...(['approve', 'reject'].includes(action) ? {instrument_version: current.instrument_version} : {}), ...extra};
+      await client.post(api(`releases/${caseId}/${action}`), payload); setReason(''); setFile(undefined);
+    } catch (e) {setError(e);} finally {remote.reload(); setBusy(false);}
+  }
+  if (remote.error) return <ErrorBox error={remote.error} />;
+  if (!remote.data) return <Loading />;
+  const item = remote.data;
+  async function getSummary() {
+    if (busy) return; setBusy(true); setError(undefined);
+    try {setSummary(await client.post(api(`releases/${caseId}/ai-summary`), {version: item.version}));} catch (e) {setError(e);} finally {setBusy(false);}
+  }
+  const pathLabel = RELEASE_PATH_LABELS[item.path] ?? humanize(item.path);
+  return <section>
+    <PageHeader title={`Release case ${item.id}`} breadcrumb={[{label: 'Release cases', to: '/releases'}, {label: `Case ${item.id}`}]}
+      subtitle={<span className="cluster"><StatusTag value={item.status} /><span className="muted">{pathLabel} · {item.mode}</span></span>} />
+    <Notice />
+    <div className="stack stack--lg">
+      {item.status === 'APPROVED' && <Alert type="success" showIcon message="Release authorized; completion pending." description="Monitoring continues until completion is recorded with new evidence." />}
+      <Panel title="Case summary">
+        <SummaryList items={[
+          {label: 'Monitoring', value: item.monitoring_active ? 'Active' : 'Ended by recorded completion'},
+          {label: 'Next step', value: item.next_action}, {label: 'Responsible', value: item.responsible_party ?? 'Unavailable'},
+          {label: 'Application reason', value: item.application_reason ?? 'Unavailable'},
+          {label: 'Decision reason', value: item.decision_reason}, {label: 'Completion notes', value: item.completion_notes}]} />
+      </Panel>
+      <div className="two-col">
+        <Panel title="Readiness for human review"><Readiness value={item.readiness} /></Panel>
+        <Panel title="Documents">
+          {item.documents ? (item.documents.length === 0 ? <p className="muted">No documents.</p> : <ul>{item.documents.map(d => <li key={d.id}>
+            {d.name} <span className="muted">· {humanize(d.kind)} · {d.page_count == null ? 'pages unknown' : `${d.page_count} ${d.page_count === 1 ? 'page' : 'pages'}`}</span>{' '}
+            {/^\/(?!\/)/.test(d.download_path) && <button disabled={busy} onClick={() => client.download(d.download_path).catch(setError)}>Download {d.name}</button>}</li>)}</ul>) : <p>Document list unavailable.</p>}
+        </Panel>
+      </div>
+      {!!error && <ErrorBox error={error} />}
+      <Panel title="AI summary">
+        {item.actions.can_ai_summary ? <>
+          <p className="muted">Advisory only. It cannot approve, reject or change this case.</p>
+          {item.ai_summary_enabled === false ? <p>AI summary is off. Continue manual release review.</p> : <button disabled={busy} onClick={() => void getSummary()}>Generate AI summary</button>}
+        </> : <p className="muted">Available to the assigned clearance units and the independent authority.</p>}
+        {summary && <div role="status"><p><strong>{summary.label}</strong></p>
+          {summary.status === 'success' ? <><p>{summary.summary}</p>{summary.cached && <p className="muted">Saved result for this case version.</p>}
+            <ul>{summary.risk_flags?.map((flag, i) => <li key={i}><strong>{humanize(flag.severity)}</strong> · {flag.field}: {flag.message}</li>)}</ul></> : <p>{summary.detail}</p>}</div>}
+      </Panel>
+      <Panel title="Clearances" flush>
+        <Table rowKey="unit" size="middle" scroll={{x: 520}} pagination={false} dataSource={item.clearances} locale={{emptyText: 'No clearances required.'}} columns={[
+          {title: 'Unit', dataIndex: 'unit'}, {title: 'Status', dataIndex: 'status', render: (v: string) => <StatusTag value={v} />},
+          {title: 'Reason', dataIndex: 'reason', render: (v: string) => v || '—'}]} />
+      </Panel>
+      <Panel title="Penalties">
+        {item.penalties.length === 0 ? <p className="muted">No penalties proposed.</p> : <ul>{item.penalties.map(p => <li key={p.id}>{humanize(p.kind)}: {money(p.amount_paise)} <StatusTag value={p.status} /> <span className="muted">· clause {p.clause}</span>
+          {item.actions.can_review_penalties && p.status === 'PROPOSED' && <button disabled={busy || !reason.trim()} onClick={() => mutate('penalties', {confirm_id: p.id})}>Confirm reviewed proposal</button>}</li>)}</ul>}
+        <p className="muted">Officer review complete: {item.penalty_review_complete ? 'Yes' : 'No'}. Confirming a penalty does not prove payment or authorise a deduction.</p>
+      </Panel>
+      <Panel title="Decision and actions">
+        <fieldset disabled={busy} style={{border: 0, padding: 0}}><legend className="sr-only">Human action and reason</legend>
+          <label>Reason / completion notes <textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
+          {item.actions.can_review_penalties && <>
+            <label>Penalty kind <select value={penalty} onChange={e => setPenalty(e.target.value)}>{['premature_encashment', 'closure_lapsed', 'closure_six_years'].map(k => <option key={k} value={k}>{humanize(k)}</option>)}</select></label>
+            <label>Reviewed penalty base (INR) <input inputMode="decimal" value={base} onChange={e => setBase(e.target.value)} /></label>
+            <button disabled={!reason.trim() || !base} onClick={() => {try {void mutate('penalties', {kind: penalty, base_paise: paise(base)});} catch (e) {setError(e);}}}>Propose penalty for review</button>
+            <button className="primary" disabled={!reason.trim()} onClick={() => mutate('penalties')}>Record officer checklist and penalty review complete</button></>}
+          {item.actions.can_approve && <button className="primary" disabled={!reason.trim()} onClick={() => mutate('approve')}>Record authority authorization</button>}
+          {item.actions.can_reject && <button disabled={!reason.trim()} onClick={() => mutate('reject')}>Record authority rejection</button>}
+          {item.actions.can_issue && <button className="primary" disabled={!reason.trim()} onClick={() => mutate('issue')}>Issue letter (unsigned)</button>}
+          {item.actions.can_revoke && <button disabled={!reason.trim()} onClick={() => mutate('revoke')}>Revoke letter</button>}
+        </fieldset>
+      </Panel>
+      <div className="two-col">
+        <Panel title="Letter">
+          {item.letter ? <><p><strong>{humanize(item.letter.kind)}</strong> {item.letter.serial} <StatusTag value={item.letter.revoked ? 'REVOKED' : 'ISSUED'} /></p>
+            <p className="muted">Not digitally signed. The QR code leads to the public verification page.</p>
+            <button onClick={() => client.download(api(`releases/${caseId}/letter`)).catch(setError)}>Download protected letter</button></> : <p className="muted">Not issued.</p>}
+        </Panel>
+        <Panel title="Completion">
+          {item.actions.can_complete ? <fieldset disabled={busy} style={{border: 0, padding: 0}}>
+            <label>New completion PDF <input type="file" accept="application/pdf,.pdf" onChange={e => setFile(e.target.files?.[0])} /></label>
+            {item.mode === 'RTGS' && <label>Recorded bank/PFMS refund reference <input maxLength={200} value={refund} onChange={e => setRefund(e.target.value)} /></label>}
+            <button className="primary" disabled={!file || !reason.trim() || (item.mode === 'RTGS' && !refund.trim())} onClick={() => {
+              if (!file) return; const data = new FormData();
+              data.set('version', String(item.version)); data.set('instrument_version', String(item.instrument_version)); data.set('notes', reason); data.set('refund_reference', refund); data.set('document', file);
+              void mutate('complete', {}, data);}}>Record evidence-backed completion</button></fieldset>
+            : <p className="muted">Completion is not available in the current state.</p>}
+        </Panel>
+      </div>
+      <Panel title="Case history">
+        <Timeline items={item.history?.map((h, i) => ({key: i, children: <><strong>{humanize(h.action)}</strong>{h.reason && <div>{h.reason}</div>}<small className="muted">{formatDateTime(h.at)} IST</small></>}))} />
+        {item.history_has_more && <p className="muted">The latest 100 events are shown; earlier history exists.</p>}
+      </Panel>
+      <div><button disabled={busy} onClick={remote.reload}>Reload case</button></div>
+    </div>
+  </section>;
+}
+
+interface Task {case_id: number; version: number; unit: string; status: string; can_decide: boolean; due_date: string | null}
+export function ClearanceQueue({client, identityKey, onSelect}: {client: Transport; identityKey: string; onSelect: (id: number) => void}) {
+  return <QueueBody key={identityKey} client={client} identityKey={identityKey} onSelect={onSelect} />;
+}
+function QueueBody({client, identityKey, onSelect}: {client: Transport; identityKey: string; onSelect: (id: number) => void}) {
+  const [page, setPage] = React.useState(1);
+  const remote = useRemote<Page<Task>>(client, `clearance-tasks?page=${page}`, identityKey);
+  const [reason, setReason] = React.useState('');
+  const [evidence, setEvidence] = React.useState('');
+  const [error, setError] = React.useState<unknown>();
+  const [busy, setBusy] = React.useState(false);
+  async function decide(task: Task, status: string) {
+    setBusy(true); setError(undefined);
+    try {await client.post(api(`releases/${task.case_id}/clearances/${task.unit}`), {version: task.version, status, reason, evidence_ref: evidence}); setReason(''); setEvidence('');}
+    catch (e) {setError(e);} finally {remote.reload(); setBusy(false);}
+  }
+  return <section>
+    <PageHeader title="Clearance work" subtitle="Release cases waiting for your unit’s decision." />
+    <Notice />
+    {!!remote.error && <ErrorBox error={remote.error} />} {!!error && <ErrorBox error={error} />}
+    {!remote.error && !remote.data && <Loading />}
+    <Panel title="Your decision">
+      <fieldset disabled={busy} style={{border: 0, padding: 0}}><legend className="sr-only">Clearance reason and evidence</legend>
+        <label>Reason <textarea maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
+        <label>Reviewed evidence reference <input maxLength={200} value={evidence} onChange={e => setEvidence(e.target.value)} /></label>
+        <p className="muted">Enter the reason and your unit’s file reference first, then choose a decision on a case below.</p></fieldset>
+    </Panel>
+    <h2>Cases</h2>
+    {remote.data?.results.length === 0 && <p>No assigned clearance work. This does not mean all cases are cleared.</p>}
+    <ul className="record-list">{remote.data?.results.map(t => <li key={`${t.case_id}:${t.unit}`} className="record-card">
+      <div className="record-card__top"><button type="button" className="record-card__ref" onClick={() => onSelect(t.case_id)}>Case {t.case_id}</button><StatusTag value={t.status} /></div>
+      <dl className="record-card__meta"><div><dt>Unit</dt><dd>{t.unit}</dd></div><div><dt>Due</dt><dd>{t.due_date ? formatDate(t.due_date) : 'Unavailable'}</dd></div></dl>
+      {t.can_decide && <div style={{marginTop: 12}}>{['CLEARED', 'OBJECTION', 'HOLD'].map(s => <button key={s} disabled={busy || !reason.trim() || !evidence.trim()} onClick={() => decide(t, s)}>{s.toLowerCase()}</button>)}</div>}
+    </li>)}</ul>
+    <nav aria-label="Task pages"><button disabled={page === 1 || busy} onClick={() => setPage(page - 1)}>Previous tasks</button>
+      <button disabled={page * 25 >= (remote.data?.count ?? 0) || busy} onClick={() => setPage(page + 1)}>Next tasks</button></nav>
+  </section>;
+}
+
+export function PublicVerification({client, token}: {client: Transport; token: string}) {
+  const remote = useRemote<unknown>(client, `public/verify/${encodeURIComponent(token)}`, token);
+  if (remote.error) {
+    const status = (remote.error as Failure)?.status;
+    return <section><h1>Verify letter</h1>
+      <p role="alert">{status === 404 || status === 400 ? 'Verification record unavailable.' : 'Verification service temporarily unavailable.'}</p>
+      <button onClick={remote.reload}>Retry</button></section>;
+  }
+  if (!remote.data) return <Loading />;
+  let record: PublicRecord;
+  try {record = publicRecord(remote.data);} catch {return <p role="alert">Verification response unavailable.</p>;}
+  const revoked = record.status === 'REVOKED';
+  return <section className="verify-result">
+    <div className={`verify-icon ${revoked ? 'verify-icon--bad' : 'verify-icon--ok'}`} aria-hidden>{revoked ? <CloseCircleFilled /> : <CheckCircleFilled />}</div>
+    <h1>{revoked ? 'Revoked — do not rely on this letter' : 'Letter found'}</h1>
+    <Notice />
+    <SummaryList items={[{label: 'Serial', value: record.serial}, {label: 'Issue date', value: formatDate(record.issue_date)},
+      {label: 'Institution', value: record.institution_name}, {label: 'Kind', value: record.kind === 'NOC' ? 'No Objection Certificate' : 'Sanction order'}]} />
+    <p className="muted">This confirms that the letter was issued by the portal. It is not a bank confirmation or a digital signature.</p>
+  </section>;
 }

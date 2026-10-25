@@ -61,7 +61,7 @@ browser journeys pass; a physically disconnected rehearsal remains outstanding.
   → answer the six Affidavit-6 declarations → documents checklist is complete → Submit. clearance_pgrc,
   clearance_vigilance and clearance_grants → Clearance work → reason + file number (e.g. `PGRC/2026/17`) → cleared.
   officer → Release cases → case → *Record officer checklist and penalty review complete* (or propose and confirm a
-  penalty first). authority → case → Record authority authorization → Generate unsigned demo letter → Download
+  penalty first). authority → case → Record authority authorization → Issue letter (unsigned) → Download
   protected letter, open its QR link (`/verify/<token>`) → back on the case, Record evidence-backed completion with
   `fixtures/release-evidence.pdf`. Release documents for any other accepted record are added with *Upload release
   document* on the record page.

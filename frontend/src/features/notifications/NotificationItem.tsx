@@ -6,8 +6,6 @@ import { safeLink, type AppNotification } from './api'
 
 dayjs.extend(relativeTime)
 
-const COLORS = { info: 'blue', warning: 'orange', critical: 'red' } as const
-
 export function NotificationItem({ item, onRead, compact = false }: {
   item: AppNotification
   onRead: (id: number) => void
@@ -15,26 +13,24 @@ export function NotificationItem({ item, onRead, compact = false }: {
 }) {
   const target = safeLink(item.link)
   return (
-    <Flex gap={12} align="start" style={{ opacity: item.is_read ? 0.7 : 1 }}>
+    <div className={`note-row${item.is_read ? ' note-row--read' : ''}`}>
+      <span className={`note-dot${item.is_read ? ' note-dot--read' : ''}`} role="img" aria-label={item.is_read ? 'Read' : 'Unread'} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <Flex gap={8} align="center" wrap>
-          {!item.is_read && <span aria-label="Unread" style={{ width: 8, height: 8, borderRadius: 4, background: '#1d3f72' }} />}
           <Typography.Text strong={!item.is_read}>{item.subject}</Typography.Text>
-          {item.severity !== 'info' && <Tag color={COLORS[item.severity]}>{item.severity}</Tag>}
+          {item.severity !== 'info' && <Tag bordered={false} className={`tag tag--${item.severity === 'critical' ? 'danger' : 'warning'}`}>{item.severity}</Tag>}
         </Flex>
         {!compact && <Typography.Paragraph style={{ margin: '4px 0' }}>{item.body}</Typography.Paragraph>}
         <Typography.Text type="secondary" style={{ fontSize: 12 }} title={dayjs(item.created_at).format('D MMM YYYY, HH:mm')}>
           {dayjs(item.created_at).fromNow()}
         </Typography.Text>
       </div>
-      <Flex gap={4} wrap>
+      <Flex gap={4} wrap justify="end" className="note-actions">
         {target && (
-          <Link to={target} onClick={() => !item.is_read && onRead(item.id)}>
-            <Button size="small" type="link">Open</Button>
-          </Link>
+          <Link to={target} onClick={() => !item.is_read && onRead(item.id)}>Open</Link>
         )}
         {!item.is_read && <Button size="small" type="text" onClick={() => onRead(item.id)}>Mark read</Button>}
       </Flex>
-    </Flex>
+    </div>
   )
 }

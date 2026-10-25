@@ -33,7 +33,7 @@ describe('Saksham components in the shared frontend runner', () => {
     const client = transport(async () => approvedCase);
     render(<ReleaseCase client={client} identityKey="authority" caseId={1} />);
     expect(await screen.findByText(/Release authorized; completion pending/)).toBeInTheDocument();
-    expect(screen.getByText('Monitoring: Active')).toBeInTheDocument();
+    expect(screen.getByText('Monitoring').nextElementSibling).toHaveTextContent('Active');
     expect(screen.queryByRole('button', { name: 'Record evidence-backed completion' })).not.toBeInTheDocument();
   });
 
@@ -118,8 +118,8 @@ describe('Saksham components in the shared frontend runner', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Reason / completion notes' }),
       { target: { value: 'Independent review' } });
     await userEvent.setup().click(authorize);
-    expect(await screen.findByText(/Saved status: APPROVED/)).toBeInTheDocument();
-    expect(screen.getByText('Monitoring: Active')).toBeInTheDocument();
+    expect(await screen.findByText('Approved')).toBeInTheDocument();
+    expect(screen.getByText('Monitoring').nextElementSibling).toHaveTextContent('Active');
     expect(container).not.toHaveTextContent('COMPLETED');
     expect(write).toHaveBeenCalledExactlyOnceWith('/api/releases/1/approve',
       { version: 1, instrument_version: 5, reason: 'Independent review' });

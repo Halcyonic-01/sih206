@@ -24,7 +24,7 @@ export const routes: AppRoute[] = [
   { path: '/kpis', element: <Kpis />, roles: ['institution', 'officer', 'authority'],
     menu: { label: 'Process KPIs', order: 22 } },
   { path: '/imports/institutions', element: <Import />, roles: ['officer'],
-    menu: { label: 'Synthetic institution import', order: 23 } },
+    menu: { label: 'Import institutions', order: 23 } },
   { path: '/releases', element: <ReleaseCases />, roles: ['institution', 'officer', 'authority'],
     menu: { label: 'Release cases', order: 24 } },
   { path: '/releases/request', element: <ReleaseRequest />, roles: ['institution'] },

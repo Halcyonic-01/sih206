@@ -1,7 +1,8 @@
-import { Alert, Button, Empty, Result, Skeleton } from 'antd'
+import { Alert, Button, Empty, Skeleton } from 'antd'
 import type { ReactNode } from 'react'
 import { ApiError } from '@/api/client'
 import { errorMessage } from '@/api/forms'
+import { LogoMark } from './Logo'
 
 export function LoadingState({ rows = 4 }: { rows?: number }) {
   return <div role="status" aria-live="polite" aria-label="Loading"><Skeleton active paragraph={{ rows }} /></div>
@@ -19,8 +20,13 @@ export function EmptyState({ title = 'Nothing to show yet', detail, action }:
 export function ErrorState({ status, title, detail, onRetry }:
   { status?: 403 | 404 | 409 | 500; title: string; detail?: ReactNode; onRetry?: () => void }) {
   return (
-    <Result status={status === 409 ? 'warning' : status ?? 'error'} title={title} subTitle={detail}
-            extra={onRetry && <Button onClick={onRetry}>Try again</Button>} />
+    <div className="state-page">
+      <LogoMark size={52} />
+      {status && <span className="state-code">{status}</span>}
+      <h2 className="state-title">{title}</h2>
+      {detail && <div className="state-detail">{detail}</div>}
+      {onRetry && <Button onClick={onRetry}>Try again</Button>}
+    </div>
   )
 }
 

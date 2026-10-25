@@ -1,109 +1,122 @@
 import * as React from 'react';
+import { Alert, Empty, Table } from 'antd';
+import { PageHeader } from '@/components/PageHeader';
+import { Panel, StatCard, SummaryList } from '@/components/Panel';
+import { StatusTag } from '@/components/StatusTag';
+import { formatDate } from '@/lib/format';
+import { findingLabel, humanize } from '@/lib/labels';
 import {api, Approval, Institution, Obligation, ObligationDetail, Page, Transport, money} from './client';
 import {ErrorBox, Loading, Notice, useRemote} from './shared';
 
-export function InstitutionList({client, identityKey, onSelect}: {client: Transport; identityKey: string; onSelect: (id:number)=>void}) {
+function Pager({page, setPage, count, label}: {page: number; setPage: (n: number) => void; count?: number; label: string}) {
+  if (page === 1 && (count ?? 0) <= 25) return null;
+  return <nav aria-label={`${label} pages`}>
+    <button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous {label}</button>
+    <button disabled={page * 25 >= (count ?? 0)} onClick={() => setPage(page + 1)}>Next {label}</button>
+  </nav>;
+}
+
+export function InstitutionList({client, identityKey, onSelect}: {client: Transport; identityKey: string; onSelect: (id: number) => void}) {
   const [q, setQ] = React.useState('');
   const [page, setPage] = React.useState(1);
   const remote = useRemote<Page<Institution>>(client, `institutions?q=${encodeURIComponent(q)}&page=${page}`, identityKey);
-  return <section><h1>Institutions</h1><Notice/><label>Search institutions <input value={q} maxLength={100}
-    onChange={e=>{setQ(e.target.value); setPage(1);}}/></label>
-    {remote.error ? <ErrorBox error={remote.error}/> : !remote.data ? <Loading/> : <>
-      {!remote.data.results.length ? <p>No visible institutions.</p> : <ul>{remote.data.results.map(i =>
-        <li key={i.id}><button onClick={()=>onSelect(i.id)}>{i.name}</button> · {i.code}</li>)}</ul>}
-      <button disabled={page===1} onClick={()=>setPage(page-1)}>Previous page</button>
-      <button disabled={page*25 >= (remote.data.count??0)} onClick={()=>setPage(page+1)}>Next page</button></>}
-    <button onClick={remote.reload}>Refresh</button></section>;
+  return <section>
+    <PageHeader title="Institutions" subtitle="Profiles, programme approvals and the deposit each institution owes." />
+    <Notice />
+    <label>Search institutions <input value={q} maxLength={100} onChange={e => {setQ(e.target.value); setPage(1);}} /></label>
+    {remote.error ? <ErrorBox error={remote.error} /> : !remote.data ? <Loading /> : <>
+      {!remote.data.results.length ? <p>No visible institutions.</p> : <ul className="record-list">{remote.data.results.map(i =>
+        <li key={i.id} className="record-card">
+          <div className="record-card__top">
+            <button type="button" className="record-card__ref" onClick={() => onSelect(i.id)}>{i.name}</button>
+            <span className="muted">{i.code}</span>
+          </div>
+          {i.profile && <dl className="record-card__meta">
+            <div><dt>AICTE ID</dt><dd>{i.profile.aicte_id}</dd></div>
+            <div><dt>Type</dt><dd>{humanize(i.profile.institution_type)}</dd></div>
+            <div><dt>Region</dt><dd>{i.profile.region} · {i.profile.state}</dd></div>
+          </dl>}
+        </li>)}</ul>}
+      <Pager page={page} setPage={setPage} count={remote.data.count} label="page" /></>}
+  </section>;
 }
 
-export function InstitutionDetail({client, identityKey, institutionId}: {client: Transport; identityKey:string; institutionId:number}) {
-  return <InstitutionDetailBody key={`${identityKey}:${institutionId}`} client={client} identityKey={identityKey} institutionId={institutionId}/>;
+export function InstitutionDetail({client, identityKey, institutionId, actions}: {client: Transport; identityKey: string; institutionId: number; actions?: React.ReactNode}) {
+  return <InstitutionDetailBody key={`${identityKey}:${institutionId}`} client={client} identityKey={identityKey} institutionId={institutionId} actions={actions} />;
 }
-function InstitutionDetailBody({client, identityKey, institutionId}: {client: Transport; identityKey:string; institutionId:number}) {
+function InstitutionDetailBody({client, identityKey, institutionId, actions}: {client: Transport; identityKey: string; institutionId: number; actions?: React.ReactNode}) {
   const base = `institutions/${institutionId}`;
-  const [programmePage,setProgrammePage]=React.useState(1);
-  const [obligationPage,setObligationPage]=React.useState(1);
+  const [programmePage, setProgrammePage] = React.useState(1);
+  const [obligationPage, setObligationPage] = React.useState(1);
   const detail = useRemote<Institution>(client, base, identityKey);
   const programmes = useRemote<Page<Approval>>(client, `${base}/programme-approvals?page=${programmePage}`, identityKey);
   const obligations = useRemote<Page<Obligation>>(client, `${base}/obligations?page=${obligationPage}`, identityKey);
   // Gate all child rendering on successful parent scope resolution.
-  if (detail.error) return <ErrorBox error={detail.error}/>;
-  if (!detail.data) return <Loading/>;
-  return <section key={`${identityKey}:${institutionId}`}><h1>{detail.data.name}</h1><Notice/>
-    {detail.data.profile ? <dl><dt>AICTE ID</dt><dd>{detail.data.profile.aicte_id}</dd>
-      <dt>Trust</dt><dd>{detail.data.profile.trust_name}</dd><dt>Institution type</dt><dd>{detail.data.profile.institution_type}</dd>
-      <dt>Region / state</dt><dd>{detail.data.profile.region} / {detail.data.profile.state}</dd>
-      <dt>Contact email</dt><dd>{detail.data.profile.contact_email??'Unavailable'}</dd>
-      <dt>Profile status</dt><dd>{detail.data.profile.status??'Unavailable'}</dd></dl> : <p>Institution profile unavailable.</p>}
-    <h2>Programme approvals</h2>{programmes.error ? <ErrorBox error={programmes.error}/> : !programmes.data ? <Loading/> :
-      programmes.data.results.length ? <ul>{programmes.data.results.map(p=><li key={p.id}>{p.programme} · {p.level} · {p.loa_ref} · {p.approved_on}</li>)}</ul> : <p>No programme approvals recorded.</p>}
-    <h2>Obligations</h2>{obligations.error ? <ErrorBox error={obligations.error}/> : !obligations.data ? <Loading/> :
-      obligations.data.results.length ? obligations.data.results.map(o=><ObligationCard key={o.id} client={client} identityKey={identityKey} obligationId={o.id}/>) : <p>No obligations recorded.</p>}
-    <nav aria-label="Programme pages"><button disabled={programmePage===1} onClick={()=>setProgrammePage(programmePage-1)}>Previous programmes</button>
-      <button disabled={programmePage*25>=(programmes.data?.count??0)} onClick={()=>setProgrammePage(programmePage+1)}>Next programmes</button></nav>
-    <nav aria-label="Obligation pages"><button disabled={obligationPage===1} onClick={()=>setObligationPage(obligationPage-1)}>Previous obligations</button>
-      <button disabled={obligationPage*25>=(obligations.data?.count??0)} onClick={()=>setObligationPage(obligationPage+1)}>Next obligations</button></nav>
+  if (detail.error) return <ErrorBox error={detail.error} />;
+  if (!detail.data) return <Loading />;
+  const profile = detail.data.profile;
+  return <section key={`${identityKey}:${institutionId}`}>
+    <PageHeader title={detail.data.name} subtitle={`Institution code ${detail.data.code}`} extra={actions}
+      breadcrumb={[{label: 'Institutions', to: '/institutions'}, {label: detail.data.name}]} />
+    <Notice />
+    <div className="stack stack--lg">
+      <Panel title="Profile">
+        {profile ? <SummaryList items={[
+          {label: 'AICTE ID', value: profile.aicte_id}, {label: 'Trust', value: profile.trust_name},
+          {label: 'Institution type', value: humanize(profile.institution_type)}, {label: 'Region / state', value: `${profile.region} / ${profile.state}`},
+          {label: 'Contact email', value: profile.contact_email}, {label: 'Profile status', value: profile.status ? <StatusTag value={profile.status} /> : null},
+        ]} /> : <p>Institution profile unavailable.</p>}
+      </Panel>
+      <Panel title="Programme approvals" flush>
+        {programmes.error ? <div className="panel__body"><ErrorBox error={programmes.error} /></div> : !programmes.data ? <div className="panel__body"><Loading /></div> :
+          <Table rowKey="id" size="middle" scroll={{x: 520}} pagination={false} dataSource={programmes.data.results}
+            locale={{emptyText: 'No programme approvals recorded.'}} columns={[
+            {title: 'Programme', dataIndex: 'programme', render: (v: string) => humanize(v)}, {title: 'Level', dataIndex: 'level'},
+            {title: 'Approval reference', dataIndex: 'loa_ref'}, {title: 'Approved on', dataIndex: 'approved_on', render: (v: string) => formatDate(v)}]} />}
+        <div className="panel__body" style={{paddingTop: 0}}><Pager page={programmePage} setPage={setProgrammePage} count={programmes.data?.count} label="programmes" /></div>
+      </Panel>
+      <div className="stack">
+        <h2 style={{marginBottom: 0}}>Obligations</h2>
+        {obligations.error ? <ErrorBox error={obligations.error} /> : !obligations.data ? <Loading /> :
+          obligations.data.results.length ? obligations.data.results.map(o => <ObligationCard key={o.id} client={client} identityKey={identityKey} obligationId={o.id} />) : <p>No obligations recorded.</p>}
+        <Pager page={obligationPage} setPage={setObligationPage} count={obligations.data?.count} label="obligations" />
+      </div>
+    </div>
   </section>;
 }
 
-export function ObligationCard({client, identityKey, obligationId}: {client: Transport; identityKey:string; obligationId:number}) {
+export function ObligationCard({client, identityKey, obligationId}: {client: Transport; identityKey: string; obligationId: number}) {
   const remote = useRemote<ObligationDetail>(client, `obligations/${obligationId}`, identityKey);
-  if (remote.error) return <ErrorBox error={remote.error}/>;
-  if (!remote.data) return <Loading/>;
+  if (remote.error) return <ErrorBox error={remote.error} />;
+  if (!remote.data) return <Loading />;
   const item = remote.data, coverage = item.assessment.coverage;
-  return <article><h3>Obligation {item.id}</h3><p>Recorded status: {item.status} · Basis: {item.basis}</p>
-    <dl><dt>Required</dt><dd>{money(item.required_paise)}</dd><dt>Held</dt><dd>{money(coverage?.held_paise)}</dd>
-      <dt>Shortfall</dt><dd>{money(coverage?.shortfall_paise)}</dd></dl>
-    <table><caption>Coverage against the obligation term</caption><thead><tr><th>Term start</th><th>Term end</th><th>Continuous coverage through</th></tr></thead>
-      <tbody><tr><td>{item.term_start??'Unavailable'}</td><td>{item.term_end??'Unavailable'}</td><td>{coverage?.coverage_end??'Unavailable'}</td></tr></tbody></table>
-    <p>Assessment date: {item.assessment.as_of}. {item.assessment.status === 'UNAVAILABLE' ? 'Coverage unavailable; source integration required.' : 'Draft assessment for human review.'}</p>
-    <ul>{item.assessment.findings?.map(f=><li key={f.code}>{f.explanation}</li>)}</ul>
-    {item.assessment.findings?.length===0&&<p>No findings in the available draft assessment.</p>}
-    <ProofReceipts client={client} item={item} onSaved={remote.reload}/>
-    <table><caption>Scoped holding timeline</caption><thead><tr><th>Holding</th><th>Issue date</th><th>Maturity</th><th>Amount</th><th>Review state</th></tr></thead>
-      <tbody>{item.assessment.holdings?.map(h=><tr key={h.id}><td>{h.id}</td><td>{h.issue_date}</td><td>{h.maturity_date}</td><td>{money(h.amount_paise)}</td><td>{h.status}</td></tr>)}</tbody></table>
-    {item.assessment.holdings==null&&<p>Holding timeline unavailable.</p>}
-    <h4>Suggested follow-up</h4>{item.assessment.open_actions==null?<p>Follow-up assessment unavailable.</p>:<ul>{item.assessment.open_actions.map((a,i)=><li key={i}>{a.description} · {a.responsible_party}. Suggested only; no task assigned or notification delivered.</li>)}</ul>}
+  const shortfall = coverage?.shortfall_paise;
+  const gap = typeof shortfall === 'string' ? Number(shortfall) > 0 : (shortfall ?? 0) > 0;
+  return <article>
+    <div className="panel__head" style={{padding: 0}}>
+      <h3 style={{margin: 0}}>Obligation {item.id}</h3>
+      <span className="cluster"><StatusTag value={item.status} /><span className="muted">Basis: {humanize(item.basis)}</span></span>
+    </div>
+    <div className="stat-grid stat-grid--three" style={{margin: '16px 0'}}>
+      <StatCard label="Required" value={money(item.required_paise)} tone="info" />
+      <StatCard label="Held" value={money(coverage?.held_paise)} tone="success" />
+      <StatCard label="Shortfall" value={money(coverage?.shortfall_paise)} tone={gap ? 'danger' : 'neutral'} />
+    </div>
+    <div className="table-scroll"><table className="data-table"><caption>Coverage against the obligation term</caption><thead><tr><th>Term start</th><th>Term end</th><th>Continuous coverage through</th></tr></thead>
+      <tbody><tr><td>{item.term_start ? formatDate(item.term_start) : 'Unavailable'}</td><td>{item.term_end ? formatDate(item.term_end) : 'Unavailable'}</td><td>{coverage?.coverage_end ? formatDate(coverage.coverage_end) : 'Unavailable'}</td></tr></tbody></table></div>
+    <p className="muted">Assessed on {formatDate(item.assessment.as_of)}. {item.assessment.status === 'UNAVAILABLE' ? 'Coverage unavailable; source integration required.' : 'Draft assessment for human review.'}</p>
+    <div className="stack">
+      {item.assessment.findings?.map(f => <Alert key={f.code} type="warning" showIcon message={findingLabel(f.code)} description={f.explanation} />)}
+      {item.assessment.findings?.length === 0 && <Alert type="success" showIcon message="No findings in the available draft assessment." />}
+    </div>
+    <ProofReceipts client={client} item={item} onSaved={remote.reload} />
+    <div className="table-scroll"><table className="data-table"><caption>Scoped holding timeline</caption><thead><tr><th>Holding</th><th>Issue date</th><th>Maturity</th><th>Amount</th><th>Review state</th></tr></thead>
+      <tbody>{item.assessment.holdings?.map(h => <tr key={h.id}><td>{h.id}</td><td>{formatDate(h.issue_date)}</td><td>{formatDate(h.maturity_date)}</td><td>{money(h.amount_paise)}</td><td><StatusTag value={h.status} /></td></tr>)}</tbody></table></div>
+    {item.assessment.holdings == null && <p>Holding timeline unavailable.</p>}
+    <h4>Suggested follow-up</h4>
+    {item.assessment.open_actions == null ? <p>Follow-up assessment unavailable.</p> : item.assessment.open_actions.length === 0 ? <p className="muted">Nothing to follow up.</p> :
+      <ul>{item.assessment.open_actions.map((a, i) => <li key={i}>{a.description} <span className="muted">· {a.responsible_party}. Suggested only; no task assigned or notification delivered.</span></li>)}</ul>}
   </article>;
-}
-
-export function Calculator({client, identityKey, institutionId}: {client:Transport; identityKey:string; institutionId:number}) {
-  return <CalculatorBody key={`${identityKey}:${institutionId}`} client={client} identityKey={identityKey} institutionId={institutionId}/>;
-}
-function CalculatorBody({client, identityKey, institutionId}: {client:Transport; identityKey:string; institutionId:number}) {
-  const rules = useRemote<Page<{id:number;code:string;version:number}>>(client,'rules',identityKey);
-  const [rule, setRule] = React.useState('');
-  const [rows, setRows] = React.useState([{programme:'MANAGEMENT',level:'PG',land_tenure:'OWNED',building_tenure:'OWNED'}]);
-  const [result, setResult] = React.useState<{required_paise:number;source_clause:string;rule_code:string;rule_version:number;as_of:string}|null>(null);
-  const [error, setError] = React.useState<unknown>();
-  const [busy, setBusy] = React.useState(false);
-  const generation = React.useRef(0);
-  function invalidate(){generation.current++;setResult(null);setError(undefined);}
-  function update(index:number,field:string,value:string){invalidate();setRows(rows.map((r,i)=>i===index?{...r,[field]:value}:r));}
-  React.useEffect(()=>()=>{generation.current++;},[]);
-  async function calculate(e: React.FormEvent) {
-    e.preventDefault(); const current = ++generation.current; setBusy(true); setError(undefined);
-    try {const r = await client.post<NonNullable<typeof result>>(api('calculator'), {institution_id:institutionId,rule_set_id:Number(rule),approvals:rows});
-      if(current===generation.current) setResult(r);}
-    catch(error){if(current===generation.current) setError(error);} finally{setBusy(false);}
-  }
-  return <section><h1>Requirement calculator</h1><Notice/><p>Preview only; this does not save an obligation. Select each applicable programme and level once.</p>
-    {!!rules.error&&<ErrorBox error={rules.error}/>} {!rules.error&&!rules.data&&<Loading/>}
-    {rules.data?.results.length===0&&<p>No rule versions available. A preview cannot be calculated.</p>}
-    <form onSubmit={calculate}><fieldset disabled={busy}><legend>Hypothetical programmes</legend>
-      <label>Rule version <select required value={rule} onChange={e=>{invalidate();setRule(e.target.value);}}><option value="">Select explicit rule</option>
-        {rules.data?.results.map(r=><option key={r.id} value={r.id}>{r.code} v{r.version}</option>)}</select></label>
-      {rows.map((row,index)=><fieldset key={index}><legend>Programme {index+1}</legend>
-        <label>Programme code <input required value={row.programme} onChange={e=>update(index,'programme',e.target.value)}/></label>
-        <label>Level <select value={row.level} onChange={e=>update(index,'level',e.target.value)}>{['DIPLOMA','UG','PG'].map(x=><option key={x}>{x}</option>)}</select></label>
-        <label>Land tenure <select value={row.land_tenure} onChange={e=>update(index,'land_tenure',e.target.value)}>{['OWNED','LEASED'].map(x=><option key={x}>{x}</option>)}</select></label>
-        <label>Building tenure <select value={row.building_tenure} onChange={e=>update(index,'building_tenure',e.target.value)}>{['OWNED','LEASED'].map(x=><option key={x}>{x}</option>)}</select></label>
-        <button type="button" disabled={rows.length===1} onClick={()=>{invalidate();setRows(rows.filter((_,i)=>i!==index));}}>Remove programme {index+1}</button>
-      </fieldset>)}
-      <button type="button" disabled={rows.length>=100} onClick={()=>{invalidate();setRows([...rows,{programme:'',level:'UG',land_tenure:'OWNED',building_tenure:'OWNED'}]);}}>Add programme</button>
-      <button disabled={!rule}>Calculate preview</button></fieldset></form>{!!error&&<ErrorBox error={error}/>}<p aria-live="polite">{money(result?.required_paise)}</p>
-      {result&&<p>Assessed {result.as_of} using {result.rule_code} v{result.rule_version}, clause {result.source_clause}. Draft human-review context only.</p>}
-  </section>;
 }
 
 /** Deposit proof and Affidavit-3 receipt (APH 2.25(f)): shown to everyone, recorded by an officer. */
@@ -123,17 +136,66 @@ function ProofReceipts({client, item, onSaved}: {client: Transport; item: Obliga
     } catch (failure) {setError(failure);} finally {setBusy(false);}
   }
   return <section aria-label="Proof receipts"><h4>Deposit proof and Affidavit-3</h4>
-    <p>Intimation date: {item.intimation_date ?? 'Not recorded'}. Proof assessment: {item.assessment.proof_assessment ?? 'Unavailable'}
+    <p>Intimation date: {item.intimation_date ? formatDate(item.intimation_date) : 'Not recorded'}. Proof assessment: {item.assessment.proof_assessment ?? 'Unavailable'}
       {item.assessment.proof_assessment !== 'AVAILABLE' && ' (an officer has not yet recorded the receipt review, or the intimation date is missing)'}.</p>
     {review ? <p>Officer review by {review.reviewed_by} on {new Date(review.reviewed_at).toLocaleDateString('en-IN', {timeZone: 'Asia/Kolkata'})}:
       payment proof {review.payment_proof_on ? `received ${review.payment_proof_on}` : 'not received'},
       Affidavit-3 {review.affidavit_on ? `received ${review.affidavit_on}` : 'not received'}.</p> : <p>No officer receipt review yet.</p>}
     {item.actions?.can_record_proof_receipts && <form onSubmit={save}><fieldset disabled={busy}><legend>Record receipt review</legend>
-      <label>Payment proof received on <input type="date" value={payment} onChange={e => setPayment(e.target.value)}/></label>
-      <label>Affidavit-3 received on <input type="date" value={affidavit} onChange={e => setAffidavit(e.target.value)}/></label>
-      <p>Leave a date empty if that document has not been received.</p>
-      <label>Reason <textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)}/></label>
+      <label>Payment proof received on <input type="date" value={payment} onChange={e => setPayment(e.target.value)} /></label>
+      <label>Affidavit-3 received on <input type="date" value={affidavit} onChange={e => setAffidavit(e.target.value)} /></label>
+      <p className="muted">Leave a date empty if that document has not been received.</p>
+      <label>Reason <textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
       <button disabled={!reason.trim()}>Record receipt review</button></fieldset></form>}
-    {!!error && <ErrorBox error={error}/>}
+    {!!error && <ErrorBox error={error} />}
+  </section>;
+}
+
+type Crumbs = {label: string; to?: string}[];
+export function Calculator({client, identityKey, institutionId, breadcrumb}: {client: Transport; identityKey: string; institutionId: number; breadcrumb?: Crumbs}) {
+  return <CalculatorBody key={`${identityKey}:${institutionId}`} client={client} identityKey={identityKey} institutionId={institutionId} breadcrumb={breadcrumb} />;
+}
+function CalculatorBody({client, identityKey, institutionId, breadcrumb}: {client: Transport; identityKey: string; institutionId: number; breadcrumb?: Crumbs}) {
+  const rules = useRemote<Page<{id: number; code: string; version: number}>>(client, 'rules', identityKey);
+  const [rule, setRule] = React.useState('');
+  const [rows, setRows] = React.useState([{programme: 'MANAGEMENT', level: 'PG', land_tenure: 'OWNED', building_tenure: 'OWNED'}]);
+  const [result, setResult] = React.useState<{required_paise: number; source_clause: string; rule_code: string; rule_version: number; as_of: string} | null>(null);
+  const [error, setError] = React.useState<unknown>();
+  const [busy, setBusy] = React.useState(false);
+  const generation = React.useRef(0);
+  function invalidate() {generation.current++; setResult(null); setError(undefined);}
+  function update(index: number, field: string, value: string) {invalidate(); setRows(rows.map((r, i) => i === index ? {...r, [field]: value} : r));}
+  React.useEffect(() => () => {generation.current++;}, []);
+  async function calculate(e: React.FormEvent) {
+    e.preventDefault(); const current = ++generation.current; setBusy(true); setError(undefined);
+    try {
+      const r = await client.post<NonNullable<typeof result>>(api('calculator'), {institution_id: institutionId, rule_set_id: Number(rule), approvals: rows});
+      if (current === generation.current) setResult(r);
+    } catch (failure) {if (current === generation.current) setError(failure);} finally {setBusy(false);}
+  }
+  return <section>
+    <PageHeader title="Requirement calculator" breadcrumb={breadcrumb} subtitle="Preview the deposit an institution would owe for a set of programmes. Nothing is saved." />
+    <Notice />
+    {!!rules.error && <ErrorBox error={rules.error} />} {!rules.error && !rules.data && <Loading />}
+    {rules.data?.results.length === 0 && <p>No rule versions available. A preview cannot be calculated.</p>}
+    <form onSubmit={calculate}><fieldset disabled={busy}><legend>Programmes</legend>
+      <label>Rule version <select required value={rule} onChange={e => {invalidate(); setRule(e.target.value);}}><option value="">Select explicit rule</option>
+        {rules.data?.results.map(r => <option key={r.id} value={r.id}>{r.code} v{r.version}</option>)}</select></label>
+      {rows.map((row, index) => <fieldset key={index}><legend>Programme {index + 1}</legend>
+        <label>Programme code <input required value={row.programme} onChange={e => update(index, 'programme', e.target.value)} /></label>
+        <label>Level <select value={row.level} onChange={e => update(index, 'level', e.target.value)}>{['DIPLOMA', 'UG', 'PG'].map(x => <option key={x}>{x}</option>)}</select></label>
+        <label>Land tenure <select value={row.land_tenure} onChange={e => update(index, 'land_tenure', e.target.value)}>{['OWNED', 'LEASED'].map(x => <option key={x}>{x}</option>)}</select></label>
+        <label>Building tenure <select value={row.building_tenure} onChange={e => update(index, 'building_tenure', e.target.value)}>{['OWNED', 'LEASED'].map(x => <option key={x}>{x}</option>)}</select></label>
+        <button type="button" disabled={rows.length === 1} onClick={() => {invalidate(); setRows(rows.filter((_, i) => i !== index));}}>Remove programme {index + 1}</button>
+      </fieldset>)}
+      <button type="button" disabled={rows.length >= 100} onClick={() => {invalidate(); setRows([...rows, {programme: '', level: 'UG', land_tenure: 'OWNED', building_tenure: 'OWNED'}]);}}>Add programme</button>
+      <button className="primary" disabled={!rule}>Calculate preview</button></fieldset></form>
+    {!!error && <ErrorBox error={error} />}
+    {result && <Panel title="Required deposit">
+      <p className="stat__value" aria-live="polite">{money(result.required_paise)}</p>
+      <p className="muted">Assessed on {formatDate(result.as_of)} using {result.rule_code} v{result.rule_version}, clause {result.source_clause}. Draft, for human review only.</p>
+    </Panel>}
+    {!result && <p aria-live="polite" className="sr-only">{busy ? 'Calculating' : ''}</p>}
+    {rules.data && rules.data.results.length > 0 && !result && !error && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="The result appears here." />}
   </section>;
 }

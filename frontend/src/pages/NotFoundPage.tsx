@@ -4,5 +4,5 @@ import { ErrorState } from '@/components/states'
 
 export default function NotFoundPage() {
   return <ErrorState status={404} title="Page not found"
-                     detail={<><Link to="/"><Button type="primary">Go to the start page</Button></Link></>} />
+                     detail={<><p>The address may be wrong, or the page may have moved.</p><Link to="/"><Button type="primary">Back to start</Button></Link></>} />
 }

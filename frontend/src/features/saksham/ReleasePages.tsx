@@ -1,14 +1,18 @@
 import { useCallback, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { Card } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
+import { Table } from 'antd'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Brand } from '@/components/Logo'
+import { PageHeader } from '@/components/PageHeader'
+import { Panel } from '@/components/Panel'
+import { StatusTag } from '@/components/StatusTag'
+import { humanize, RELEASE_PATH_LABELS } from '@/lib/labels'
 import { ME_KEY, useAuth } from '@/auth/AuthProvider'
 import { ClearanceQueue, PublicVerification, ReleaseCase, ReleaseWizard } from './releases'
 import type { Case, Page } from './client'
-import { ErrorBox, Loading, useRemote } from './shared'
+import { ErrorBox, Loading, Notice, useRemote } from './shared'
 import { platformTransport } from './platformTransport'
 import { routeIdentity } from './InstitutionPages'
-import './institutions.css'
 
 /** Session-bound wrapper for the release screens. It deliberately does not
  * manufacture a questionnaire, document capability, or clearance assignment. */
@@ -26,7 +30,7 @@ function ReleaseSession({ children }: { children: (identityKey: string) => React
     return <ErrorBox error={{ status: 403 }} />
   }
   const key = JSON.stringify([generation, auth.user.id, auth.user.role, auth.user.institution?.id, auth.user.unit])
-  return <Card className="institution-feature"><div key={key}>{children(key)}</div></Card>
+  return <div className="native-ui" key={key}>{children(key)}</div>
 }
 
 function requestedIdentity(value: string | null): number | null {
@@ -55,8 +59,9 @@ function RequestWithRequirements({ identityKey, instrumentId, obligationId, inst
   if (!requirements) return <Loading />
   const current = remote.data !== undefined
   const documents = <>
-    <ul aria-label="Required documents">{requirements.documents.map(d => <li key={d.name}>
-      {d.name.replaceAll('_', ' ').toLowerCase()}: {d.parsed ? 'uploaded and parsed' : d.present ? 'uploaded, could not be parsed' : 'missing'}
+    <ul aria-label="Required documents" className="checklist">{requirements.documents.map(d => <li key={d.name}>
+      <StatusTag value={d.parsed ? 'CLEARED' : d.present ? 'HOLD' : 'OBJECTION'} />
+      {' '}{humanize(d.name)}: {d.parsed ? 'uploaded and readable' : d.present ? 'uploaded, but could not be read' : 'missing'}
     </li>)}</ul>
     {!requirements.documents_ready && <p role="alert">Upload the missing documents on the <Link to={`/records/${instrumentId}`}>record page</Link> (Upload release document), then reload this page.</p>}
     {path === 'TERM_COMPLETE' && !requirements.term_elapsed && <p role="alert">The obligation term ends on {requirements.term_end ?? 'an unknown date'}; a term-complete release is blocked until it has elapsed.</p>}
@@ -95,23 +100,28 @@ function CaseList({ identityKey, page, setPage }: { identityKey: string; page: n
   const remote = useRemote<Page<Case>>(platformTransport, `releases?page=${page}`, identityKey)
   if (remote.error) return <ErrorBox error={remote.error} />
   if (!remote.data) return <Loading />
-  const cases = remote.data.results
-  return <section><h1>Release cases</h1>
-    {cases.length === 0 ? <p>No release cases yet. Institutions request release from an accepted record.</p> :
-      <table><thead><tr><th scope="col">Case</th><th scope="col">Path</th><th scope="col">Mode</th><th scope="col">Status</th><th scope="col">Clearances</th><th scope="col">Next action</th></tr></thead>
-        <tbody>{cases.map(c => <tr key={c.id}><td><Link to={`/releases/${c.id}`}>Case {c.id}</Link></td><td>{c.path.replaceAll('_', ' ').toLowerCase()}</td><td>{c.mode}</td>
-          <td>{c.status}</td><td>{c.clearances.filter(t => t.status === 'CLEARED').length} of {c.clearances.length} cleared</td><td>{c.next_action}</td></tr>)}</tbody></table>}
-    <button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button>
-    <button disabled={page * 25 >= (remote.data.count ?? 0)} onClick={() => setPage(page + 1)}>Next</button>
+  return <section>
+    <PageHeader title="Release cases" subtitle="Release requests from submission through clearances, decision, letter and completion." />
+    <Notice />
+    <Panel flush>
+      <Table<Case> rowKey="id" size="middle" scroll={{ x: 760 }} dataSource={remote.data.results}
+        locale={{ emptyText: 'No release cases yet. An institution requests release from an accepted deposit record.' }}
+        pagination={{ current: page, pageSize: 25, total: remote.data.count ?? 0, onChange: setPage, hideOnSinglePage: true, showSizeChanger: false }}
+        columns={[
+          { title: 'Case', dataIndex: 'id', render: (id: number) => <Link to={`/releases/${id}`}>Case {id}</Link> },
+          { title: 'Path', dataIndex: 'path', render: (v: string) => RELEASE_PATH_LABELS[v] ?? humanize(v) },
+          { title: 'Type', dataIndex: 'mode', width: 90 },
+          { title: 'Status', dataIndex: 'status', render: (v: string) => <StatusTag value={v} /> },
+          { title: 'Clearances', render: (_, c) => `${c.clearances.filter(t => t.status === 'CLEARED').length} of ${c.clearances.length} cleared` },
+          { title: 'Next step', dataIndex: 'next_action' }]} />
+    </Panel>
   </section>
 }
 
 export function ReleaseCasePage() {
   const id = routeIdentity(useParams().caseId)
-  return <ReleaseSession>{identityKey => id === null ? <ErrorBox error={{ status: 404 }} /> : <>
-    <nav aria-label="Release navigation"><Link to="/releases/request">Request release</Link><Link to="/clearance-tasks">Clearance work</Link></nav>
-    <ReleaseCase client={platformTransport} identityKey={identityKey} caseId={id} />
-  </>}</ReleaseSession>
+  return <ReleaseSession>{identityKey => id === null ? <ErrorBox error={{ status: 404 }} /> :
+    <ReleaseCase client={platformTransport} identityKey={identityKey} caseId={id} />}</ReleaseSession>
 }
 
 export function ClearanceQueuePage() {
@@ -122,6 +132,12 @@ export function ClearanceQueuePage() {
 
 export function PublicVerificationPage() {
   const token = useParams().token
-  if (!token || !/^[A-Za-z0-9_-]{20,100}$/.test(token)) return <section className="institution-feature"><h1>Verify demo letter</h1><p role="alert">Verification record unavailable.</p></section>
-  return <section className="institution-feature"><PublicVerification client={platformTransport} token={token} /></section>
+  const valid = token && /^[A-Za-z0-9_-]{20,100}$/.test(token)
+  return <main className="verify-page">
+    <Brand size={42} />
+    <div className="verify-card native-ui">
+      {valid ? <PublicVerification client={platformTransport} token={token} />
+        : <section><h1>Verify letter</h1><p role="alert">Verification record unavailable.</p></section>}
+    </div>
+  </main>
 }

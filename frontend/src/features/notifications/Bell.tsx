@@ -16,7 +16,7 @@ export default function Bell() {
   const count = unread.data ?? 0
 
   const content = (
-    <div style={{ width: 340, maxWidth: '80vw' }}>
+    <div style={{ width: 360, maxWidth: 'calc(100vw - 48px)' }}>
       {latest.isPending ? <LoadingState rows={2} />
         : latest.isError ? <QueryError error={latest.error} onRetry={() => void latest.refetch()} />
         : latest.data.results.length === 0 ? <EmptyState title="No notifications yet" />
@@ -41,7 +41,7 @@ export default function Bell() {
     <Popover content={content} trigger="click" open={open} onOpenChange={setOpen} placement="bottomRight"
              title={<Typography.Text strong>Notifications</Typography.Text>}>
       <Badge count={count} size="small" overflowCount={99}>
-        <Button type="text" shape="circle" icon={<BellOutlined />}
+        <Button type="text" shape="circle" size="large" icon={<BellOutlined />}
                 aria-label={count ? `Notifications, ${count} unread` : 'Notifications'} />
       </Badge>
     </Popover>

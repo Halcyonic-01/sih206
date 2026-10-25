@@ -42,22 +42,22 @@ export default function AccessLogTab() {
         Sign-ins, failed sign-ins, document downloads and exports, with the person, address and request ID.
         Rows cannot be edited or deleted.
       </Typography.Paragraph>
-      <Form form={form} layout="inline" style={{ rowGap: 12, marginBottom: 16 }}
+      <Form form={form} layout="vertical" className="filter-form"
             onFinish={(values) => {
               setFilters({ username: values.username?.trim(), action: values.action ?? [], object_type: values.object_type,
                            ip: values.ip?.trim(), ...rangeFilters(values.range) })
               setPage(1)
             }}>
-        <Form.Item name="username" label="Username"><Input allowClear placeholder="Contains…" /></Form.Item>
+        <Form.Item name="username" label="Username"><Input allowClear  /></Form.Item>
         <Form.Item name="action" label="Action">
           <Select mode="multiple" allowClear style={{ minWidth: 220 }} options={(facets.data?.actions ?? []).map((value) => ({ value, label: value }))} />
         </Form.Item>
         <Form.Item name="object_type" label="Object">
-          <Select allowClear style={{ width: 170 }} options={(facets.data?.object_types ?? []).map((value) => ({ value, label: value }))} />
+          <Select allowClear options={(facets.data?.object_types ?? []).map((value) => ({ value, label: value }))} />
         </Form.Item>
-        <Form.Item name="ip" label="IP"><Input allowClear style={{ width: 140 }} /></Form.Item>
+        <Form.Item name="ip" label="IP"><Input allowClear /></Form.Item>
         <Form.Item name="range" label="Dates"><DatePicker.RangePicker /></Form.Item>
-        <Flex gap={8}>
+        <Flex gap={8} className="filter-form__actions" wrap>
           <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>Filter</Button>
           <Button onClick={() => { form.resetFields(); setFilters({}); setPage(1) }}>Reset</Button>
           <Button icon={<DownloadOutlined />} loading={exporting} onClick={() => void exportCsv()}>Export CSV</Button>
