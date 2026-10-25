@@ -105,7 +105,7 @@ Scoped coverage reads reviewed stored requirements. Authoritative programme-to-r
 ## Optional AI configuration
 
 AI is off unless the operating-system variable `AI_ENABLED=true` is deliberately
-set. Model: Google Gemini `gemini-3.8-flash` (`AI_MODEL`). Set `GEMINI_API_KEY` privately if testing authorized
+set. Model: Google Gemini `gemini-3.5-flash-lite` (`AI_MODEL`). Set `GEMINI_API_KEY` privately if testing authorized
 synthetic documents. No key is saved in the repo or frontend. The UI requires an
 explicit synthetic-data declaration and consent to transfer to Google Gemini before an
 enabled request. Max 10 MB/30 known pages; 10 attempted calls per user per hour.

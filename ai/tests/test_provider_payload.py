@@ -77,17 +77,52 @@ class WorkerShapeTests(SimpleTestCase):
         unknown = HTTPError('u', 400, 'Bad', {}, io.BytesIO(b'Invalid JSON payload received. Unknown name "responseFormat"'))
         ok = io.BytesIO(json.dumps(gemini_reply(FIELDS)).encode())
         with patch.object(provider_worker, 'urlopen', side_effect=[unknown, ok]) as call:
-            self.assertEqual(provider_worker.request(self.payload), FIELDS)
+            self.assertEqual(provider_worker.request(self.payload), (FIELDS, 'gemini-3.8-flash'))
         second = json.loads(call.call_args_list[1].args[0].data)
         self.assertIn('responseJsonSchema', second['generationConfig'])
         self.assertEqual(call.call_args_list[0].args[0].get_header('X-goog-api-key'), 'synthetic-test-key')
         for status, text, code in [(403, b'denied', 'KEY_REJECTED'), (400, b'API key not valid', 'KEY_REJECTED'),
-                                   (404, b'not found', 'MODEL_NOT_FOUND'), (429, b'quota', 'RATE_LIMITED')]:
+                                   (404, b'not found', 'MODEL_NOT_FOUND'), (429, b'quota', 'RATE_LIMITED'),
+                                   (503, b'high demand', 'OVERLOADED')]:
             error = HTTPError('u', status, 'x', {}, io.BytesIO(text))
             with self.subTest(code=code), patch.object(provider_worker, 'urlopen', side_effect=error), \
                     self.assertRaises(provider_worker.ProviderError) as failure:
                 provider_worker.request(self.payload)
             self.assertEqual(failure.exception.code, code)
+
+    @patch.dict(os.environ, {'GEMINI_API_KEY': 'synthetic-test-key'})
+    def test_busy_model_falls_back_once_but_a_bad_key_does_not(self):
+        busy = HTTPError('u', 503, 'x', {}, io.BytesIO(b'high demand'))
+        ok = io.BytesIO(json.dumps(gemini_reply(FIELDS)).encode())
+        payload = self.payload | {'fallback_models': ['gemini-3.6-flash']}
+        with patch.object(provider_worker, 'urlopen', side_effect=[busy, ok]) as call:
+            self.assertEqual(provider_worker.request(payload), (FIELDS, 'gemini-3.6-flash'))
+        self.assertIn('/gemini-3.6-flash:', call.call_args_list[1].args[0].full_url)
+        denied = HTTPError('u', 403, 'x', {}, io.BytesIO(b'denied'))
+        with patch.object(provider_worker, 'urlopen', side_effect=[denied]) as call, \
+                self.assertRaises(provider_worker.ProviderError) as failure:
+            provider_worker.request(payload)
+        self.assertEqual((failure.exception.code, call.call_count), ('KEY_REJECTED', 1))
+
+    @patch.dict(os.environ, {'GEMINI_API_KEY': 'synthetic-test-key'})
+    def test_timeouts_are_reported_as_timeouts_and_share_one_budget(self):
+        import socket
+        with patch.object(provider_worker, 'urlopen', side_effect=socket.timeout('timed out')) as call, \
+                self.assertRaises(provider_worker.ProviderError) as failure:
+            provider_worker.request(self.payload | {'fallback_models': ['gemini-3.6-flash']})
+        self.assertEqual((failure.exception.code, call.call_count), ('TIMEOUT', 2))
+        self.assertLessEqual(call.call_args_list[0].kwargs['timeout'], provider_worker.BUDGET_SECONDS)
+        with patch.object(provider_worker, 'BUDGET_SECONDS', 0), self.assertRaises(provider_worker.ProviderError) as failure:
+            provider_worker.request(self.payload)
+        self.assertEqual(failure.exception.code, 'TIMEOUT')
+
+    @patch.dict(os.environ, {'GEMINI_API_KEY': 'synthetic-test-key'})
+    def test_unsupported_thinking_level_is_retried_without_it(self):
+        refused = HTTPError('u', 400, 'x', {}, io.BytesIO(b'Thinking level LOW is not supported for this model.'))
+        ok = io.BytesIO(json.dumps(gemini_reply(FIELDS)).encode())
+        with patch.object(provider_worker, 'urlopen', side_effect=[refused, ok]) as call:
+            provider_worker.request(self.payload)
+        self.assertNotIn('thinkingConfig', json.loads(call.call_args_list[1].args[0].data)['generationConfig'])
 
     def test_missing_key_and_unsafe_model_name(self):
         with patch.dict(os.environ, {}, clear=True), self.assertRaises(provider_worker.ProviderError) as failure:

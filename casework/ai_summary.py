@@ -134,8 +134,9 @@ def summarize(actor, case_id, version):
         if AiRun.objects.filter(actor=actor, operation=OPERATION,
                 created_at__gte=timezone.now()-timedelta(hours=1)).count() >= 10:
             raise ValueError('RATE_LIMIT')
-        output = validate_output(call_model(gemini_request(model, SYSTEM,
-            [{'text': json.dumps(payload, sort_keys=True)}], SCHEMA)))
+        request = gemini_request(model, SYSTEM, [{'text': json.dumps(payload, sort_keys=True)}], SCHEMA)
+        output = validate_output(call_model(request))
+        run.model = request.get('answered_by', model)
         run.status, run.output = 'SUCCESS', output
         return _result(run, 'success')
     except Exception as exc:
@@ -145,4 +146,4 @@ def summarize(actor, case_id, version):
         return _result(run, 'unavailable', detail='AI summary unavailable. Continue manual release review.')
     finally:
         run.duration_ms = int((monotonic() - started) * 1000)
-        run.save(update_fields=['status', 'error_code', 'duration_ms', 'output'])
+        run.save(update_fields=['status', 'error_code', 'duration_ms', 'output', 'model'])
