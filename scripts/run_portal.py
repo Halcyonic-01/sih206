@@ -37,6 +37,7 @@ VENV_PYTHON = VENV / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
 CREDENTIALS = ROOT / 'data' / 'demo-credentials.txt'
 STAFF_CREDENTIALS = ROOT / 'data' / 'staff-credentials.txt'
 REVIEW_MANIFEST = ROOT / 'data' / 'seed-review-v2.json'
+SEEDED_FOR = ROOT / 'data' / '.seeded-database'  # which database the saved demo passwords belong to (no secrets)
 ENV_FILE = ROOT / '.env'
 ENV_EXAMPLE = ROOT / '.env.example'
 DATABASE = ROOT / 'data' / 'portal.sqlite3'
@@ -130,8 +131,44 @@ def manage(*args, env, check=True):
     return run([VENV_PYTHON, 'manage.py', *args], env=env, check=check)
 
 
+def database_identity(settings_values=None):
+    """Engine, host, database and schema the app will use (never the password), as settings.py chooses them."""
+    from urllib.parse import urlsplit
+    if settings_values is None:  # .env overlaid by real environment variables, as settings.py does
+        values = {**dotenv_settings(), **{key: os.environ[key] for key in
+                                          ('DATABASE_BACKEND', 'DATABASE_URL', 'DATABASE_SCHEMA') if key in os.environ}}
+    else:
+        values = settings_values
+    backend = values.get('DATABASE_BACKEND', 'auto').strip().lower() or 'auto'
+    url = values.get('DATABASE_URL', '').strip()
+    if backend == 'sqlite' or (backend == 'auto' and not url):
+        return 'sqlite data/portal.sqlite3'
+    try:
+        parsed = urlsplit(url)
+        host, name = parsed.hostname or '?', parsed.path.lstrip('/') or '?'
+    except ValueError:
+        host, name = '?', '?'
+    return f'postgresql {host}/{name} schema {values.get("DATABASE_SCHEMA", "portal_app") or "portal_app"}'
+
+
+def check_seeded_database():
+    """Warn when the saved demo passwords were created in a different database: sign-in would fail there."""
+    current = database_identity()
+    if not CREDENTIALS.exists():
+        return
+    if not SEEDED_FOR.exists():
+        SEEDED_FOR.write_text(current + '\n', encoding='utf-8')  # older installs: assume the current database
+        return
+    seeded = SEEDED_FOR.read_text(encoding='utf-8').strip()
+    if seeded != current:
+        say(f'WARNING: the demo passwords in data/*-credentials.txt were created for "{seeded}", '
+            f'but the portal now uses "{current}". Signing in with them will fail. Switch back in .env, '
+            'or move the data/*-credentials.txt files and seed manifests aside and run ./run.sh --seed.')
+
+
 def prepare_database(env, force_seed, prod):
     manage('migrate', '--noinput', env=env)
+    check_seeded_database()
     manage('seal_audit_chain', env=env)  # seals audit events written before the hash chain existed
     seed_env = {**env, 'DJANGO_DEBUG': 'true'}  # generated credentials are allowed in local DEBUG only
     steps = []
@@ -148,6 +185,8 @@ def prepare_database(env, force_seed, prod):
         result = manage(*args, env=seed_env, check=False)
         if result.returncode:
             say(f'{" ".join(args)} did not run (already seeded?); continuing')
+    if steps and CREDENTIALS.exists():
+        SEEDED_FOR.write_text(database_identity() + '\n', encoding='utf-8')
     if prod:
         manage('collectstatic', '--noinput', '-v', '0', env=env)
 
