@@ -21,7 +21,8 @@ export function useRemote<T>(client: Transport, path: string, identityKey: strin
 export function Notice() { return <p role="note">SIMULATED · Draft rules, not approved policy. Not independently bank-verified.</p>; }
 export function ErrorBox({error}: {error: unknown}) {
   const ref = React.useRef<HTMLParagraphElement>(null);
-  React.useEffect(()=>{ref.current?.focus();},[error]);
+  // Layout effect: focus moves in the same commit that shows the alert, so it is never visible unfocused.
+  React.useLayoutEffect(()=>{ref.current?.focus();},[error]);
   return <p ref={ref} role="alert" tabIndex={-1}>{errorMessage(error)}</p>;
 }
 export function Loading() { return <p role="status">Loading…</p>; }

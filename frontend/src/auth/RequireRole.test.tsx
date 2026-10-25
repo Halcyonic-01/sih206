@@ -41,6 +41,18 @@ describe('RequireRole', () => {
     expect(screen.queryByText('Officer screen')).not.toBeInTheDocument()
   })
 
+  it('says the session ended (with a sign-in link) instead of a blank screen while the redirect lands', async () => {
+    fetchMock.mockImplementation(async () => json(401, { detail: 'Auth.', code: 'not_authenticated' }))
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    // Every path renders the guard, so what it shows stays visible after the redirect.
+    render(<QueryClientProvider client={client}><AuthProvider><MemoryRouter initialEntries={['/officer-only']}>
+      <Routes><Route path="*" element={<RequireRole roles={['officer']}><p>Officer screen</p></RequireRole>} /></Routes>
+    </MemoryRouter></AuthProvider></QueryClientProvider>)
+    expect(await screen.findByRole('status')).toHaveTextContent('Your session has ended')
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login')
+    expect(screen.queryByText('Officer screen')).not.toBeInTheDocument()
+  })
+
   it('renders the screen for an allowed role', async () => {
     fetchMock.mockImplementation(async () => json(200, officer))
     mount('/officer-only')
