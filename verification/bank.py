@@ -65,6 +65,18 @@ def request_confirmation(actor, pk, version):
     return request
 
 
+LOCAL_BACKENDS = {'django.core.mail.backends.locmem.EmailBackend', 'django.core.mail.backends.console.EmailBackend',
+                  'django.core.mail.backends.filebased.EmailBackend'}
+LOCAL_SMTP_HOSTS = {'localhost', '127.0.0.1', '::1', 'mailpit'}  # mailpit: the Docker Compose catcher service
+
+
+def local_email_only():
+    """A simulated request may only reach a mailbox on this machine: memory, console, file, or a local catcher."""
+    backend = settings.EMAIL_BACKEND
+    return backend in LOCAL_BACKENDS or (backend == 'django.core.mail.backends.smtp.EmailBackend'
+                                         and settings.EMAIL_HOST.strip().lower() in LOCAL_SMTP_HOSTS)
+
+
 def deliver_requests():
     """Explicit worker only. Never returns tokens or OTPs to the officer or logs."""
     sent = 0
@@ -81,7 +93,7 @@ def deliver_requests():
                 if not row.simulated and (not settings.NOTIFICATION_EMAIL_ENABLED or
                     settings.EMAIL_BACKEND != 'django.core.mail.backends.smtp.EmailBackend'):
                     raise ValueError('LIVE_EMAIL_NOT_CONFIGURED')
-                if row.simulated and settings.EMAIL_BACKEND != 'django.core.mail.backends.locmem.EmailBackend':
+                if row.simulated and not local_email_only():
                     raise ValueError('SIMULATION_REQUIRES_LOCAL_EMAIL')
                 link = settings.BANK_PUBLIC_BASE_URL.rstrip('/') + '/bank/confirm/' + token_for(row) + '/'
                 prefix = 'SIMULATED ' if row.simulated else ''

@@ -4,9 +4,12 @@ from portal.models import Instrument
 
 def coverage(obligation, as_of):
     rule = obligation.rule_version
-    reviewed = bool(rule and rule.approved_by_id and rule.source_clause and rule.source_document)
+    sourced = bool(rule and rule.source_clause and rule.source_document)
+    reviewed = sourced and bool(rule.approved_by_id)
     exempt = obligation.status == 'EXEMPT' and bool(obligation.exemption_approved_by_id)
-    known = exempt or (reviewed and obligation.required_paise is not None and obligation.status != 'UNKNOWN')
+    # A recorded requirement under a sourced rule set is assessed, as on the institution page (S2); a draft rule
+    # set is labelled DRAFT_DEMO_NOT_APPROVED rather than hidden. No rule set or amount stays unknown.
+    known = exempt or (sourced and obligation.required_paise is not None)
     holdings = list(obligation.instruments.filter(status='ACCEPTED', superseded_at__isnull=True,
         released_at__isnull=True, issue_date__lte=as_of, maturity_date__gte=as_of)
         .order_by('-maturity_date', 'pk'))
@@ -21,6 +24,7 @@ def coverage(obligation, as_of):
         'institution': obligation.institution.name, 'known': known, 'required_paise': required,
         'held_paise': held, 'shortfall_paise': shortfall, 'coverage_end': end,
         'term_end': obligation.term_end, 'term_gap': bool(known and ledger['term_gap_days']), 'exempt': exempt,
+        'policy_label': 'APPROVED' if reviewed else 'DRAFT_DEMO_NOT_APPROVED',
         'holdings': [item.pk for item in holdings],
         'notice': 'Accepted holdings are tracked amounts, not independently bank-confirmed funds.'}
 

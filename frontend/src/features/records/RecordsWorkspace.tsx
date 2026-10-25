@@ -13,18 +13,18 @@ export function DashboardPage({api, onOpen, onCategory}: {api: Api; onOpen: (id:
   const data = query.data;
   const max = Math.max(1, ...data.maturity_chart.map(m => m.count));
   return <Space direction="vertical" size="large" style={{width: '100%'}}>
-    <h2>Deposit overview</h2><span>Business date: {data.as_of} Â· Asia/Kolkata</span>
+    <h2>Deposit overview</h2><span>Business date: {data.as_of} · Asia/Kolkata</span>
     <Row gutter={[16, 16]}>{Object.entries(data.counts).filter(([name]) => name !== 'all').map(([name, count]) => <Col xs={12} md={8} key={name}>
       <Card><Statistic title={name.charAt(0).toUpperCase() + name.slice(1)} value={count}/><Button type="link" onClick={() => onCategory(name)}>View records</Button></Card>
     </Col>)}</Row>
     <Alert type="info" message="Active means accepted and not superseded/released; it includes matured records awaiting action. Expiring and matured are subsets, so do not add all cards."/>
     {!data.coverage_available && <Alert type="warning" message="Some requirements are missing or await reviewed policy data. Coverage must not be assumed sufficient."/>}
     {!!data.coverage?.length && <Card title="Obligation coverage"><Table rowKey="obligation_id" scroll={{x: 650}} dataSource={data.coverage} columns={[
-      {title: 'Institution', dataIndex: 'institution'},
+      {title: 'Institution', dataIndex: 'institution', render: (v: string, row: {policy_label?: string}) => <>{v} {row.policy_label === 'DRAFT_DEMO_NOT_APPROVED' && <Tag>Draft rules</Tag>}</>},
       {title: 'Required INR', dataIndex: 'required_paise', render: (v: number | null) => v === null ? 'Needs review' : (v/100).toFixed(2)},
       {title: 'Held INR', dataIndex: 'held_paise', render: (v: number) => (v/100).toFixed(2)},
       {title: 'Shortfall INR', dataIndex: 'shortfall_paise', render: (v: number | null) => v === null ? 'Unknown' : (v/100).toFixed(2)},
-      {title: 'Term gap', dataIndex: 'term_gap', render: (v: boolean) => v ? 'Review required' : 'â€”'}]}/></Card>}
+      {title: 'Term gap', dataIndex: 'term_gap', render: (v: boolean) => v ? 'Review required' : '—'}]}/></Card>}
     <Card title="Cases requiring attention"><Table rowKey={r => `${r.kind}:${r.id}`} scroll={{x: 650}} dataSource={data.interventions} locale={{emptyText: 'No cases in these intervention queues'}} columns={[
       {title: 'Reference', dataIndex: 'reference', render: (value: string, row) => <Button type="link" onClick={() => onOpen(row.id)}>{value}</Button>},
       {title: 'Issue', dataIndex: 'kind'}, {title: 'Next action', dataIndex: 'next_action'}]}/></Card>

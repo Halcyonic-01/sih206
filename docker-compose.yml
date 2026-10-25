@@ -42,6 +42,7 @@ services:
         if [ -z "$$DJANGO_SECRET_KEY" ]; then export DJANGO_SECRET_KEY="$$(cat data/.secret_key)"; fi
         while true; do
           python manage.py send_notifications || true
+          python manage.py deliver_bank_requests || true
           stamp="data/.rules-ran-$$(date -u +%F)"
           if [ ! -f "$$stamp" ]; then
             python manage.py run_due_rules && touch "$$stamp" || true

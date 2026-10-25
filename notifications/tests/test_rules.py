@@ -222,6 +222,18 @@ class ProofDueTests(RulesTestCase):
         self.assertEqual(Notification.objects.count(), 0)
 
 
+    def test_reminders_stop_once_an_officer_records_both_receipts(self):
+        from obligations.models import ProofReceiptReview
+        ProofReceiptReview.objects.create(obligation=self.obligation, payment_proof_on=self.intimation,
+                                          affidavit_on=None, reviewed_by=self.officer, reason='Affidavit pending')
+        self.run_on(self.intimation + timedelta(days=7))
+        self.assertEqual(self.keys('proof_due_reminder'), [self.key(7)])
+        ProofReceiptReview.objects.create(obligation=self.obligation, payment_proof_on=self.intimation,
+                                          affidavit_on=self.intimation, reviewed_by=self.officer, reason='Both received')
+        self.run_on(self.intimation + timedelta(days=12))
+        self.assertEqual(self.keys('proof_due_reminder'), [self.key(7)])
+
+
 class SlaTests(RulesTestCase):
     def submitted(self, on, reference='SUB-1'):
         fdr = self.instrument(status=Instrument.Status.SUBMITTED, reference=reference)
@@ -272,7 +284,7 @@ class SlaTests(RulesTestCase):
         self.assertEqual(self.recipients(key(30)), {'officer'})
 
     def test_clearance_tasks_alert_the_unit_then_the_head(self):
-        task = {'id': 7, 'unit': 'PGRC', 'opened_on': date(2026, 11, 2), 'reference': 'FDR-1', 'instrument_id': 1}
+        task = {'id': 7, 'unit': 'PGRC', 'opened_on': date(2026, 11, 2), 'reference': 'FDR-1', 'case_id': 1}
         provider = lambda as_of: [task]  # noqa: E731
         key = lambda limit: f'clearance:7:sla:{limit}:2026-11-02'  # noqa: E731
         self.run_on(date(2026, 11, 11), clearance_provider=provider)   # 7 working days: not yet
@@ -283,7 +295,7 @@ class SlaTests(RulesTestCase):
         self.run_on(date(2026, 11, 23), clearance_provider=provider)
         self.assertEqual(self.recipients(key(14)), {'authority'})
 
-    def test_clearance_rule_is_inert_until_casework_exists(self):
+    def test_no_open_clearance_tasks_means_no_clearance_alerts(self):
         from notifications.rules import open_clearance_tasks
         self.assertEqual(open_clearance_tasks(date(2026, 11, 20)), [])
 

@@ -1,6 +1,6 @@
 import { Spin } from 'antd'
 import type { ReactNode } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import type { Role } from '@/api/client'
 import { ErrorState } from '@/components/states'
 import { useAuth } from './AuthProvider'
@@ -18,7 +18,15 @@ export function RequireRole({ roles, children }: { roles?: Role[]; children: Rea
     return <ErrorState title="Cannot reach the server" detail="Check the connection and reload the page." />
   }
   if (status === 'anonymous' || !user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
+    // The route change is a low-priority React transition; on a busy device it can take a moment. Say what is
+    // happening (and offer the link) instead of showing a blank screen while it lands.
+    const from = { from: location.pathname + location.search }
+    return <>
+      <Navigate to="/login" replace state={from} />
+      <p role="status" className="session-ended">
+        Your session has ended. Opening the sign-in page… <Link to="/login" replace state={from}>Sign in</Link>
+      </p>
+    </>
   }
   if (!user.role) {
     return <ErrorState status={403} title="No portal role assigned"

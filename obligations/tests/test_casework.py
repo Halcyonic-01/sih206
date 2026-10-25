@@ -247,7 +247,7 @@ class CaseworkTests(PortalTestCase):
         before_status, before_version = case.release.status, case.version
         output = {'summary': 'One clearance remains open.', 'risk_flags': [
             {'field': 'clearances[0].status', 'severity': 'warning', 'message': 'Manual clearance is pending.'}]}
-        with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'synthetic-only'}), \
+        with patch.dict('os.environ', {'GEMINI_API_KEY': 'synthetic-only'}), \
                 patch('casework.ai_summary.call_model', return_value=output) as provider:
             first = ai_summary.summarize(self.clearance['PGRC'], case.pk, case.version)
             second = ai_summary.summarize(self.clearance['PGRC'], case.pk, case.version)
@@ -263,7 +263,7 @@ class CaseworkTests(PortalTestCase):
     @override_settings(AI_ENABLED=True)
     def test_ai_summary_rejects_invalid_output_and_stale_version(self):
         case = self.case()
-        with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'synthetic-only'}), \
+        with patch.dict('os.environ', {'GEMINI_API_KEY': 'synthetic-only'}), \
                 patch('casework.ai_summary.call_model', return_value={'summary': 'Bad', 'risk_flags': [{}]}):
             result = ai_summary.summarize(self.clearance['PGRC'], case.pk, case.version)
         self.assertEqual(result['status'], 'unavailable')
@@ -271,6 +271,7 @@ class CaseworkTests(PortalTestCase):
         with self.assertRaises(WorkflowError):
             ai_summary.summarize(self.clearance['PGRC'], case.pk, case.version + 1)
 
+    @override_settings(AI_ENABLED=False)  # independent of a developer's local .env
     def test_ai_summary_api_is_specific_route_and_requires_current_version(self):
         case = self.case()
         self.client.force_login(self.clearance['PGRC'])

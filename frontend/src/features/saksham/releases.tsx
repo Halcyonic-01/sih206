@@ -82,7 +82,7 @@ function CaseBody({client,identityKey,caseId}:{client:Transport;identityKey:stri
     {item.actions.can_review_penalties&&<><label>Penalty kind <select value={penalty} onChange={e=>setPenalty(e.target.value)}>{['premature_encashment','closure_lapsed','closure_six_years'].map(k=><option key={k} value={k}>{k.replaceAll('_',' ')}</option>)}</select></label>
       <label>Reviewed penalty base (INR) <input inputMode="decimal" value={base} onChange={e=>setBase(e.target.value)}/></label>
       <button disabled={!reason.trim()||!base} onClick={()=>{try{void mutate('penalties',{kind:penalty,base_paise:paise(base)});}catch(e){setError(e);}}}>Propose penalty for review</button>
-      <button disabled={!reason.trim()} onClick={()=>mutate('penalties')}>Record complete penalty review</button></>}
+      <button disabled={!reason.trim()} onClick={()=>mutate('penalties')}>Record officer checklist and penalty review complete</button></>}
     {item.actions.can_approve&&<button disabled={!reason.trim()} onClick={()=>mutate('approve')}>Record authority authorization</button>}
     {item.actions.can_reject&&<button disabled={!reason.trim()} onClick={()=>mutate('reject')}>Record authority rejection</button>}
     {item.actions.can_issue&&<button disabled={!reason.trim()} onClick={()=>mutate('issue')}>Generate unsigned demo letter</button>}

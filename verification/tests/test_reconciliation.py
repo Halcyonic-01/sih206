@@ -23,7 +23,7 @@ class ReconciliationTests(PortalTestCase):
     def csv(self, amount='500000.25'):
         return f'utr,amount,value_date\nSYNTHETIC-UTR,{amount},2026-01-01\n'.encode()
 
-    def test_preview_commit_replay_and_simulation_never_promote_confirmation(self):
+    def test_preview_commit_replay_and_a_match_records_simulated_statement_confirmation(self):
         item = self.rtgs()
         content = self.csv()
         preview = plan_matches(self.officer, content)
@@ -32,7 +32,7 @@ class ReconciliationTests(PortalTestCase):
         batch, replay = import_statement(self.officer, content, 'Synthetic bank fixture', {str(item.pk): item.version})
         self.assertFalse(replay)
         item.refresh_from_db()
-        self.assertEqual(item.verification_level, 'DECLARED')
+        self.assertEqual(item.verification_level, 'CONFIRMED')  # PS scenario 6, plan Y6
         self.assertTrue(batch.simulated)
         self.assertEqual(item.verification_evidence.get().method, 'SIMULATED_STATEMENT')
         _, replay = import_statement(self.officer, content, 'Synthetic bank fixture', {})

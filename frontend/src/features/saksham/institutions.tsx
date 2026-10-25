@@ -59,7 +59,7 @@ export function ObligationCard({client, identityKey, obligationId}: {client: Tra
     <p>Assessment date: {item.assessment.as_of}. {item.assessment.status === 'UNAVAILABLE' ? 'Coverage unavailable; source integration required.' : 'Draft assessment for human review.'}</p>
     <ul>{item.assessment.findings?.map(f=><li key={f.code}>{f.explanation}</li>)}</ul>
     {item.assessment.findings?.length===0&&<p>No findings in the available draft assessment.</p>}
-    <p>Proof receipt assessment: {item.assessment.proof_assessment??'Unavailable'}.</p>
+    <ProofReceipts client={client} item={item} onSaved={remote.reload}/>
     <table><caption>Scoped holding timeline</caption><thead><tr><th>Holding</th><th>Issue date</th><th>Maturity</th><th>Amount</th><th>Review state</th></tr></thead>
       <tbody>{item.assessment.holdings?.map(h=><tr key={h.id}><td>{h.id}</td><td>{h.issue_date}</td><td>{h.maturity_date}</td><td>{money(h.amount_paise)}</td><td>{h.status}</td></tr>)}</tbody></table>
     {item.assessment.holdings==null&&<p>Holding timeline unavailable.</p>}
@@ -103,5 +103,37 @@ function CalculatorBody({client, identityKey, institutionId}: {client:Transport;
       <button type="button" disabled={rows.length>=100} onClick={()=>{invalidate();setRows([...rows,{programme:'',level:'UG',land_tenure:'OWNED',building_tenure:'OWNED'}]);}}>Add programme</button>
       <button disabled={!rule}>Calculate preview</button></fieldset></form>{!!error&&<ErrorBox error={error}/>}<p aria-live="polite">{money(result?.required_paise)}</p>
       {result&&<p>Assessed {result.as_of} using {result.rule_code} v{result.rule_version}, clause {result.source_clause}. Draft human-review context only.</p>}
+  </section>;
+}
+
+/** Deposit proof and Affidavit-3 receipt (APH 2.25(f)): shown to everyone, recorded by an officer. */
+function ProofReceipts({client, item, onSaved}: {client: Transport; item: ObligationDetail; onSaved: () => void}) {
+  const review = item.proof_review;
+  const [payment, setPayment] = React.useState(review?.payment_proof_on ?? '');
+  const [affidavit, setAffidavit] = React.useState(review?.affidavit_on ?? '');
+  const [reason, setReason] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<unknown>();
+  async function save(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setError(undefined);
+    try {
+      await client.post(api(`obligations/${item.id}/proof-receipts`), {version: item.version,
+        payment_proof_on: payment || null, affidavit_on: affidavit || null, reason});
+      setReason(''); onSaved();
+    } catch (failure) {setError(failure);} finally {setBusy(false);}
+  }
+  return <section aria-label="Proof receipts"><h4>Deposit proof and Affidavit-3</h4>
+    <p>Intimation date: {item.intimation_date ?? 'Not recorded'}. Proof assessment: {item.assessment.proof_assessment ?? 'Unavailable'}
+      {item.assessment.proof_assessment !== 'AVAILABLE' && ' (an officer has not yet recorded the receipt review, or the intimation date is missing)'}.</p>
+    {review ? <p>Officer review by {review.reviewed_by} on {new Date(review.reviewed_at).toLocaleDateString('en-IN', {timeZone: 'Asia/Kolkata'})}:
+      payment proof {review.payment_proof_on ? `received ${review.payment_proof_on}` : 'not received'},
+      Affidavit-3 {review.affidavit_on ? `received ${review.affidavit_on}` : 'not received'}.</p> : <p>No officer receipt review yet.</p>}
+    {item.actions?.can_record_proof_receipts && <form onSubmit={save}><fieldset disabled={busy}><legend>Record receipt review</legend>
+      <label>Payment proof received on <input type="date" value={payment} onChange={e => setPayment(e.target.value)}/></label>
+      <label>Affidavit-3 received on <input type="date" value={affidavit} onChange={e => setAffidavit(e.target.value)}/></label>
+      <p>Leave a date empty if that document has not been received.</p>
+      <label>Reason <textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)}/></label>
+      <button disabled={!reason.trim()}>Record receipt review</button></fieldset></form>}
+    {!!error && <ErrorBox error={error}/>}
   </section>;
 }

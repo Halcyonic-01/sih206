@@ -45,3 +45,36 @@ and explain that saving is explicit. Show Notifications/inbox and officer delive
 operations. Show the bank-request panel, explaining reviewed contacts and simulation
 mode; never call a simulated/mocked response an actual bank confirmation. The new
 browser journeys pass; a physically disconnected rehearsal remains outstanding.
+
+## PS scenarios 3, 6, 7 and 9 on the React shell (review build, 25 Oct)
+
+`./run.sh` seeds these through `seed_review_ps_data` (synthetic; draft rules labelled DRAFT_DEMO_NOT_APPROVED).
+
+- **3 · Validity tracking:** officer → Institutions → Fictional Technical Institute A → obligation `PS3-DEMO-A`:
+  required ₹1 crore ((35 + 15) lakh × 2, leased land), held, shortfall, coverage against the 10-year term. The
+  Dashboard's Obligation coverage table shows the same shortfall with a *Draft rules* tag.
+- **6 · Independent confirmation:** create and submit an RTGS record with a UTR as institution_a; officer →
+  Reconciliation → upload `utr,amount,value_date` with a matching line and a wrong-amount line → Commit. The match
+  shows **CONFIRMED** (evidence method SIMULATED_STATEMENT); the mismatch shows DISCREPANCY, a blocking observation
+  and an alert in institution_a's bell.
+- **7 · Authorised release:** institution_a → Records → `PS7-RELEASE-READY` → Request release → path *Term complete*
+  → answer the six Affidavit-6 declarations → documents checklist is complete → Submit. clearance_pgrc,
+  clearance_vigilance and clearance_grants → Clearance work → reason + file number (e.g. `PGRC/2026/17`) → cleared.
+  officer → Release cases → case → *Record officer checklist and penalty review complete* (or propose and confirm a
+  penalty first). authority → case → Record authority authorization → Generate unsigned demo letter → Download
+  protected letter, open its QR link (`/verify/<token>`) → back on the case, Record evidence-backed completion with
+  `fixtures/release-evidence.pdf`. Release documents for any other accepted record are added with *Upload release
+  document* on the record page.
+- **9 · Reports and KPIs:** officer → Reports → each report → Download XLSX. Process KPIs → window 2025-09-01 to
+  2026-10-01 for the dated seeded history only (turnaround, one correction cycle, one renewal on time and one late),
+  or up to today to include the records seeded at install time.
+- **Proof deadline (S2):** the same obligation shows *payment proof and Affidavit-3 are not both recorded by the
+  deadline* (intimation 15 Sep, payment proof received 28 Sep, Affidavit-3 missing). Officer → *Record receipt review*
+  with both dates → the finding clears and day-7/12/15 reminders stop. Without any officer review, receipt timing stays
+  unknown; upload times are never treated as receipt dates.
+- **% confirmed (S4 KPI):** `PS6-RTGS-CONFIRMED` is confirmed by a SIMULATED statement line, so the KPI shows a
+  real percentage. Simulated bank-link responses never count.
+- **Bank confirmation email:** with `EMAIL_HOST=localhost`, `EMAIL_PORT=1025` (Mailpit, which `run.sh` starts) a
+  simulated request is caught at http://127.0.0.1:8025; the scheduler delivers requests every 5 minutes
+  (`manage.py deliver_bank_requests` delivers now). Live mode (`BANK_CONFIRMATION_SIMULATED=false`) also needs
+  `--prod`, `NOTIFICATION_EMAIL_ENABLED=true`, an https `BANK_PUBLIC_BASE_URL` and `BANK_CONTACTS_JSON`.

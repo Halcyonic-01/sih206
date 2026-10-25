@@ -1,4 +1,4 @@
-"""Read-only P5 adapters; simulated matches never establish bank confirmation."""
+"""Read-only P5 adapters. Statement matches confirm fields; no source here establishes bank authenticity."""
 from django.core.exceptions import PermissionDenied, ValidationError
 from portal.permissions import role, scoped_instruments
 
@@ -8,7 +8,7 @@ MAX_RECORDS = 5000
 def records_for(actor):
     if role(actor) not in {'institution', 'officer', 'authority'}:
         raise PermissionDenied('Institution, officer or authority access is required.')
-    records = list(scoped_instruments(actor).select_related('institution').prefetch_related(
+    records = list(scoped_instruments(actor).select_related('institution', 'obligation').prefetch_related(
         'documents', 'observations', 'audit_events', 'verification_evidence').order_by('pk')[:MAX_RECORDS + 1])
     if len(records) > MAX_RECORDS:
         raise ValidationError('This demo report supports at most 5000 visible records. No truncated export was produced.')
@@ -16,7 +16,10 @@ def records_for(actor):
 
 
 def independent(evidence):
-    return evidence.method == 'BANK_CONFIRMATION' and evidence.result == 'CONFIRMED'
+    # The evidence kinds that set verification level CONFIRMED (plan F3): a bank confirmation, or a statement
+    # reconciliation match. Simulated bank-link responses (SIMULATED_BANK) never confirm.
+    return ((evidence.method, evidence.result) in {('BANK_CONFIRMATION', 'CONFIRMED'),
+                                                   ('SIMULATED_STATEMENT', 'SIMULATED_MATCH')})
 
 
 def verified_current(item):

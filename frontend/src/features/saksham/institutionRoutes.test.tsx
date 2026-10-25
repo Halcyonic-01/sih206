@@ -70,7 +70,9 @@ describe('institution feature registered in shared auth and routing', () => {
     expect(screen.getByText('Holding timeline unavailable.')).toBeInTheDocument();
     await browser.click(screen.getByRole('link', { name: 'Requirement calculator' }));
     expect(await screen.findByRole('heading', { name: 'Requirement calculator' })).toBeInTheDocument();
-    await browser.selectOptions(await screen.findByLabelText('Rule version'), '1');
+    // The rule list loads after the page; wait for its option before choosing it (raced under CI load).
+    await screen.findByRole('option', { name: / v1$/ });
+    await browser.selectOptions(screen.getByLabelText('Rule version'), '1');
     await browser.selectOptions(screen.getByLabelText('Building tenure'), 'LEASED');
     await browser.click(screen.getByRole('button', { name: 'Calculate preview' }));
     expect(await screen.findByText('INR 30,00,000.00')).toBeInTheDocument();

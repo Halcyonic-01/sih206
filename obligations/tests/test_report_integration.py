@@ -243,9 +243,11 @@ class ReportIntegrationTests(PortalTestCase):
         self.assertEqual(result['submission_to_acceptance']['sample_count'],2)
         self.assertEqual(result['submission_to_acceptance']['median_seconds'],'10800.000000')
         self.assertEqual(result['correction_cycles']['total'],2)
-        self.assertIsNone(result['confirmed_share']['percentage_bps'])
+        # The simulated bank-link response does not confirm, but that record's history is complete, so it is
+        # known to be unconfirmed rather than unknown: 1 of 2 confirmed.
+        self.assertEqual(result['confirmed_share']['percentage_bps'],5000)
         self.assertEqual(result['confirmed_share']['numerator'],1)
-        self.assertEqual(result['confirmed_share']['unknown_count'],1)
+        self.assertEqual(result['confirmed_share']['unknown_count'],0)
         self.assertEqual(result['data_quality']['incomplete_process_histories'],1)
         self.assertEqual(reports.kpi_report(self.b,window_start=base,window_end=now,as_of=timezone.now())['data_quality']['process_snapshots'],0)
 

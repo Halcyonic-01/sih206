@@ -226,4 +226,22 @@ BANK_CONTACTS = json.loads(os.environ.get('BANK_CONTACTS_JSON', '{}'))
 BANK_CONFIRMATION_SIMULATED = env_bool('BANK_CONFIRMATION_SIMULATED', True)
 BANK_PUBLIC_BASE_URL = os.environ.get('BANK_PUBLIC_BASE_URL', PORTAL_BASE_URL)
 AI_ENABLED = env_bool('AI_ENABLED', False)
-AI_MODEL = os.environ.get('AI_MODEL', 'claude-opus-5-5')
+# Google Gemini (free tier available). The key is read from GEMINI_API_KEY by the AI worker process only.
+AI_MODEL = os.environ.get('AI_MODEL', '') or 'gemini-3.5-flash-lite'
+if sys.argv[1:2] == ['test']:
+    # A test that forgets to mock the provider fails fast on a closed local port; it never reaches Google with the
+    # developer's key. Tests that need a provider start their own fake server and override this.
+    os.environ['GEMINI_TEST_ENDPOINT'] = 'http://127.0.0.1:9'
+# Tried once when AI_MODEL is busy, rate-limited or slow. Empty = no fallback.
+AI_FALLBACK_MODEL = os.environ.get('AI_FALLBACK_MODEL', 'gemini-3.6-flash').strip()
+
+# Release case (S5) and proof-deadline (S2) ports: they fail closed when unset, so the platform supplies them.
+# Proof receipt dates come only from an officer's ProofReceiptReview, never from upload times.
+from config import integrations as _integrations  # noqa: E402
+SAKSHAM_RELEASE_FACTS = _integrations.release_facts
+SAKSHAM_CLEARANCE_EVIDENCE = _integrations.clearance_evidence
+SAKSHAM_COMPLETION_VALIDATOR = _integrations.completion_validator
+SAKSHAM_PROOF_RECEIPTS = _integrations.proof_receipts
+SAKSHAM_NOTIFY = _integrations.notify
+# The QR code on an issued letter points here: PORTAL_BASE_URL + /verify/<token>.
+SAKSHAM_PUBLIC_BASE_URL = PORTAL_BASE_URL

@@ -24,7 +24,7 @@ export function AiExtraction({api, documentId, canUse, onUse}: {
     <Alert type="info" message="Local OCR for scanned PDFs" description="Reads up to five English pages on this computer. Review suggestions before saving. No document is sent to an external service."/>
     <Button loading={busy} onClick={() => void extract(true)}>Read with local OCR</Button>
     <Alert type="info" message="Optional AI assistance · off by default" description="Manual review remains available. Suggestions cannot change verification, approval or release decisions."/>
-    <Checkbox checked={consent} onChange={e => setConsent(e.target.checked)}>I confirm this document is synthetic and authorize sending it to Anthropic for extraction if AI is enabled.</Checkbox>
+    <Checkbox checked={consent} onChange={e => setConsent(e.target.checked)}>I confirm this document is synthetic and authorize sending it to Google Gemini for extraction if AI is enabled. Free-tier requests may be used by Google to improve its products.</Checkbox>
     <Button loading={busy} onClick={() => void extract(false)}>Extract with AI</Button>
     {error && <Alert type="error" message={error}/>}
     {result && <Alert type={result.status === 'success' ? 'warning' : 'info'} message={result.label} description={result.detail || 'Review each suggested value against its source page.'}/>}

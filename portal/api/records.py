@@ -10,6 +10,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from access.logging import log_access
+from access.models import AccessLog
 from portal import record_operations, record_reporting, services
 from portal.deadlines import business_today, classify_maturity
 from portal.exports import register_csv
@@ -57,7 +59,15 @@ def actions(user, item):
                                 and item.status in ('SUBMITTED', 'ACCEPTED') and not item.released_at and not item.superseded_at,
             'can_review': reviewable, 'can_observe': reviewable, 'can_correct': reviewable,
             'can_renew': own and item.is_current and not item.has_active_release
-                         and not Instrument.objects.filter(predecessor=item).exists()}
+                         and not Instrument.objects.filter(predecessor=item).exists(),
+            'can_upload_release_documents': own and record_operations.release_documents_allowed(item),
+            'can_request_release': own and record_operations.release_documents_allowed(item)
+                                   and item.obligation_id is not None}
+
+
+def release_case_id(user, item):
+    from casework.services import scoped_cases
+    return scoped_cases(user).filter(release__instrument=item).order_by('-pk').values_list('pk', flat=True).first()
 
 
 def brief(item):
@@ -74,7 +84,7 @@ def detail(user, item):
     result.update({key: getattr(item, key) for key in [
         'obligation_id', 'ifsc', 'branch', 'holder_names', 'utr', 'lien_marked']})
     visible = scoped_instruments(user)
-    result.update(actions=actions(user, item),
+    result.update(actions=actions(user, item), release_case_id=release_case_id(user, item),
         documents=[{'id': d.pk, 'name': d.original_name, 'kind': d.kind,
             'page_count': d.page_count, 'sha256': d.sha256, 'uploaded_at': d.created_at,
             'download_url': f'/api/documents/{d.pk}/download/'} for d in item.documents.all()],
@@ -194,6 +204,7 @@ class Download(RecordEndpoint):
             file = document.file.open('rb')
         except FileNotFoundError:
             raise Http404 from None
+        log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document, detail=f'instrument={document.instrument_id}')
         response = FileResponse(file, content_type='application/pdf', as_attachment=True,
                                 filename=document.original_name)
         response['Cache-Control'] = 'no-store'
@@ -204,6 +215,8 @@ class Download(RecordEndpoint):
 class Export(RecordEndpoint):
     def get(self, request):
         records, as_of = record_reporting.query_records(request.user, request.query_params)
+        log_access(request, AccessLog.EXPORT, object_type='instrument_register',
+                   detail=f'rows={records.count()} query={request.query_params.urlencode()[:200]}')
         return register_csv(records, as_of)
 
 

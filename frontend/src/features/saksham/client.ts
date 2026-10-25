@@ -42,7 +42,10 @@ export interface Obligation { id: number; required_paise: Paise | null; term_sta
   term_end: string | null; basis: string; status: string; version: number }
 export interface Assessment { outcome: string; reason_codes?: string[]; findings?: {
   code: string; field: string; source_clause: string; as_of: string }[] }
-export interface ObligationDetail extends Obligation { assessment: { status: string; reason?: string; as_of: string;
+export interface ObligationDetail extends Obligation { intimation_date?: string | null;
+  actions?: { can_edit?: boolean; can_record_proof_receipts?: boolean };
+  proof_review?: null | { payment_proof_on: string | null; affidavit_on: string | null; reviewed_by: string; reviewed_at: string; reason: string };
+  assessment: { status: string; reason?: string; as_of: string;
   proof_assessment?: string; coverage: null | { required_paise: Paise | null; held_paise: Paise | null;
   shortfall_paise: Paise | null; coverage_end: string | null; term_gap_days: number | null };
   holdings: null | {id:number;amount_paise:Paise;issue_date:string;maturity_date:string;status:string}[];

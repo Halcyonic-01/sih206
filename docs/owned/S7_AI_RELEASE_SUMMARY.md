@@ -8,4 +8,4 @@ The response always describes an advisory result and, when successful, has a sho
 
 Successful output is reused by the deterministic SHA-256 of the structured case payload, which includes the case version. Each provider attempt, disabled request and failure has an `AiRun` audit row using operation `RELEASE_SUMMARY`. With `AI_ENABLED=false`, missing configuration, timeout or invalid model JSON, the page remains usable and tells the reviewer to continue manual review.
 
-For a real provider run set `AI_ENABLED=true` and `ANTHROPIC_API_KEY` only for approved synthetic data. The API model remains `claude-opus-5-5`; it is never required for the release journey.
+For a real provider run set `AI_ENABLED=true` and `GEMINI_API_KEY` (Google AI Studio) only for approved synthetic data, then run `python manage.py check_ai`. The model is `AI_MODEL` (default `gemini-3.5-flash-lite`); it is never required for the release journey.

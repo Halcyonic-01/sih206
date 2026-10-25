@@ -10,6 +10,7 @@ urlpatterns = [
     path('programme-approvals/<int:pk>', views.ChildDetail.as_view(), name='s2-approval'),
     path('institutions/<int:pk>/obligations', views.Obligations.as_view(), name='s2-obligations'),
     path('obligations/<int:pk>', views.ObligationDetail.as_view(), name='s2-obligation'),
+    path('obligations/<int:pk>/proof-receipts', views.ProofReceipts.as_view(), name='s2-proof-receipts'),
     path('calculator', views.Calculator.as_view(), name='s2-calculator'),
     path('rules', views.Rules.as_view(), name='s2-rules'),
     path('imports/institutions/preview', report_views.CsvPreview.as_view(), name='s4-import-preview'),

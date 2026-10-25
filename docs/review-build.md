@@ -25,6 +25,9 @@ but never creates the tag or pushes anything.
 | `seed_review` | example-domain e-mail addresses, institution profiles, real download/export activity, and `run_due_rules --as-of 2026-10-23` (the PS scenario 4 reminders, pending e-mail) |
 | `seed_review_<area>` | **owner hooks**: any management command with this prefix is run by `seed_review` in alphabetical order |
 
+`seed_review_ps_data` (K8) adds the PS 3/7/9 data: obligations for DEMO-A and DEMO-B with the scenario records
+linked to them, the release-ready record `PS7-RELEASE-READY` with its APH 6.46 documents, and dated KPI history.
+
 Yash and Saksham ship their scenario data as `seed_review_records` / `seed_review_verification` /
 `seed_review_obligations` / `seed_review_release` commands (synthetic, idempotent, through the services). `seed_review` reports
 a failing hook at the end without hiding the others.

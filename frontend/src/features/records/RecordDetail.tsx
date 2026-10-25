@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {Link} from 'react-router-dom';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {Alert, Button, Descriptions, Empty, Form, Input, Modal, Select, Space, Spin, Table, Tabs, Tag, Timeline, Upload} from 'antd';
 import {PdfViewer} from './PdfViewer';
@@ -31,7 +32,8 @@ export function RecordDetail({api, id, onBack, onOpen}: {api: Api; id: number; o
       let body: unknown = {...values, version: item.version};
       if (action === 'accept' || action === 'changes') {suffix = 'review'; body = {...values, version: item.version, decision: action};}
       if (action === 'observations') body = {...values, version: item.version, document: selected, page_number: page};
-      if (action === 'documents') {
+      if (action === 'release documents') suffix = 'documents';
+      if (action === 'documents' || action === 'release documents') {
         if (!file) throw new Error('Select a PDF first.');
         const data = new FormData(); data.set('version', String(item.version)); data.set('kind', String(values.kind)); data.set('document', file); body = data;
       }
@@ -50,7 +52,11 @@ export function RecordDetail({api, id, onBack, onOpen}: {api: Api; id: number; o
         observe: 'Add observation', correct: 'Officer correction', renew: 'Create renewal', upload: 'Upload document'}).map(([key, label]) =>
         item.actions?.[`can_${key}`] && <Button key={key} onClick={() => {setError(''); setAction(key === 'review' ? 'accept' : key === 'observe' ? 'observations' : key === 'upload' ? 'documents' : key);}}>{label}</Button>)}
       {item.actions?.can_review && <Button onClick={() => setAction('changes')}>Request corrections</Button>}
+      {item.actions?.can_upload_release_documents && <Button onClick={() => {setError(''); setAction('release documents');}}>Upload release document</Button>}
+      {item.actions?.can_request_release && <Link to={`/releases/request?instrument=${item.id}&obligation=${item.obligation_id}&version=${item.version}`}><Button type="primary">Request release</Button></Link>}
+      {item.release_case_id && <Link to={`/releases/${item.release_case_id}`}><Button>Open release case</Button></Link>}
     </Space>
+    {item.actions?.can_upload_release_documents && !item.obligation_id && <Alert type="warning" message="This deposit is not linked to an obligation, so release cannot be requested. Enter the Obligation ID when creating or correcting the record."/>}
     <Tabs activeKey={tab} onChange={setTab} items={[
       {key: 'details', label: 'Details', children: <Descriptions bordered column={{xs: 1, sm: 2}} items={[
         ['Institution', item.institution.name], ['Bank', item.bank], ['Amount INR', item.amount],
@@ -88,6 +94,9 @@ export function RecordDetail({api, id, onBack, onOpen}: {api: Api; id: number; o
           <Form.Item name="comment" label="Observation" rules={[{required: true}]}><Input.TextArea maxLength={2000}/></Form.Item></>}
         {action.endsWith('/resolve') && <Form.Item name="resolution" label="How was it resolved?" rules={[{required: true}]}><Input.TextArea maxLength={2000}/></Form.Item>}
         {action === 'documents' && <><Form.Item name="kind" label="Document category" rules={[{required: true}]}><Select options={['FDR', 'PAYMENT_PROOF', 'RPGF_PROOF', 'AFFIDAVIT_3', 'AFFIDAVIT_6', 'APPROVAL_LETTER', 'BANK_CERTIFICATE', 'REQUEST_LETTER', 'STUDENT_CLEARANCE', 'EXTERNAL_NOC'].map(value => ({value, label: value.replaceAll('_', ' ')}))}/></Form.Item>
+          <Upload maxCount={1} beforeUpload={f => {setFile(f); return false;}} onRemove={() => setFile(undefined)} accept=".pdf"><Button>Select PDF</Button></Upload></>}
+        {action === 'release documents' && <><p>APH 6.46 application documents: request letter, Affidavit-6, latest LoA/EoA and, where the path needs them, a student clearance certificate or external NOC. They are added to the accepted record; its deposit details do not change.</p>
+          <Form.Item name="kind" label="Document category" rules={[{required: true}]}><Select options={['REQUEST_LETTER', 'AFFIDAVIT_6', 'APPROVAL_LETTER', 'STUDENT_CLEARANCE', 'EXTERNAL_NOC'].map(value => ({value, label: value.replaceAll('_', ' ')}))}/></Form.Item>
           <Upload maxCount={1} beforeUpload={f => {setFile(f); return false;}} onRemove={() => setFile(undefined)} accept=".pdf"><Button>Select PDF</Button></Upload></>}
         {action === 'submit' && <p>Submit this record and its supporting document for officer review?</p>}
         <Button type="primary" htmlType="submit" loading={busy} style={{marginTop: 16}}>Record action</Button>

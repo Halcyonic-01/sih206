@@ -10,7 +10,7 @@ continue to use SQLite. Live connection requires your own project's credentials.
 
 The current branch adds deposit/document fields, PDF structure validation, REST
 records APIs, a React records/dashboard/verification workspace, synthetic statement
-reconciliation and optional AI extraction (off by default). Start with
+reconciliation and optional AI extraction with Google Gemini (off by default; set `GEMINI_API_KEY` and `AI_ENABLED=true` in `.env`, then run `python manage.py check_ai`). Start with
 [the workspace setup, task status and integration boundaries](docs/yash-workspace.md).
 After building `frontend/`, open `http://127.0.0.1:8010/workspace/` and use the existing
 Django login. Local OCR, notification workers/inbox, reviewed-requirement coverage and

@@ -11,6 +11,7 @@ from . import api
 
 urlpatterns = [
     path('releases', api.Cases.as_view(), name='release-cases'),
+    path('releases/requirements', api.Requirements.as_view(), name='release-requirements'),
     path('releases/<int:pk>', api.CaseDetail.as_view(), name='release-case-detail'),
     path('releases/<int:pk>/letter', api.LetterDownload.as_view(), name='release-letter'),
     path('releases/<int:pk>/ai-summary', api.AiSummary.as_view(), name='release-ai-summary'),

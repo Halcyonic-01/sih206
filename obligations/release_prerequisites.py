@@ -257,7 +257,10 @@ def evaluate_prerequisites(snapshot, *, operation, rules, as_of, simulation_labe
         if doc['parse_status'] != 'VALID_SYNTHETIC_METADATA':
             issue('DOCUMENT_UNUSABLE', field, values={'parse_status': doc['parse_status']})
             return False
-        if doc['review_status'] != 'REVIEWED_SYNTHETIC_METADATA':
+        # Application documents are reviewed by the officer after the request (APH 6.46 flow), so a request may
+        # carry documents that are parsed but still awaiting that review. Every later operation needs the review.
+        awaiting_review = operation == 'REQUEST' and doc['review_status'] == 'SUBMITTED_FOR_REVIEW'
+        if doc['review_status'] != 'REVIEWED_SYNTHETIC_METADATA' and not awaiting_review:
             issue('DOCUMENT_REVIEW_REQUIRED', field)
             return False
         return True

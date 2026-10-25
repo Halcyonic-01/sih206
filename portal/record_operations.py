@@ -9,6 +9,14 @@ from .models import Document, Instrument
 from .permissions import require_officer, scoped_instruments
 from .uploads import validate_pdf_upload
 
+# APH 6.46 application documents an institution adds to an accepted holding before it requests release.
+RELEASE_APPLICATION_KINDS = (Document.Kind.REQUEST_LETTER, Document.Kind.AFFIDAVIT_6, Document.Kind.APPROVAL_LETTER,
+                             Document.Kind.STUDENT_CLEARANCE, Document.Kind.EXTERNAL_NOC)
+
+
+def release_documents_allowed(item):
+    return item.is_current and not item.has_active_release
+
 
 @transaction.atomic
 def correct_record(actor, pk, version, changes, reason):
@@ -47,10 +55,14 @@ def upload_document(actor, pk, version, upload, kind):
     try:
         with transaction.atomic():
             item = Instrument.objects.get(pk=pk, institution=institution)
-            if item.status not in (Instrument.Status.DRAFT, Instrument.Status.CHANGES_REQUESTED):
-                raise services.WorkflowError('Documents can only be added to editable records.')
+            editable = item.status in (Instrument.Status.DRAFT, Instrument.Status.CHANGES_REQUESTED)
+            if not editable and not (kind in RELEASE_APPLICATION_KINDS and release_documents_allowed(item)):
+                raise services.WorkflowError('Documents can only be added to editable records, or release '
+                                             'application documents to a current accepted record.')
             before = services.snapshot(item)
-            services._compare_and_update(item, version, verification_level=Instrument.VerificationLevel.DECLARED)
+            # A release application document adds evidence; it does not change the deposit's declared facts.
+            changes = {'verification_level': Instrument.VerificationLevel.DECLARED} if editable else {}
+            services._compare_and_update(item, version, **changes)
             digest = hashlib.sha256()
             for chunk in upload.chunks():
                 digest.update(chunk)

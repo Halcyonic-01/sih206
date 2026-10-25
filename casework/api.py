@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from obligations.api.views import OwnedView, body, page, pagination
 from obligations.models import ClearanceTask, IssuedLetter, MasterAudit
 from obligations.services import DependencyUnavailable
+from portal.models import Instrument
 from portal.permissions import role
 from access.logging import log_access
 from access.models import AccessLog
@@ -80,6 +81,29 @@ class Cases(OwnedView):
                 raise ValidationError({key: 'Required.'})
         case = services.request_case(request.user, **data)
         return Response(case_json(request.user, case), status=201)
+
+
+class Requirements(OwnedView):
+    """What the institution's request wizard needs: Affidavit-6 questions, document checklist, eligibility."""
+    def get(self, request):
+        from obligations.models import DepositObligation
+        from portal.permissions import institution_for
+        from .adapters import requirements
+        owner = institution_for(request.user)
+        params = request.query_params
+        if set(params) - {'instrument', 'obligation', 'path'}:
+            raise ValidationError('Use instrument, obligation and path only.')
+        try:
+            instrument_id, obligation_id = int(params['instrument']), int(params['obligation'])
+        except (KeyError, TypeError, ValueError):
+            raise ValidationError({'instrument': 'Supply positive instrument and obligation identities.'}) from None
+        path = params.get('path', 'TERM_COMPLETE')
+        if path not in services.PATHS:
+            raise ValidationError({'path': 'Unsupported release path.'})
+        instrument = get_object_or_404(Instrument, pk=instrument_id, institution=owner)
+        obligation = get_object_or_404(DepositObligation.objects.select_related('rule_version'),
+                                       pk=obligation_id, institution=owner, rule_version__isnull=False)
+        return Response(requirements(request.user, instrument, obligation, path))
 
 
 class CaseDetail(OwnedView):

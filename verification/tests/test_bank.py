@@ -122,3 +122,27 @@ class BankConfirmationTests(PortalTestCase):
         services.review(self.officer, item.pk, item.version, 'accept', 'Synthetic mocked live-path review')
         item.refresh_from_db()
         self.assertEqual(item.verification_level, 'CONFIRMED')
+
+
+@override_settings(ROOT_URLCONF='config.urls', BANK_CONTACTS=CONTACTS, BANK_CONFIRMATION_SIMULATED=True)
+class SimulatedDeliveryTargets(PortalTestCase):
+    """A running demo prints or catches simulated requests locally; it never sends them to an outside server."""
+
+    def deliver(self, **email):
+        item = self.submitted()
+        item.ifsc = 'ABCD0123456'
+        item.save()
+        row = request_confirmation(self.officer, item.pk, item.version)
+        with override_settings(**email):
+            delivered = deliver_requests()
+        row.refresh_from_db()
+        return delivered, row
+
+    def test_console_and_local_catcher_deliver(self):
+        delivered, row = self.deliver(EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend')
+        self.assertEqual((delivered, row.status), (1, 'SENT'))
+
+    def test_outside_smtp_server_is_refused(self):
+        delivered, row = self.deliver(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend',
+                                      EMAIL_HOST='smtp.example.org')
+        self.assertEqual((delivered, row.status, row.last_error), (0, 'PENDING', 'DELIVERY_FAILED'))

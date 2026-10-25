@@ -5,7 +5,6 @@ case but cannot alter a release, clearance, penalty, decision or letter.
 """
 import hashlib
 import json
-import os
 import re
 import subprocess
 from datetime import timedelta
@@ -17,7 +16,7 @@ from django.utils import timezone
 
 from ai.models import AiRun
 from obligations.models import MasterAudit
-from ai.services import call_model
+from ai.services import ProviderUnavailable, ai_configured, ai_model, call_model, gemini_request
 from portal.permissions import role
 from portal.services import WorkflowError
 from . import services
@@ -121,7 +120,7 @@ def summarize(actor, case_id, version):
     cached = AiRun.objects.filter(operation=OPERATION, status='SUCCESS', input_sha256=input_sha256).order_by('-pk').first()
     if cached:
         return _result(cached, 'success', cached=True)
-    model = getattr(settings, 'AI_MODEL', 'claude-opus-5-5')
+    model = ai_model()
     run = AiRun.objects.create(actor=actor, document=None, operation=OPERATION, model=model,
                                status='STARTED', input_sha256=input_sha256)
     started = monotonic()
@@ -129,21 +128,22 @@ def summarize(actor, case_id, version):
         if not getattr(settings, 'AI_ENABLED', False):
             run.status, run.error_code = 'DISABLED', 'AI_DISABLED'
             return _result(run, 'disabled', detail='AI is off. Continue manual release review.')
-        if not os.environ.get('ANTHROPIC_API_KEY'):
+        if not ai_configured():
             run.status, run.error_code = 'UNAVAILABLE', 'NOT_CONFIGURED'
             return _result(run, 'unavailable', detail='AI is not configured. Continue manual release review.')
         if AiRun.objects.filter(actor=actor, operation=OPERATION,
                 created_at__gte=timezone.now()-timedelta(hours=1)).count() >= 10:
             raise ValueError('RATE_LIMIT')
-        output = validate_output(call_model({'model': model, 'max_tokens': 1024, 'system': SYSTEM,
-            'messages': [{'role': 'user', 'content': [{'type': 'text', 'text': json.dumps(payload, sort_keys=True)}]}],
-            'output_config': {'format': {'type': 'json_schema', 'schema': SCHEMA}}}))
+        request = gemini_request(model, SYSTEM, [{'text': json.dumps(payload, sort_keys=True)}], SCHEMA)
+        output = validate_output(call_model(request))
+        run.model = request.get('answered_by', model)
         run.status, run.output = 'SUCCESS', output
         return _result(run, 'success')
     except Exception as exc:
         run.status = 'FAILED'
-        run.error_code = 'TIMEOUT' if isinstance(exc, subprocess.TimeoutExpired) else 'SUMMARY_FAILED'
+        run.error_code = ('TIMEOUT' if isinstance(exc, subprocess.TimeoutExpired) else
+                          exc.code if isinstance(exc, ProviderUnavailable) else 'SUMMARY_FAILED')
         return _result(run, 'unavailable', detail='AI summary unavailable. Continue manual release review.')
     finally:
         run.duration_ms = int((monotonic() - started) * 1000)
-        run.save(update_fields=['status', 'error_code', 'duration_ms', 'output'])
+        run.save(update_fields=['status', 'error_code', 'duration_ms', 'output', 'model'])
