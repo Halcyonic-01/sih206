@@ -4,6 +4,7 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ApiError } from '@/api/client'
 import { AuthProvider } from '@/auth/AuthProvider'
+import { StepUpProvider } from '@/auth/StepUpProvider'
 import { RequireRole } from '@/auth/RequireRole'
 import { AppShell } from '@/layout/AppShell'
 import { appRoutes, publicRoutes } from '@/routes/registry'
@@ -50,7 +51,7 @@ export default function App() {
       <AntApp>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <RouterProvider router={buildRouter()} />
+            <StepUpProvider><RouterProvider router={buildRouter()} /></StepUpProvider>
           </AuthProvider>
         </QueryClientProvider>
       </AntApp>

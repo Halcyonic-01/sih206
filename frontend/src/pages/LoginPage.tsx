@@ -20,12 +20,14 @@ export function allowedDestination(destination: string, role: string | null | un
 }
 
 export default function LoginPage() {
-  const { user, status, login } = useAuth()
+  const { user, status, login, verifyMfa } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [form] = Form.useForm<LoginValues>()
+  const [codeForm] = Form.useForm<{ code: string }>()
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [needsCode, setNeedsCode] = useState(false)
   const destination = (location.state as { from?: string } | null)?.from ?? '/'
 
   if (status === 'authenticated' && user) return <Navigate to={allowedDestination(destination, user.role)} replace />
@@ -34,12 +36,29 @@ export default function LoginPage() {
     setBusy(true)
     setError(null)
     try {
-      const signedIn = await login(values.username.trim(), values.password)
-      navigate(allowedDestination(destination, signedIn.role), { replace: true })
+      const result = await login(values.username.trim(), values.password)
+      if ('mfa_required' in result) { setNeedsCode(true); return }
+      navigate(allowedDestination(destination, result.role), { replace: true })
     } catch (caught) {
       if (applyFieldErrors(form, caught)) return
       setError(caught instanceof ApiError ? caught.message : 'Cannot reach the server. Try again.')
       form.setFieldValue('password', '')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function submitCode(values: { code: string }) {
+    setBusy(true)
+    setError(null)
+    try {
+      const signedIn = await verifyMfa(values.code)
+      navigate(allowedDestination(destination, signedIn.role), { replace: true })
+    } catch (caught) {
+      const expired = caught instanceof ApiError && caught.code === 'mfa_pending_expired'
+      if (expired) setNeedsCode(false)
+      setError(caught instanceof ApiError ? caught.message : 'Cannot reach the server. Try again.')
+      codeForm.setFieldValue('code', '')
     } finally {
       setBusy(false)
     }
@@ -62,9 +81,19 @@ export default function LoginPage() {
         <section className="auth-main" aria-labelledby="sign-in">
           <div className="auth-card">
             <span className="eyebrow">ACCESS YOUR WORKSPACE</span>
-            <h1 id="sign-in" tabIndex={-1}>Sign in</h1>
-            <p className="muted">Use the account issued to your institution or office.</p>
+            <h1 id="sign-in" tabIndex={-1}>{needsCode ? 'Enter your code' : 'Sign in'}</h1>
+            <p className="muted">{needsCode ? 'Open your authenticator app and enter the 6-digit code for this portal.'
+              : 'Use the account issued to your institution or office.'}</p>
             {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} role="alert" />}
+            {needsCode ? (
+              <Form form={codeForm} layout="vertical" size="large" onFinish={submitCode} requiredMark={false} disabled={busy}>
+                <Form.Item name="code" label="Authenticator code" rules={[{ required: true, message: 'Enter the 6-digit code.' }]}>
+                  <Input inputMode="numeric" autoComplete="one-time-code" maxLength={8} autoFocus />
+                </Form.Item>
+                <Button type="primary" htmlType="submit" block loading={busy}>Verify and sign in</Button>
+                <Button type="link" block onClick={() => { setNeedsCode(false); setError(null) }}>Use a different account</Button>
+              </Form>
+            ) : (
             <Form form={form} layout="vertical" size="large" onFinish={submit} requiredMark={false} disabled={busy}>
               <Form.Item name="username" label="Username" rules={[{ required: true, message: 'Enter your username.' }]}>
                 <Input prefix={<UserOutlined aria-hidden />} autoComplete="username" autoFocus />
@@ -74,6 +103,7 @@ export default function LoginPage() {
               </Form.Item>
               <Button type="primary" htmlType="submit" block loading={busy}>Sign in</Button>
             </Form>
+            )}
             <p className="auth-help"><LockOutlined aria-hidden /> Access is limited to your assigned role and institution.</p>
             <div className="auth-security-note">After five failed attempts the account is locked for a few minutes.
               Contact your project administrator if you need account access.</div>

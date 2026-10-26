@@ -14,6 +14,7 @@ from obligations.models import ClearanceTask, IssuedLetter, MasterAudit
 from obligations.services import DependencyUnavailable
 from portal.models import Instrument
 from portal.permissions import role
+from access import mfa
 from access.logging import log_access
 from access.models import AccessLog
 from . import services
@@ -136,6 +137,8 @@ class AiSummary(OwnedView):
     request={'application/json': docs.ACTION, 'multipart/form-data': docs.ACTION}, responses=responses(docs.CASE)))
 class CaseAction(OwnedView):
     def post(self, request, pk, action):
+        if action in {'approve', 'issue', 'complete'}:
+            mfa.require_recent_mfa(request)  # authorisation, letter issue and completion need a code from the last 10 minutes
         if action == 'complete':
             if set(request.data) - {'version','instrument_version','notes','refund_reference','document'}:
                 raise ValidationError('Unexpected completion field.')

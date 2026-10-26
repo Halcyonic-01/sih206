@@ -9,7 +9,21 @@ export interface CurrentUser {
   institution: { id: number; code: string; name: string } | null
   /** PGRC, VIGILANCE or GRANTS for a clearance-unit account, otherwise null. */
   unit: 'PGRC' | 'VIGILANCE' | 'GRANTS' | null
+  /** Two-factor sign-in state. Absent on responses that do not carry it. */
+  mfa?: MfaStatus
 }
+
+export interface MfaStatus {
+  /** A staff role that can use an authenticator app. */
+  in_scope: boolean
+  enrolled: boolean
+  /** Enrolment is compulsory for this account (MFA_REQUIRED). */
+  required: boolean
+  verified_recently: boolean
+}
+
+/** The password step succeeded but a code from the authenticator app is still needed. */
+export interface MfaChallenge { mfa_required: true }
 
 export const ROLE_LABELS: Record<Role, string> = {
   institution: 'Institution',

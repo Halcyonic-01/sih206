@@ -1,14 +1,16 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react'
 import { ApiError, get, onUnauthorized, post, type Role } from '@/api/client'
-import type { CurrentUser } from './types'
+import type { CurrentUser, MfaChallenge } from './types'
 
 type Status = 'loading' | 'authenticated' | 'anonymous' | 'error'
 
 interface AuthContextValue {
   user: CurrentUser | null
   status: Status
-  login: (username: string, password: string) => Promise<CurrentUser>
+  login: (username: string, password: string) => Promise<CurrentUser | MfaChallenge>
+  /** Second step of sign-in for an account with an authenticator app. */
+  verifyMfa: (code: string) => Promise<CurrentUser>
   logout: () => Promise<void>
   hasRole: (...roles: Role[]) => boolean
 }
@@ -39,7 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => onUnauthorized(() => dropPrivateData(client, null)), [client])
 
   const login = useCallback(async (username: string, password: string) => {
-    const user = await post<CurrentUser>('/auth/login/', { username, password })
+    const result = await post<CurrentUser | MfaChallenge>('/auth/login/', { username, password })
+    if ('mfa_required' in result) return result
+    dropPrivateData(client, result)
+    return result
+  }, [client])
+
+  const verifyMfa = useCallback(async (code: string) => {
+    const user = await post<CurrentUser>('/auth/mfa/verify/', { code })
     dropPrivateData(client, user)
     return user
   }, [client])
@@ -55,9 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const user = me.data ?? null
   const status: Status = me.isPending ? 'loading' : me.isError ? 'error' : user ? 'authenticated' : 'anonymous'
   const value = useMemo<AuthContextValue>(() => ({
-    user, status, login, logout,
+    user, status, login, verifyMfa, logout,
     hasRole: (...roles) => !!user?.role && roles.includes(user.role),
-  }), [user, status, login, logout])
+  }), [user, status, login, verifyMfa, logout])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

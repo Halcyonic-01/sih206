@@ -1,4 +1,6 @@
 """/api/auth/*: CSRF bootstrap, sign-in with lockout, sign-out and the current user."""
+import time
+
 from axes.handlers.proxy import AxesProxyHandler
 from django.contrib.auth import authenticate, login, logout
 from django.core.exceptions import PermissionDenied
@@ -15,6 +17,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from access import mfa
 from portal.models import UserProfile
 from portal.permissions import clearance_unit, role
 
@@ -35,6 +38,10 @@ class CurrentUserSerializer(serializers.Serializer):
     role = serializers.CharField(allow_null=True, help_text='institution, officer, authority, clearance, auditor or null when no role is assigned')
     institution = InstitutionSerializer(allow_null=True)
     unit = serializers.CharField(allow_null=True, help_text='PGRC, VIGILANCE or GRANTS for a clearance-unit account')
+    mfa = inline_serializer('MfaStatus', {
+        'in_scope': serializers.BooleanField(help_text='Staff role that can use an authenticator app'),
+        'enrolled': serializers.BooleanField(), 'required': serializers.BooleanField(help_text='Enrolment is compulsory for this account'),
+        'verified_recently': serializers.BooleanField(help_text='A code was entered within the step-up window')}, required=False)
 
 
 class LoginSerializer(serializers.Serializer):
@@ -42,7 +49,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=256, trim_whitespace=False, write_only=True)
 
 
-def current_user_payload(user):
+def current_user_payload(user, request=None):
     institution = None
     profile = UserProfile.objects.select_related('institution').filter(user=user).first()
     if profile:
@@ -53,9 +60,12 @@ def current_user_payload(user):
         unit = clearance_unit(user) if current_role == 'clearance' else None
     except PermissionDenied:
         unit = None
-    return {'id': user.pk, 'username': user.get_username(),
-            'display_name': user.get_full_name() or user.get_username(),
-            'role': current_role, 'institution': institution, 'unit': unit}
+    payload = {'id': user.pk, 'username': user.get_username(),
+               'display_name': user.get_full_name() or user.get_username(),
+               'role': current_role, 'institution': institution, 'unit': unit}
+    if request is not None:
+        payload['mfa'] = mfa.status(request, user)
+    return payload
 
 
 class CsrfView(APIView):
@@ -77,7 +87,7 @@ class LoginView(APIView):
 
     @extend_schema(
         request=LoginSerializer, responses={
-            200: CurrentUserSerializer,
+            200: OpenApiResponse(CurrentUserSerializer, description='Signed in; or {"mfa_required": true} when a code from the authenticator app is still needed (POST it to /auth/mfa/verify/)'),
             400: OpenApiResponse(description='Invalid credentials or missing fields'),
             429: OpenApiResponse(description='Locked out after repeated failures'),
         })
@@ -96,8 +106,13 @@ class LoginView(APIView):
         if not user.is_active:
             return envelope(status.HTTP_400_BAD_REQUEST, 'Enter a correct username and password.',
                             code='invalid_credentials')
+        if mfa.has_device(user):
+            # Password accepted; the session stays anonymous until /auth/mfa/verify/ receives a valid code.
+            request.session.cycle_key()
+            request.session[mfa.PENDING] = {'user_id': user.pk, 'backend': getattr(user, 'backend', None), 'at': time.time(), 'tries': 0}
+            return Response({'mfa_required': True})
         login(request._request, user)
-        return Response(current_user_payload(user))
+        return Response(current_user_payload(user, request))
 
 
 class LogoutView(APIView):
@@ -115,7 +130,7 @@ class LogoutView(APIView):
 class MeView(APIView):
     @extend_schema(responses={200: CurrentUserSerializer, 401: OpenApiResponse(description='Not signed in')})
     def get(self, request):
-        return Response(current_user_payload(request.user))
+        return Response(current_user_payload(request.user, request))
 
 
 class HealthView(APIView):

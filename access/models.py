@@ -18,6 +18,25 @@ class UnitAssignment(models.Model):
         return f'{self.user} -> {self.unit}'
 
 
+class MfaDevice(models.Model):
+    """A staff member's authenticator app (TOTP). Unconfirmed until the first valid code is entered.
+
+    The secret is stored as is, as other TOTP libraries do: protect the database and its backups. `last_step` is the
+    last accepted 30-second step (a code cannot be replayed); after five wrong codes in a row the device locks for 15 minutes.
+    """
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='mfa_device')
+    secret = models.CharField(max_length=64)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    last_step = models.BigIntegerField(default=0)
+    failures = models.PositiveSmallIntegerField(default=0)
+    locked_until = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'MFA for {self.user} ({"confirmed" if self.confirmed_at else "pending"})'
+
+
 class AppendOnlyError(Exception):
     pass
 
