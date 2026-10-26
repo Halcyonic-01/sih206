@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
@@ -16,6 +16,7 @@ from .forms import (InstrumentForm, ObservationForm, RenewalForm, ResolutionForm
                     ReleaseRequestForm, ReleaseDecisionForm, ReleaseCompletionForm)
 from .models import Document, Instrument, ReleaseRequest
 from .permissions import institution_for, require_authority, require_officer, role, scoped_instruments
+from .scanning import downloadable
 from .validation import CHECKS_VERSION, run_checks
 from .exports import register_csv
 from access.logging import log_access
@@ -314,6 +315,9 @@ def observation_resolve(request, pk, observation_pk):
 def document_download(request, pk):
     document = get_object_or_404(Document.objects.filter(
         instrument__in=scoped_instruments(request.user)), pk=pk)
+    if not downloadable(document):
+        return HttpResponse('This document is quarantined or has not been scanned, so it cannot be downloaded.',
+                            status=409, content_type='text/plain; charset=utf-8')
     log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document, detail=f'instrument={document.instrument_id}')
     try:
         response = FileResponse(document.file.open('rb'), as_attachment=True,

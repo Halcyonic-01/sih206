@@ -249,6 +249,8 @@ The local demo runs with no `.env` at all.
 | `AUDIT_CHAIN_KEY` | derived from the secret key | HMAC key for the audit chain. Set a separate long value in production. Changing it breaks verification of existing events. |
 | `MAX_UPLOAD_MB` | `10` | Largest PDF upload. |
 | `BUSINESS_TIMEZONE` | `Asia/Kolkata` | Timezone for dates and deadlines. |
+| `CLAMAV_HOST`, `CLAMAV_PORT` | empty, `3310` | A ClamAV `clamd` service. When set, every uploaded PDF is scanned and an infected one is refused. |
+| `SCAN_REQUIRED` | `false` | When `true` (needs `CLAMAV_HOST`), uploads are refused while the scanner is down, and documents that were never scanned cannot be downloaded or sent to OCR or AI. `manage.py scan_documents` scans older documents and quarantines infected ones. |
 | `REMINDER_DAYS` | `30,15,7` | Reminder thresholds used by the due-actions report. |
 
 ### Sign-in protection
@@ -504,7 +506,7 @@ append-only tables. Migrations are committed and `makemigrations --check` runs i
   token. No token is kept in `localStorage`. With `DJANGO_SECURE_COOKIES=true` cookies are Secure.
 * **Lockout and throttling.** Five failed sign-ins lock an account for 15 minutes. The sign-in endpoint is rate limited.
 * **Uploads.** Extension, type, size, header and trailer are checked, then the PDF is parsed. Encrypted files, files
-  with JavaScript and files with embedded content are rejected. Storage names are generated and the SHA-256 is kept.
+  with JavaScript and files with embedded content are rejected. Storage names are generated and the SHA-256 is kept. With ClamAV configured the file is also scanned for known malware (`Document.scan_status`: not scanned, clean, quarantined).
 * **Headers.** A Content-Security-Policy, `X-Content-Type-Options`, same-origin referrer and opener policies, and
   no-store caching on API responses. Same-origin framing is allowed only for the PDF viewer.
 * **Tamper evidence.** Audit events are chained with an HMAC key. `manage.py verify_audit_chain` and the Audit screen

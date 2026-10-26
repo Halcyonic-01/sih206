@@ -10,7 +10,7 @@ export type RecordItem = {
   ifsc?: string; branch?: string; holder_names?: string; utr?: string;
   lien_marked?: boolean | null; obligation_id?: number | null;
   actions?: Record<string, boolean>; release_case_id?: number | null;
-  documents?: {id: number; name: string; kind: string; page_count: number | null; sha256: string}[];
+  documents?: {id: number; name: string; kind: string; page_count: number | null; sha256: string; scan_status?: 'PENDING' | 'CLEAN' | 'REJECTED'}[];
   observations?: {id: number; document_id: number; page_number: number | null; severity: string;
     comment: string; resolution: string; resolved_at: string | null}[];
   findings?: {code: string; severity: string; explanation: string}[];

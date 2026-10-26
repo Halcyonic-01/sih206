@@ -170,6 +170,15 @@ class Document(models.Model):
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class ScanStatus(models.TextChoices):
+        PENDING = 'PENDING', 'Not scanned yet'
+        CLEAN = 'CLEAN', 'Scanned, no malware found'
+        REJECTED = 'REJECTED', 'Quarantined: malware found'
+
+    scan_status = models.CharField(max_length=10, choices=ScanStatus, default=ScanStatus.PENDING)
+    scan_detail = models.CharField(max_length=200, blank=True, default='')
+    scanned_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ['-created_at', '-pk']
         constraints = [models.CheckConstraint(
