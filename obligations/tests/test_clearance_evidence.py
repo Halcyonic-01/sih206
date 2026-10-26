@@ -131,4 +131,3 @@ class ClearanceEvidenceTests(PortalTestCase):
             'CLEARED', 'Re-attested original decision against synthetic PDF', 'PGRC/NEW', item.pk)
         task.refresh_from_db()
         self.assertEqual(task.evidence_id, item.pk)
-

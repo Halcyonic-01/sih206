@@ -1,283 +1,672 @@
 # Pramaan — Trust Backed by Evidence
 
-AICTE Security Deposit / FDR Portal (SIH 2026, problem statement 26265).
+**Security deposit and FDR portal for the AICTE Regulation Bureau** (Smart India Hackathon 2026, problem statement 26265).
 
-Supabase PostgreSQL support is available through a private root `.env` connection
-URI. See [Supabase setup](docs/supabase.md). Local tests and offline demo commands
-continue to use SQLite. Live connection requires your own project's credentials.
+Pramaan tracks the security deposits that technical institutions lodge with AICTE, from the first submission to the
+final release. Every deposit is recorded with its documents, checked, reviewed by an officer, monitored until maturity,
+renewed or released, and every step leaves a tamper-evident audit trail.
 
-## Yash's records workspace (Y1-Y8)
+> **Synthetic data only.** The portal runs on fictional institutions and fictional documents. Anything that stands in
+> for an outside system (bank statements, bank confirmations, the AICTE institution list) is labelled **SIMULATED**
+> in the data and on screen. *Accepted* always means **accepted for tracking**. It does not mean verified by the
+> bank, and it is not a statement of regulatory compliance.
 
-The current branch adds deposit/document fields, PDF structure validation, REST
-records APIs, a React records/dashboard/verification workspace, synthetic statement
-reconciliation and optional AI extraction with Google Gemini (off by default; set `GEMINI_API_KEY` and `AI_ENABLED=true` in `.env`, then run `python manage.py check_ai`). Start with
-[the workspace setup, task status and integration boundaries](docs/yash-workspace.md).
-After building `frontend/`, open `http://127.0.0.1:8010/workspace/` and use the existing
-Django login. Local OCR, notification workers/inbox, reviewed-requirement coverage and
-a signed-link/OTP bank workflow are now included. Live provider/bank setup and complete
-regulatory rules remain external/team handoffs; see [integration setup](docs/pending-integrations.md). The sections below document the preserved legacy
-MVP; their old feature/dependency counts are historical, not the full current branch.
+---
 
-A localhost, synthetic-data MVP for **institution submission → protected PDFs → manual scrutiny/corrections → officer acceptance → maturity monitoring → linked renewal or authority-controlled release**.
+## Contents
 
-**New teammate: start here.** GitHub is the source of truth. Clone the repository to get editable source, tests, documentation, synthetic PDFs and evaluation data; install the pinned Python dependencies locally. You do not need the previous developer's database, passwords, virtual environment or conversation history.
+1. [What the portal does](#1-what-the-portal-does)
+2. [Roles and what each can do](#2-roles-and-what-each-can-do)
+3. [Architecture](#3-architecture)
+4. [Technology](#4-technology)
+5. [Quick start](#5-quick-start)
+6. [Demo accounts](#6-demo-accounts)
+7. [Configuration](#7-configuration)
+8. [Feature guide](#8-feature-guide)
+9. [API reference](#9-api-reference)
+10. [Data model](#10-data-model)
+11. [Security](#11-security)
+12. [AI assistance](#12-ai-assistance)
+13. [Scheduled work and notifications](#13-scheduled-work-and-notifications)
+14. [Testing and quality checks](#14-testing-and-quality-checks)
+15. [Repository layout](#15-repository-layout)
+16. [Documentation index](#16-documentation-index)
+17. [Limits and honest scope](#17-limits-and-honest-scope)
 
-## Quick start: React app + Django on one port (platform, K1 to K10)
+---
 
-The interface is now a React app (`frontend/`) served by Django together with the JSON API; the previous
-Django-template interface stays at `/legacy/` until 28 Oct 2026. Python 3.12 and Node.js 22+ are needed.
+## 1. What the portal does
 
-```bash
-./run.sh              # macOS / Linux          (first run creates .env, installs, builds, migrates, seeds synthetic data;
-                      #                         then runs the daily rules + e-mail retries and, if installed, Mailpit)
-.\run.ps1             # Windows PowerShell
-docker compose up --build   # alternative, see docs/docker.md
-```
-
-Open **http://127.0.0.1:8010/**. Generated sign-in passwords are in `data/demo-credentials.txt`,
-`data/authority-credentials.txt` and `data/staff-credentials.txt` (git-ignored, never printed). Useful variants:
-`./run.sh --dev` (hot reload, open http://localhost:5173/), `./run.sh --prod` (DEBUG off), `./run.sh --smoke`
-(start, probe, stop), `--no-scheduler` / `--no-mailpit` (leave those background parts out).
-API contract: `/api/docs/`. Details: [API conventions](docs/api-conventions.md),
-[scheduled rules](docs/scheduled-rules.md), [review build](docs/review-build.md), [frontend guide](frontend/README.md).
-Copy `.env.example` to `.env` to configure e-mail, HTTPS and the audit-chain key.
-
-## 1. Current status and boundaries
-
-All six approved implementation milestones are present. The release audit recorded **159 passing tests**, real HTTP workflow checks, measured rule evaluation and a recovery drill. These are dated results, not a guarantee for every future edit or machine.
-
-This is a **synthetic localhost demonstration candidate**. Public/real-data deployment is blocked. Target-browser visual/PDF and physically disconnected rehearsal still require manual sign-off. Read the [release-readiness report](docs/release-readiness.md).
-
-This is an FDR lifecycle portal, not a general AICTE application-validation engine. There is **no OCR, AI model, automatic PDF extraction, bank connection, regulatory policy engine or payment execution**. In-app and e-mail notifications, daily deadline rules and a tamper-evident audit trail now exist (see the quick start); e-mail goes to the console unless SMTP is configured. Officers manually inspect documents. Acceptance means **accepted for tracking**, not bank-authenticated or legally compliant.
-
-S1 adds the [institution and obligation model foundation](obligations/README.md): four new tables, validation and migration tests. Existing records receive no inferred requirements or exemptions. Run `manage.py test` to include the new app's tests alongside the original portal suite.
-
-The [independent S2 backend portion](obligations/S2.md) now provides draft demo rule configuration, read-only amount/coverage calculations, evidence-linked obligation findings and penalty proposals. It is not connected to the current browser workflow. APIs and instrument adapters await teammate dependencies; policy publication and S3 screens are not implemented. Existing `technical-v2` checks and decisions are unchanged.
-
-The newer local [S1–S6 owned implementation](docs/owned/README.md) adds tested services,
-an opt-in DRF API harness, transactional imports, reports/KPIs, guarded release
-casework and isolated React components. These are built against provisional ports;
-they are not mounted in the default app or integrated with the teammates' stack.
-Read its contract and verification records before using it. Install
-`requirements-saksham.txt` to run the **full current test suite**; the original
-`requirements.txt` still supports the preserved legacy runtime. No S7 work is added.
-
-## 2. Read these documents in order
-
-| Your question | Document |
+| Area | What it covers |
 |---|---|
-| What should I receive? Where do I start? | [Handover index](docs/handover/README.md) and [transfer checklist](docs/handover/transfer-checklist.md) |
-| What was required and why did we narrow it? | [Requirements and scope](docs/handover/completed/requirements-and-scope.md) |
-| How and why did we build each milestone? | [Step-by-step build history](docs/handover/completed/build-history.md) |
-| What does each file do? How do I edit safely? | [Code map and developer workflow](docs/handover/completed/code-map.md) |
-| What has actually been completed? | [Completed-work folder](docs/handover/completed/README.md) |
-| How do I test everything from zero? | [Beginner testing walkthrough](docs/handover/testing/README.md) and [test-record template](docs/handover/testing/test-record-template.md) |
-| What should I do next? | [Sequenced next steps](docs/handover/next-steps.md) |
-| What could strengthen the hackathon entry? | [Prioritized improvement backlog](docs/handover/improvements.md) |
-| How do I present it? | [Five-minute demo and fallback](docs/demo-script.md) |
-| How does the system fit together? | [Implemented architecture](docs/architecture.md) |
+| **Deposit records** | Institutions create, edit and submit deposits held as a Fixed Deposit Receipt (FDR), an RTGS deposit or a Refundable Performance Guaranty Fund (RPGF). Each record carries bank, branch, IFSC, holder names, UTR, lien status, amounts and dates, plus typed PDF documents. |
+| **Document handling** | PDFs are validated on upload (structure, page count, no encryption, no JavaScript, no embedded files), stored privately with a SHA-256 hash, and only ever served through a permission-checked download. An inline viewer opens a document at a given page. |
+| **Scrutiny** | Deterministic checks run on every record and officers add manual observations tied to a document and page. A blocking observation prevents acceptance until an officer resolves it with a written reason. |
+| **Verification ladder** | Each record sits on a four-step ladder: *Declared*, *Reviewed*, *Confirmed*, or *Discrepancy*. Confirmation comes from an append-only evidence trail, for example a statement line that matches the UTR and amount. |
+| **Reconciliation** | Officers upload a statement CSV. Lines are matched to RTGS deposits on UTR and amount. A match confirms the record; a mismatch raises a discrepancy and alerts the institution. |
+| **Institutions and obligations** | Each institution has a profile, programme approvals and a deposit obligation. The portal computes the required amount, what is held, the shortfall, and how holdings cover the 10-year term. |
+| **Renewals** | A renewal is linked to its predecessor. The predecessor stays current until the successor is accepted, then it is superseded in one step with full history kept. |
+| **Release** | Institutions request release along one of five paths. Clearance units (PGRC, Vigilance, Grants) record their decisions, officers review penalties, the authority decides, and an unsigned NOC or sanction order is issued with a QR code that anyone can verify. |
+| **Dashboard and search** | Status counts, an intervention queue, a maturity chart and a header search across records. |
+| **Reports and KPIs** | Five XLSX registers, process KPIs (turnaround, correction cycles, renewal timeliness) and a CSV import for institutions. |
+| **Notifications** | An in-app inbox and email with retries. Daily rules send maturity, renewal, proof-deadline and service-level reminders without duplicates. |
+| **Audit** | A hash-chained audit trail of every state change, an access log of every download, export and staff search, and a one-click integrity check. |
+| **AI assistance** | Optional, advisory field extraction from a PDF and a short release-case summary using Google Gemini. The portal works fully with AI turned off. |
 
-Roadmap/backlog items are **proposals**, not existing features. Start with baseline verification and manual sign-off.
-
-## 3. Technology
-
-| Part | Implemented choice |
-|---|---|
-| Language | Python 3.12; tested development runtime 3.12.14 |
-| Backend, forms, auth, ORM | Django 5.2.18 |
-| Frontend | React 19 + Vite + TypeScript + Ant Design (`frontend/`, built into `frontend/dist` and served by Django); the earlier Django templates remain under `/legacy/` |
-| Database | Local SQLite |
-| Documents | Private local files, generated storage names, size and SHA-256 metadata |
-| Checks | Two deterministic metadata rules and manually entered observations |
-| Application dependencies | asgiref 3.12.1, Django 5.2.18, sqlparse 0.6.0, tzdata 2026.5 |
-| Optional offline tooling | Existing wheel/package scripts remain available; ordinary GitHub setup uses requirements.txt |
-
-Node.js 22+ is needed to build the React app (`run.sh` / `run.ps1` do it). No API key, cloud account, external database service or Docker installation is needed. A read-only replay created for an earlier demonstration is not an application dependency and is not included in the clean handover.
-
-## 4. Recommended Windows setup: clone from GitHub
-
-### A. Clone and open the correct folder
-
-Install/locate Git and Python 3.12. The project repository is [Saksham-189/sih206](https://github.com/Saksham-189/sih206).
-
-Open PowerShell in the parent folder where you want the project, then run:
-
-```powershell
-git --version
-py -3.12 --version
-git clone -- https://github.com/Saksham-189/sih206.git fdr-portal
-Set-Location -LiteralPath .\fdr-portal
-Test-Path -LiteralPath .\manage.py
-git rev-parse HEAD
-```
-
-Expected: Git/Python versions, a successful clone, True for manage.py, and the checked-out commit ID. If fdr-portal already exists, choose a different new destination; do not overwrite/delete existing work. For a private repository the owner must grant your GitHub account access. Authenticate through your normal Git credential manager; never put tokens in documentation or committed files.
-
-### B. Create your environment and synthetic data
-
-Internet access is needed for GitHub and the first dependency download. These commands assume a fresh clone with no existing .venv:
-
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe manage.py migrate
-.\.venv\Scripts\python.exe manage.py seed_demo --generate-password
-.\.venv\Scripts\python.exe manage.py seed_demo --authority-only --generate-password
-.\.venv\Scripts\python.exe manage.py seed_scenarios
-```
-
-Expected: pinned dependencies installed, migrations applied, four accounts created with private local passwords, and **17 synthetic instruments / 18 PDFs**. No API key or previous developer's data is needed. Do not run Setup-Offline.ps1 in a normal clone: it expects a separately generated package manifest/wheelhouse, which are not committed.
-
-If py does not locate Python 3.12, replace it with the actual installed Python 3.12 executable, for example `& 'C:\path\to\Python312\python.exe' -m venv .venv`. Do not copy a former developer's runtime path or .venv.
-
-### C. Verify
-
-```powershell
-.\Verify-Demo.ps1
-```
-
-Expected baseline: 159 tests pass; system/migration checks pass; synthetic evaluation passes; due-action report prints. If PowerShell blocks .ps1 execution, use the individual Python commands in section 7 without weakening global policy.
-
-### D. Run
-
-```powershell
-.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8010 --noreload
-```
-
-Alternatively use .\Start-Demo.ps1 -Port 8010. Leave the terminal open. Visit **http://127.0.0.1:8010/**. Stop with Ctrl+C. Restart after Python edits when using --noreload; browser refresh alone does not reload Python modules.
-
-8010 is the example port throughout this handover. If occupied, select a free port and update all URLs. Earlier ports 8000/8005/8006 were processes on the outgoing developer's computer, not hosted services.
-
-## 5. Accounts and first visit
-
-Passwords are generated on **your machine**. Open these files privately; never commit, screenshot or redistribute them:
-
-- data/demo-credentials.txt: institution_a, institution_b, officer.
-- data/authority-credentials.txt: authority.
-
-| Account | Purpose |
-|---|---|
-| institution_a | A's submissions, corrections, renewal proposals and release requests |
-| institution_b | B's isolated records; access-control test account |
-| officer | Review, document observations, resolution and acceptance |
-| authority | Independent release decision and evidence-backed completion |
-
-Sign out before changing roles. Tabs in one browser profile share login; use separate profiles for simultaneous roles. There is no public registration/admin UI. Seed commands create demo accounts.
-
-As institution_a: Dashboard → Optional demo evaluation date **2026-10-23** → View report. Before changing sample records, expect A counts: all 16, pending 1, accepted current 11, approaching 7, today 1, matured 1. The last three are subsets of accepted current; do not add all cards together. Detail pages use the actual business date.
-
-## 6. Everyday GitHub collaboration
-
-Before editing, check your branch and working tree. Coordinate with the team on the real branch/review policy; no remote or branch name is invented here.
-
-```powershell
-git status
-git branch --show-current
-git pull --ff-only
-```
-
-Commit or safely set aside local work before pulling; do not force-reset to make a pull succeed. Work on an agreed branch, run affected tests and the full gate, then share a reviewed commit/pull request. If requirements change, reinstall them deliberately in your local environment. If new migrations arrive, back up needed local data and run manage.py migrate before using the updated code.
-
-The original three demo accounts initially share a generated demo password; this is not public-use account governance. Seeds preserve accounts/decisions and do not reset a rehearsal.
-
-macOS/Linux equivalents use python3.12 -m venv .venv and .venv/bin/python. PowerShell wrappers are Windows conveniences; target-specific non-Windows behavior has not been manually verified.
-
-## 7. Individual checks
-
-These do not require a running browser server:
-
-```powershell
-.\.venv\Scripts\python.exe manage.py check --database default
-.\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
-.\.venv\Scripts\python.exe manage.py migrate --check
-.\.venv\Scripts\python.exe manage.py test portal.tests --verbosity 1
-.\.venv\Scripts\python.exe scripts\evaluate_release.py --output data\release-evaluation.json
-.\.venv\Scripts\python.exe manage.py due_actions --as-of 2026-10-23
-```
-
-Tests use separate databases/temporary files; evaluation uses in-memory SQLite. They do not reset demo data. The due-action CLI is for a trusted operator and defaults to all institutions. It sends no notifications.
-
-With server 8010 running, on a **fresh untouched seeded demo**:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\smoke_exports.py --base http://127.0.0.1:8010 --scenarios
-```
-
-Expected: PASS, 24 role/category comparisons, 18 distinct PDF downloads. After creating/changing records, omit --scenarios; it intentionally asserts the initial state. See the testing walkthrough for HTTP scripts that add records and later --verify checks.
-
-## 8. Repository guide
+### Deposit status flow
 
 ```text
-config/                 Django settings and root routes
-obligations/            S1 institution profiles, approvals, rule records and obligations
-portal/
-  models.py             institutions, instruments, documents, observations, releases, audit
-  forms.py              field/upload validation
-  permissions.py        role and institution scope
-  services.py           submission/scrutiny/review/renewal transactions
-  releases.py           release request/decision/completion transactions
-  validation.py         technical-v2 metadata findings
-  deadlines.py          shared maturity calculations
-  exports.py            CSV formatting and formula-text protection
-  middleware.py         operational-error handling and no-store headers
-  views.py, urls.py      HTTP form endpoints and page contexts
-  management/commands/  seed commands and due-action report
-  migrations/           four ordered schema migrations
-  tests/                automated tests and complete-lineage journey
-templates/              actual Django frontend
-static/css/app.css      local styling
-fixtures/               three generated synthetic PDFs
-evaluation/             frozen labels, measured results and audit evidence
-scripts/                packaging/setup, live HTTP checks, evaluation
-docs/handover/          teammate onboarding, history, roadmap and testing
-data/                   ignored local database, files, credentials and results
-dist/                   ignored generated packages/isolated copies
+DRAFT → SUBMITTED → ACCEPTED (accepted for tracking) → superseded by a renewal
+            ↓  ↑                                     ↘ released
+   CHANGES_REQUESTED
 ```
 
-## 9. Start development safely
+### Release flow
 
-1. Finish baseline setup/tests before editing.
-2. Read the code map and choose one approved task from next-steps.md.
-3. Back up needed local data and retain a separate fresh clone for demonstrations.
-4. Edit one authoritative source folder; do not unknowingly edit an obsolete dist copy. Use the team's actual GitHub repository, branch and reviewed commits.
-5. Run affected tests after small changes and the complete gate before handover.
-6. Preserve transactions, role scope, version conflicts, evidence history and human approval.
+```text
+Request (institution) → Clearances (PGRC · Vigilance · Grants) → Officer checklist and penalty review
+  → Authority decision (authorize / reject) → Letter issued (NOC or sanction order, QR-verifiable)
+  → Completion recorded with new evidence → record leaves monitoring
+```
 
-Ordinary GitHub development uses the source commands above, not the optional offline installer. Review git diff before committing and never force-add ignored runtime files. If you later use an offline bundle, its original manifest becomes stale after edits; that separate integrity check is intentional.
+Authorizing a release does not stop monitoring. Only the separate, evidence-backed completion does. No money moves.
 
-## 10. Configuration and recovery
+---
 
-Settings read the ignored root `.env` and operating-system environment variables; explicitly set process variables take precedence. Copy `.env.example` as a reference. Database connection and isolation settings are documented in [Supabase setup](docs/supabase.md). Existing variables include DJANGO_DEBUG, DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS, DJANGO_SECURE_COOKIES, MAX_UPLOAD_MB, BUSINESS_TIMEZONE and REMINDER_DAYS.
+## 2. Roles and what each can do
 
-Database: data/portal.sqlite3. Documents: data/documents. Stop the server and back them up **together**. Restore into a new folder, never over the only working copy. Credentials/backups remain private. The testing walkthrough provides safe commands.
+A user belongs to exactly one role group. A user with no group or more than one is denied.
 
-Reset a rehearsal by using a **new clone**, not deleting a database. Seeding is intentionally idempotent and does not reset decisions.
+| Role | Scope | Main abilities |
+|---|---|---|
+| **Institution** | Own institution only | Create, edit, submit and correct deposits; upload documents; request renewal and release; read own obligations, reports and KPIs; see own notifications. |
+| **Officer** | All institutions | Review submissions, add and resolve observations, accept or request changes, correct records with a stated reason, run reconciliation, import institutions, review penalties and proof-receipt dates, read every report. |
+| **Authority** | All institutions (read), decisions | Authorize or reject release, issue the letter, record completion. Receives escalations. |
+| **Clearance unit** | Cases assigned to its unit | Review a protected supporting PDF and record a clearance decision (cleared, hold, objection), reason and file number for PGRC, Vigilance or Grants. The reviewer and decision time remain linked to the evidence. |
+| **Auditor** | Read-only | Browse the audit trail and access log, export them, and verify the audit chain. |
 
-## 11. Share through GitHub
+Draft records are private to the institution. Every list, detail, download and export is filtered by the user's scope on
+the server, and the interface only shows buttons the server will allow.
 
-Follow the [GitHub upload and handover checklist](docs/handover/transfer-checklist.md). Share the actual repository URL and grant your teammate access if private.
+---
 
-Commit source, migrations, templates, CSS, synthetic fixtures, evaluation, requirements and documentation. The .gitignore excludes local data/uploads/passwords/backups, .venv, .env variants, wheel/cache directories, logs and generated archives. .env.example and synthetic fixtures remain versioned.
+## 3. Architecture
 
-**Do not drag the entire working directory into GitHub's browser upload.** Browser uploads do not apply .gitignore. Use reviewed Git staging, or explicitly select only the source/documentation paths listed in the checklist. The source handover repository is [Saksham-189/sih206](https://github.com/Saksham-189/sih206); uploading source does not deploy the application.
+```mermaid
+flowchart LR
+    B[Browser: React app] -->|same-origin session cookie + CSRF token| API[Django REST API under /api/]
+    API --> P[Role and institution scope]
+    P --> S[Transactional services]
+    S --> DB[(PostgreSQL or SQLite)]
+    S --> F[Private PDF storage]
+    S --> A[Hash-chained audit events]
+    S --> N[Notification outbox → email]
+    S --> AI[Gemini worker process]
+    Sch[Scheduler] --> S
+    API --> W[WhiteNoise serves the React build]
+```
 
-The existing offline build/setup scripts remain optional tools for disconnected rehearsals. They are not needed for GitHub handover. The testing guide explains preparing local dependency wheels from a clone before going offline; generated wheels/data stay ignored.
+* **One origin.** Django serves the built React files and the `/api/` routes together, so the session cookie and CSRF
+  token work without cross-site settings. The frontend needs no environment variables.
+* **Thin views, real services.** Views validate input and call service functions (save, submit, review, observe,
+  renew, request, decide, complete). Services run inside a database transaction, check permission and scope, bump a
+  version number and write the audit event in the same transaction.
+* **Optimistic locking.** Every write carries the record's `version`. A stale version returns **409** with a clear
+  message, and the interface asks the user to reload.
+* **Server-computed permissions.** Every detail response includes an `actions` object (`can_edit`, `can_submit`,
+  `can_review`, …) so the interface shows only what the server will accept.
+* **Consistent errors.** All failures use one JSON shape, `{detail, code, errors?}`: 400 validation, 401 not signed
+  in, 403 not allowed, 404 not found or out of scope, 409 conflict or stale version, 429 throttled or locked.
+* **Money and time.** Amounts are integer paise. Dates and deadlines use the business timezone, `Asia/Kolkata`.
+* **Plug-in routes.** Each backend area exposes its own `urlpatterns` module that the API loads automatically, and
+  each frontend area registers its screens in a `routes.tsx` file, so features are added without editing shared files.
 
-## 12. Troubleshooting
+---
 
-| Symptom | Action |
+## 4. Technology
+
+| Layer | Choice |
 |---|---|
-| manage.py missing | Open the cloned project folder and reopen PowerShell there. |
-| py has no Python 3.12 | Install/locate 3.12; do not substitute an unrelated default 3.10 runtime. |
-| .ps1 blocked | Use equivalent Python commands, without weakening global policy. |
-| Port occupied | Stop your old server or choose another port consistently. |
-| Checksum mismatch after editing | Use the installed environment; review and rebuild a new package. |
-| Credentials/scenario collision | Preserve existing data; use a fresh clone for a clean demonstration. |
-| --scenarios fails after mutations | It expects initial state; use a fresh clone/setup or omit that flag. |
-| --verify JSON missing | Run that script's creation check first in the same folder. |
-| 409 conflict | Reload and inspect version/workflow constraints before retrying. |
-| 503 unavailable | Operation could not be confirmed; reload and inspect status before retrying. |
-| 400/403 test diagnostics | Some tests deliberately exercise denied requests. Read final OK/FAILED. |
-| Deployment warnings | These are public-deployment blockers; read the release report. |
+| Language and runtime | Python 3.12, Node.js 22 or newer |
+| Backend | Django 5.2 LTS, Django REST Framework 3.18, drf-spectacular (OpenAPI), django-axes (sign-in lockout), WhiteNoise, gunicorn |
+| Documents and reports | pikepdf (PDF validation), reportlab and qrcode (letters), openpyxl (XLSX) |
+| Database | PostgreSQL (Supabase, session pooler) or local SQLite |
+| Frontend | React 19, TypeScript, Vite 8, Ant Design 6, React Router 7, TanStack Query 5, Recharts, pdf.js |
+| AI | Google Gemini over HTTPS, run in a separate child process with a time budget |
+| Tests | Django test runner, Vitest with Testing Library, Playwright (browser specs) |
+| Delivery | GitHub Actions CI, Docker image and Docker Compose |
 
-The previous milestone diary is preserved verbatim as [README-before-handover.txt](docs/handover/completed/README-before-handover.txt). Its old machine-specific commands/historical counts are context, not the current onboarding path.
+---
+
+## 5. Quick start
+
+Requirements: **Python 3.12**, **Node.js 22+** and Git. Docker is optional.
+
+### One command (macOS, Linux)
+
+```bash
+./run.sh
+```
+
+### One command (Windows PowerShell)
+
+```powershell
+.\run.ps1
+```
+
+The first run creates `.env`, installs the Python and Node dependencies, builds the React app, migrates the database,
+seeds synthetic data, and starts the portal with its background scheduler. Then open **http://127.0.0.1:8010/**.
+
+Useful variants:
+
+| Command | Effect |
+|---|---|
+| `./run.sh --port 9000` | Use another port. |
+| `./run.sh --dev` | Django with auto-reload plus the Vite dev server; open http://localhost:5173/. |
+| `./run.sh --prod` | Production-like settings: debug off, collected static files. |
+| `./run.sh --smoke` | Set up, start, probe the key URLs, stop (used by CI). |
+| `./run.sh --no-scheduler` | Skip the background reminders and email retries. |
+| `./run.sh --no-mailpit` | Do not start the local mail catcher. |
+
+The script never resets existing data and skips work that is already done.
+
+### Docker
+
+```bash
+docker compose up --build
+```
+
+Open **http://localhost:8010/**. The first start creates the synthetic accounts and records. Passwords are written
+to the data volume and never printed:
+
+```bash
+docker compose exec web cat data/demo-credentials.txt data/authority-credentials.txt data/staff-credentials.txt
+```
+
+Compose runs a `web` service (gunicorn) and a `scheduler` service. See [docs/docker.md](docs/docker.md).
+
+### Manual setup
+
+```bash
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python manage.py migrate
+.venv/bin/python manage.py seed_demo --generate-password
+.venv/bin/python manage.py seed_demo --authority-only --generate-password
+.venv/bin/python manage.py seed_staff --generate-password
+.venv/bin/python manage.py seed_scenarios
+.venv/bin/python manage.py seed_review
+cd frontend && npm ci && npm run build && cd ..
+.venv/bin/python manage.py runserver 127.0.0.1:8010
+```
+
+On Windows use `.\.venv\Scripts\python.exe` in place of `.venv/bin/python`.
+
+---
+
+## 6. Demo accounts
+
+Seeding creates eight accounts and 17 scenario records with their PDFs. All data is synthetic.
+
+| Username | Role | Notes |
+|---|---|---|
+| `institution_a` | Institution | Fictional Technical Institute A |
+| `institution_b` | Institution | Fictional Technical Institute B (cannot see A's records) |
+| `officer` | Officer | |
+| `authority` | Authority | |
+| `clearance_pgrc` | Clearance unit | PGRC |
+| `clearance_vigilance` | Clearance unit | Vigilance |
+| `clearance_grants` | Clearance unit | Grants |
+| `auditor` | Auditor | |
+
+Passwords are generated at seed time and saved to `data/demo-credentials.txt`, `data/authority-credentials.txt` and
+`data/staff-credentials.txt`. These files are ignored by Git and are never printed. After five failed sign-ins an
+account is locked for 15 minutes.
+
+If the credentials file belongs to a different database than the one in `.env` (for example you switched from SQLite
+to Supabase), `run.sh` warns that the saved passwords will not work. Seed the database you intend to use.
+
+---
+
+## 7. Configuration
+
+Configuration is read from environment variables. `config/settings.py` also loads a git-ignored `.env` file in the
+repository root; real environment variables always win over the file. Copy [.env.example](.env.example) to start.
+The local demo runs with no `.env` at all.
+
+### Core and HTTPS
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DJANGO_DEBUG` | `true` | `false` on any shared host. Then `DJANGO_SECRET_KEY` is mandatory. |
+| `DJANGO_SECRET_KEY` | none | Long random secret. `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
+| `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated host names the site answers to. |
+| `DJANGO_SECURE_COOKIES` | `false` | `true` once the site is served over HTTPS. |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | empty | `https://` origins allowed to post when the public URL differs from the host header. |
+| `DJANGO_SECURE_SSL_REDIRECT` | `false` | Redirect HTTP to HTTPS. |
+| `DJANGO_HSTS_SECONDS` | `0` | `31536000` once HTTPS is permanent. |
+| `DJANGO_BEHIND_TLS_PROXY` | `false` | `true` only behind a proxy that sets `X-Forwarded-Proto`. |
+| `AUDIT_CHAIN_KEY` | derived from the secret key | HMAC key for the audit chain. Set a separate long value in production. Changing it breaks verification of existing events. |
+| `MAX_UPLOAD_MB` | `10` | Largest PDF upload. |
+| `BUSINESS_TIMEZONE` | `Asia/Kolkata` | Timezone for dates and deadlines. |
+| `REMINDER_DAYS` | `30,15,7` | Reminder thresholds used by the due-actions report. |
+
+### Sign-in protection
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `AXES_ENABLED` | `true` | Account lockout after repeated failures. |
+| `AXES_FAILURE_LIMIT` | `5` | Failed sign-ins before lockout. |
+| `AXES_COOLOFF_MINUTES` | `15` | Lockout length. |
+| `AXES_PROXY_COUNT` | `0` | Number of trusted reverse proxies in front of Django. |
+| `API_LOGIN_THROTTLE` | `30/min` | Rate limit on the sign-in endpoint. |
+| `API_DOCS_PUBLIC` | `DJANGO_DEBUG` | Whether `/api/docs/` is open without signing in. |
+
+### Database
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DATABASE_BACKEND` | `auto` | `auto`, `sqlite` or `postgresql`. With `auto`, an empty `DATABASE_URL` means SQLite. |
+| `DATABASE_URL` | empty | PostgreSQL URI. For Supabase use the **Session pooler** on port **5432**. Port 6543 is rejected on purpose. |
+| `DATABASE_SCHEMA` | `portal_app` | Private application schema. Reserved names such as `public` are refused. |
+| `DATABASE_SSLMODE` | `require` | `require`, `verify-ca` or `verify-full`. |
+| `DATABASE_SSL_ROOT_CERT` | empty | CA file when using `verify-ca` or `verify-full`. |
+
+Tests always use a local SQLite file, even when `DATABASE_URL` is set. Setup steps for Supabase are in
+[docs/supabase.md](docs/supabase.md); `manage.py check_supabase --initialize --migrate` creates the schema and applies
+the migrations.
+
+### Email and links
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | empty / `587` | SMTP server. With no host, emails are printed to the console and nothing is sent. |
+| `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_TIMEOUT` | `true`, `false`, `10` | SMTP transport options. |
+| `DEFAULT_FROM_EMAIL` | `Pramaan <no-reply@localhost>` | Sender. |
+| `PORTAL_BASE_URL` | `http://127.0.0.1:8010` | Public address used in email links and the QR code on issued letters. |
+| `NOTIFY_SEND_ON_COMMIT` | `true` | Send each email right after its event commits; the scheduler retries failures. |
+
+For local email testing, point `EMAIL_HOST=localhost`, `EMAIL_PORT=1025`, `EMAIL_USE_TLS=false` at Mailpit
+(`run.sh` starts it when installed; inbox at http://127.0.0.1:8025/).
+
+### AI, OCR and bank confirmation
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `AI_ENABLED` | `false` | Master switch for Gemini features. |
+| `GEMINI_API_KEY` | empty | Key from https://aistudio.google.com/apikey. Read from the environment only. |
+| `AI_MODEL` | `gemini-3.5-flash-lite` | Primary model. |
+| `AI_FALLBACK_MODEL` | `gemini-3.6-flash` | Tried once if the primary is busy, rate-limited or slow. Empty disables the fallback. |
+| `OCR_ENABLED` | `true` | Local OCR. Needs Tesseract (English data) and Poppler. |
+| `OCR_TESSERACT`, `OCR_PDFTOPPM` | empty | Absolute paths if the tools are not on `PATH`. |
+| `NOTIFICATION_EMAIL_ENABLED` | `false` | Real bank-confirmation emails stay off until `true`. |
+| `BANK_CONFIRMATION_SIMULATED` | `true` | Label and treat bank responses as simulated. |
+| `BANK_CONTACTS_JSON` | `{}` | Operator-reviewed bank directory, never an institution-supplied contact. |
+| `BANK_PUBLIC_BASE_URL` | `PORTAL_BASE_URL` | Public base for the signed bank confirmation link. |
+
+---
+
+## 8. Feature guide
+
+### Deposit records
+
+* **List** with search, filters, pagination and CSV export. On a phone the table becomes cards.
+* **Form** with fields that change with the deposit type (FDR, RTGS, RPGF) and a typed document upload.
+* **Detail page** with tabs: *Details*, *Documents* (inline PDF viewer, jumps to `#page=N`), *Checks and
+  observations*, *Lineage*, *History*, and *Verification*.
+* **Officer panels** to accept, request changes, add or resolve observations, and correct a record. A correction
+  requires a reason and is audited.
+* **Document types:** FDR, payment proof, RPGF proof, Affidavit 3, Affidavit 6, LoA/EoA, bank certificate, release
+  request letter, student clearance, external NOC, and the issued NOC or sanction order.
+
+### Checks
+
+Checks are recalculated whenever a record is read and are stored with the decision that used them. Codes include:
+
+| Code | Meaning |
+|---|---|
+| `FDR_DOCUMENT_REQUIRED` | No supporting document attached; blocks submission. |
+| `DEPOSIT_DOCUMENT_REQUIRED` | The document required for this deposit mode is missing. |
+| `POSSIBLE_DUPLICATE` | Same institution, bank and reference; advisory. |
+| `CROSS_INSTITUTION_POSSIBLE_DUPLICATE` | A match in another institution; visible to officers only, with no leak to institutions. |
+| `ISSUER_UNKNOWN` / `ISSUER_UNCONFIRMED` | The IFSC prefix is not a known issuer, or the issuer is not confirmed. |
+| `AMOUNT_SHORTFALL` | Holdings are below the amount required for the institution. |
+| `TERM_GAP` | Holdings do not cover part of the 10-year term. |
+| `PROOF_OVERDUE` | Payment proof and Affidavit 3 are not both recorded by the deadline. |
+| `AI_MISMATCH` | Advisory: an AI-extracted value differs from the declared one. Never changes a status. |
+
+Proof timing comes only from an officer's recorded *receipt review*. Upload times are never treated as receipt dates.
+
+### Verification and reconciliation
+
+* Officer acceptance sets the level to **Reviewed**.
+* A statement CSV (`utr,amount,value_date`) is previewed, then committed. A line matching an RTGS record on UTR and
+  amount sets **Confirmed** with the method `SIMULATED_STATEMENT`. A mismatch sets **Discrepancy**, adds a blocking
+  observation and notifies the institution.
+* Evidence rows are append-only; they cannot be edited or deleted.
+* **Bank branch confirmation** works through a signed, expiring link with a one-time code. Requests go only to
+  contacts in the reviewed bank directory. Until live mode is enabled, responses are labelled simulated.
+
+### Institutions, obligations and the requirement calculator
+
+* An institution has a profile (AICTE ID, trust, type, region, state, contact email) and programme approvals.
+* The **requirement calculator** computes the amount from the programme and level using Table 1.4 of the AICTE
+  Approval Process Handbook, doubled when the land or building is leased.
+* An **obligation** shows required, held and shortfall amounts, a coverage timeline against the 10-year term, and the
+  payment-proof deadline (15 days from intimation).
+* **Rules are a draft.** The seeded rule set is labelled `DRAFT_DEMO_NOT_APPROVED` and is shown with a *Draft rules* tag
+  wherever it affects a number. It is not an approved policy.
+
+| Draft rule | Value |
+|---|---|
+| Late proof | 10% (May) or 20% (July) |
+| Premature encashment | 10% |
+| Closure, lapsed | 10% |
+| Closure within six years | 50% |
+| Reminder days before maturity | 90, 60, 30, 7 |
+| Proof reminders after intimation | day 7, 12, 15 |
+
+### Release cases
+
+Five paths are supported: **term complete**, **progressive closure**, **merger**, **conversion to university** and
+**closure by AICTE**. For each path the portal builds the document checklist, the declarations to answer and the
+clearances needed. The release case page shows clearances, penalty assessments (proposed, then confirmed or waived),
+the authority decision, the issued letter and completion. The letter is a PDF with a QR code that opens a public
+page, `/verify/<token>`, showing whether the letter is valid, revoked or unknown. Letters are **unsigned**.
+
+### Reports, KPIs and import
+
+* **XLSX reports:** pending verifications, upcoming maturities, missing documents, intervention queue, released register.
+* **Process KPIs** over a date window: turnaround, correction cycles, renewal timeliness and the share of deposits
+  confirmed by evidence.
+* **Institution import:** upload a CSV, review a preview with row errors, then commit. The data is labelled SIMULATED.
+
+### Audit and access
+
+* Every state change is an audit event, chained to the previous one with an HMAC so any edit or deletion is detectable.
+* The **Audit and access** screen lists events and the access log with filters and export, and verifies the chain.
+* The access log records every document download, export, report, letter view and staff search.
+
+### Notifications
+
+The bell shows the unread count and the inbox lists reminders, review results and alerts. Delivery status for email is
+visible, and failed emails are retried. Templates cover submission, acceptance, requested changes, discrepancies,
+confirmations, release steps, penalties, letters and the reminder rules.
+
+---
+
+## 9. API reference
+
+The interactive reference is served at **`/api/docs/`** (Swagger UI) and **`/api/redoc/`**, with the schema at
+`/api/schema/`. Docs are open in debug mode and require sign-in otherwise. Conventions are in
+[docs/api-conventions.md](docs/api-conventions.md).
+
+**Authentication**
+
+| Method and path | Purpose |
+|---|---|
+| `GET /api/auth/csrf/` | Sets the CSRF cookie. |
+| `POST /api/auth/login/` | Sign in with `username` and `password`; lockout and throttling apply. |
+| `POST /api/auth/logout/` | Sign out. |
+| `GET /api/auth/me/` | The current user, role, institution and unit. |
+| `GET /api/health/` | Liveness and database check. |
+
+**Records and documents**
+
+| Method and path | Purpose |
+|---|---|
+| `GET, POST /api/instruments/` | List with search and filters; create. |
+| `GET /api/instruments/export.csv` | CSV export of the current view. |
+| `GET, PATCH /api/instruments/{id}/` | Detail with `actions`; edit. |
+| `POST /api/instruments/{id}/submit/` | Submit for scrutiny. |
+| `POST /api/instruments/{id}/review/` | Accept or request changes. |
+| `POST /api/instruments/{id}/observations/` | Add an observation. |
+| `POST /api/instruments/{id}/observations/{n}/resolve/` | Resolve with a reason. |
+| `POST /api/instruments/{id}/renew/` | Create a linked successor. |
+| `POST /api/instruments/{id}/correct/` | Officer correction with a reason. |
+| `POST /api/instruments/{id}/documents/` | Upload a PDF. |
+| `GET /api/documents/{id}/download/` | Download (scope-checked and logged). |
+| `GET /api/dashboard/` | Counts, intervention queue and maturity chart data. |
+
+**Verification and AI**
+
+| Method and path | Purpose |
+|---|---|
+| `GET /api/instruments/{id}/verification/` | Ladder and evidence trail. |
+| `POST /api/instruments/{id}/bank-requests/` | Create a bank confirmation request. |
+| `POST /api/verification/statements/` | Preview or commit a statement import. |
+| `POST /api/documents/{id}/ai-extract/` | Advisory field extraction. |
+| `POST /api/documents/{id}/ocr/` | Advisory local OCR suggestions. |
+
+**Institutions, rules, reports**
+
+| Method and path | Purpose |
+|---|---|
+| `GET /api/institutions`, `GET /api/institutions/{id}` | List and profile. |
+| `GET /api/institutions/{id}/obligations`, `GET /api/obligations/{id}` | Obligations with coverage. |
+| `POST /api/obligations/{id}/proof-receipts` | Record a receipt review. |
+| `GET /api/calculator`, `GET /api/rules` | Requirement calculator and active rule set. |
+| `POST /api/imports/institutions/preview`, `POST /api/imports/institutions/{id}/commit` | CSV import. |
+| `GET /api/reports/{kind}` | One of five XLSX registers. |
+| `GET /api/kpis` | Process KPIs. |
+
+**Release**
+
+| Method and path | Purpose |
+|---|---|
+| `GET, POST /api/releases` | List cases; request release of an accepted record. |
+| `GET /api/releases/requirements` | Checklist and declarations for a path. |
+| `GET /api/releases/{id}` | Case detail with `actions`. |
+| `POST /api/releases/{id}/{action}` | `approve`, `reject`, `penalties`, `issue` (letter), `revoke` (letter), `complete`. |
+| `POST /api/releases/{id}/clearances/{unit}` | Record a clearance decision with `version`, `status`, `reason`, `evidence_ref` and required `evidence_id`. |
+| `GET /api/releases/{id}/clearances/{unit}/evidence` | List the unit's protected supporting PDFs and current case version. |
+| `POST /api/releases/{id}/clearances/{unit}/evidence` | Upload one PDF with the current `version` as multipart data; upload does not record a decision. |
+| `GET /api/releases/{id}/clearances/{unit}/evidence/{evidence_id}` | View the protected, access-logged supporting PDF. |
+| `GET /api/releases/{id}/letter` | Download the issued letter. |
+| `POST /api/releases/{id}/ai-summary` | Advisory case summary. |
+| `GET /api/clearance-tasks` | A unit's work queue. |
+| `GET /api/public/verify/{token}` | Public letter verification (no sign-in). |
+
+**Notifications and audit**
+
+| Method and path | Purpose |
+|---|---|
+| `GET /api/notifications/` and `/unread-count/`, `/delivery-status/` | Inbox and counts. |
+| `POST /api/notifications/read-all/`, `/{id}/read/` | Mark as read. |
+| `GET /api/audit/events/` and `/facets/`, `/export/`, `/{id}/` | Audit trail. |
+| `GET /api/audit/chain/verify/` | Verify the hash chain. |
+| `GET /api/audit/access-log/` and `/facets/`, `/export/` | Access log. |
+
+Writes take the record's `version` and the `X-CSRFToken` header. Unknown `/api/` paths return a JSON 404, never HTML.
+
+---
+
+## 10. Data model
+
+| App | Main tables |
+|---|---|
+| `portal` | `Institution`, `UserProfile`, `Instrument` (status, mode, verification level, version, renewal link), `Document` (type, SHA-256, page count), `ReviewObservation`, `ReleaseRequest`, `AuditEvent` |
+| `obligations` | `InstitutionProfile`, `ProgrammeApproval`, `RuleSet`, `DepositObligation`, `ProofReceiptReview`, `CsvImport`, `MasterAudit` |
+| `verification` | `StatementImport`, `StatementLine`, `VerificationEvidence` (append-only), `BankConfirmation` |
+| `notifications` | `Notification`, `DeliveryAttempt` |
+| `audit` | `AuditSeal` (anchors the hash chain) |
+| `access` | `UnitAssignment` (clearance unit of a user), `AccessLog` (append-only) |
+| `ai` | `AiRun` (every AI or OCR call) |
+| `casework` | Release-case services, clearance tasks, penalties and issued letters |
+
+Database constraints back the rules: positive amounts, date ordering, one-to-one renewal links, unique references and
+append-only tables. Migrations are committed and `makemigrations --check` runs in CI.
+
+---
+
+## 11. Security
+
+* **Scope first.** Every query starts from the signed-in user's scope. An institution cannot see another's records,
+  and an out-of-scope address returns 404.
+* **Sessions and CSRF.** Session cookies are HttpOnly, SameSite=Lax and expire after two hours. Writes need a CSRF
+  token. No token is kept in `localStorage`. With `DJANGO_SECURE_COOKIES=true` cookies are Secure.
+* **Lockout and throttling.** Five failed sign-ins lock an account for 15 minutes. The sign-in endpoint is rate limited.
+* **Uploads.** Extension, type, size, header and trailer are checked, then the PDF is parsed. Encrypted files, files
+  with JavaScript and files with embedded content are rejected. Storage names are generated and the SHA-256 is kept.
+* **Headers.** A Content-Security-Policy, `X-Content-Type-Options`, same-origin referrer and opener policies, and
+  no-store caching on API responses. Same-origin framing is allowed only for the PDF viewer.
+* **Tamper evidence.** Audit events are chained with an HMAC key. `manage.py verify_audit_chain` and the Audit screen
+  report any broken link. The access log cannot be edited through the application.
+* **Fail closed.** If a required integration is missing, the related action is refused instead of guessing.
+* **No secrets in the repository.** `.env`, `data/`, credentials and generated builds are git-ignored.
+
+---
+
+## 12. AI assistance
+
+AI is optional and **advisory**. It is off unless `AI_ENABLED=true` and a `GEMINI_API_KEY` is set.
+
+| Feature | What it does |
+|---|---|
+| **Document extraction** | Reads a deposit PDF and returns schema-constrained fields. The form offers *Use extracted values*, and nothing is saved until the user confirms. Officers see `AI_MISMATCH` findings when a value differs from what was declared. |
+| **Release summary** | Turns the structured case data (never the PDFs) into a short summary and up to five risk flags, cached per case version. |
+| **Local OCR** | Reads up to five pages with Tesseract and offers suggestions the user reviews. |
+
+Rules the code follows:
+
+* Output is labelled **AI-generated: verify before use** and never changes a status, verification level, penalty or
+  decision.
+* Document text is treated as data, not instructions, and extraction calls have no tools.
+* Every call is logged in `AiRun` with the model, outcome and input hash.
+* Calls run in a child process with a time budget (about 27 seconds) and fall back to a second model once.
+  If both fail, the screen explains that and the user continues by hand.
+* Use synthetic documents only. Free-tier requests may be used by Google to improve its products.
+
+Check the setup with synthetic test data:
+
+```bash
+.venv/bin/python manage.py check_ai
+```
+
+---
+
+## 13. Scheduled work and notifications
+
+`run.sh` and Docker Compose run a small scheduler that executes these commands in a loop:
+
+| Command | Frequency | Purpose |
+|---|---|---|
+| `send_notifications` | every 5 minutes | Retry email delivery. |
+| `deliver_bank_requests` | every 5 minutes | Send queued bank confirmation requests. |
+| `run_due_rules` | once a day | Create reminders and escalations. |
+
+`run_due_rules` is idempotent: every notification has a key built from the record, the rule and the boundary crossed,
+so running twice, or after a missed day, never duplicates anything. Options: `--as-of YYYY-MM-DD` to replay a date,
+`--dry-run` to list without writing, `--institution` and `--only` to narrow the run.
+
+| Rule | Fires when | Recipients |
+|---|---|---|
+| Maturity reminder | 90, 60, 30 and 7 days before maturity | Institution, plus officers from 30 days |
+| Renewal overdue | One day after maturity, still current | Institution, officers, authority |
+| Penalty review | 30 days after maturity, still current | Officers |
+| Proof due | Day 7, 12 and 15 after intimation | Institution |
+| Submission SLA | Waiting more than 7 working days | Authority |
+| Correction SLA | 15 and 30 days after changes were requested | Institution, officers |
+| Clearance SLA | Open more than 7 and 14 working days | The unit, authority |
+
+Thresholds come from the `escalation-matrix` rule set when one is active, with defaults built in. Details are in
+[docs/scheduled-rules.md](docs/scheduled-rules.md).
+
+---
+
+## 14. Testing and quality checks
+
+| What | Command | Current result |
+|---|---|---|
+| System check | `python manage.py check` | No issues |
+| Migrations in sync | `python manage.py makemigrations --check --dry-run` | No changes |
+| Production profile | `python manage.py check --deploy --fail-level WARNING` (with production settings) | Clean |
+| Backend tests | `python manage.py test` | 672 tests pass (1 skipped) |
+| Frontend type check | `cd frontend && npx tsc --noEmit` | Clean |
+| Frontend tests | `cd frontend && npm test` | 120 tests pass |
+| Frontend build | `cd frontend && npm run build` | Succeeds |
+| Browser specs | `cd frontend && npx playwright test` | Specs in `frontend/tests/` (not run in CI) |
+| Whole review build | `python scripts/review_check.py` | Runs all of the above on a clean copy |
+
+Backend tests cover every endpoint for an allowed request, a denied request, a stale version (409) and invalid input
+(400), plus the services, checks, permissions, audit chain, reports and the full journeys.
+
+**Continuous integration** (GitHub Actions, on every pull request and push to `main`):
+
+1. Django checks, migration sync, production-profile deploy check, OpenAPI validation and all backend tests.
+2. React type check, tests and production build.
+3. Fresh-install smoke on Ubuntu and Windows (`run_portal.py --smoke`).
+4. Docker Compose smoke: build, health check, the React shell and a 401 from `/api/auth/me/`.
+
+**Live smoke scripts** in `scripts/` exercise a running server: `smoke_http.py`, `smoke_scrutiny.py`,
+`smoke_renewals.py`, `smoke_releases.py`, `smoke_maturity.py`, `smoke_exports.py`.
+
+---
+
+## 15. Repository layout
+
+```text
+config/          Django settings, URL table, database and integration wiring
+portal/          Records, documents, checks, releases, permissions, REST API (portal/api/), legacy views
+obligations/     Institutions, programmes, rule sets, obligations, calculator, reports, KPIs, CSV import
+casework/        Release case services, clearance tasks, penalties, letters and QR verification
+verification/    Statement import, reconciliation, evidence trail, bank confirmation
+notifications/   Outbox, inbox API, email delivery, daily rules (run_due_rules)
+audit/           Hash-chained audit trail, integrity check, auditor API
+access/          Roles, clearance-unit assignments, access log
+ai/              Gemini worker, local OCR, extraction, AiRun log
+scenarios/       Seed commands for the demo and review build
+frontend/        React app (src/features/*, components, layout, theme), Vitest and Playwright tests
+scripts/         run_portal.py (run.sh), smoke tests, review_check.py, offline packaging
+fixtures/        Synthetic PDFs and a sample statement CSV
+evaluation/      Evaluation cases and results for the checks and release rules
+docs/            Feature guides, API conventions, scheduling, Docker, Supabase, demo script
+docker/          Container entrypoint
+```
+
+Frontend areas register their screens in `frontend/src/features/<area>/routes.tsx`. The shell, theme and API client
+are shared: all HTTP goes through `frontend/src/api/client.ts`. See [frontend/README.md](frontend/README.md) for the
+design system (tokens, components, breakpoints and accessibility rules).
+
+---
+
+## 16. Documentation index
+
+| Topic | Document |
+|---|---|
+| API conventions and error shapes | [docs/api-conventions.md](docs/api-conventions.md) |
+| Frontend structure and design system | [frontend/README.md](frontend/README.md) |
+| Scheduled rules and notifications | [docs/scheduled-rules.md](docs/scheduled-rules.md) |
+| Docker and Docker Compose | [docs/docker.md](docs/docker.md) |
+| Supabase / PostgreSQL | [docs/supabase.md](docs/supabase.md) |
+| Review build and seed data | [docs/review-build.md](docs/review-build.md) |
+| Scrutiny checks | [docs/checks.md](docs/checks.md) |
+| Maturity monitoring | [docs/maturity.md](docs/maturity.md) |
+| Renewals | [docs/renewals.md](docs/renewals.md) |
+| Release workflow | [docs/releases.md](docs/releases.md) |
+| Record fields | [docs/record-fields.md](docs/record-fields.md) |
+| OCR, notification and bank integration setup | [docs/pending-integrations.md](docs/pending-integrations.md) |
+| Walkthrough of the demo scenarios | [docs/demo-script.md](docs/demo-script.md) |
+| Offline demo package | [docs/offline-demo.md](docs/offline-demo.md) |
+| Final verification record | [docs/final-verification.md](docs/final-verification.md) |
+
+Some of the older documents describe earlier stages of the portal; where they disagree with this README, the code and
+this README are current.
+
+---
+
+## 17. Limits and honest scope
+
+* **Synthetic and simulated.** There is no live bank, no real AICTE data feed and no payment execution. Statement
+  matches use the `SIMULATED_STATEMENT` method, the AICTE import is labelled SIMULATED, and bank confirmations are
+  simulated until live mode is configured with a reviewed bank directory.
+* **Draft rules.** Amounts, penalties and reminder days follow the AICTE Approval Process Handbook as transcribed for
+  the demo, but they are not an approved policy engine.
+* **Unsigned letters.** The NOC and sanction order carry a QR code for verification but no digital signature.
+* **Acceptance is administrative.** *Accepted for tracking* records an officer's decision. It is not bank
+  authentication and not a compliance finding.
+* **AI is advisory.** It never decides anything and the portal works without it.
+* **Local file storage.** Uploaded PDFs are stored on the server's disk under `data/documents`, so a hosted
+  deployment needs a persistent volume at `data/`.
+* **Not yet hardened for real data.** Before real use it would need object storage, encryption at rest, a restricted
+  database role, a managed secret store, a formal accessibility audit and an approved rule set.

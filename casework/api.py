@@ -1,3 +1,8 @@
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from portal.api.schema_types import PAGINATION, FILE, responses
+from ai.schema import SUMMARY, VERSION
+from . import schema as docs
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError
@@ -90,6 +95,9 @@ def case_json(actor, case):
             'can_revoke': independent and letter is not None and letter.revoked_at is None}}
 
 
+@extend_schema_view(
+    get=extend_schema(operation_id='release_cases_list', parameters=PAGINATION, responses=responses(docs.CASES)),
+    post=extend_schema(operation_id='release_cases_create', request={'application/json': docs.CREATE}, responses=responses(docs.CASE, 201)))
 class Cases(OwnedView):
     def get(self, request):
         return page(request, services.scoped_cases(request.user).select_related('release__instrument'),
@@ -107,6 +115,7 @@ class Cases(OwnedView):
         return Response(case_json(request.user, case), status=201)
 
 
+@extend_schema_view(get=extend_schema(parameters=docs.REQUIREMENT_PARAMS, responses=responses(docs.REQUIREMENTS)))
 class Requirements(OwnedView):
     """What the institution's request wizard needs: Affidavit-6 questions, document checklist, eligibility."""
     def get(self, request):
@@ -130,6 +139,7 @@ class Requirements(OwnedView):
         return Response(requirements(request.user, instrument, obligation, path))
 
 
+@extend_schema_view(get=extend_schema(responses=responses(docs.CASE)))
 class CaseDetail(OwnedView):
     def get(self, request, pk):
         case = services.get_case(request.user, pk)
@@ -137,6 +147,7 @@ class CaseDetail(OwnedView):
         return Response(case_json(request.user, case))
 
 
+@extend_schema_view(post=extend_schema(request={'application/json': VERSION}, responses=responses(SUMMARY)))
 class AiSummary(OwnedView):
     """Explicit advisory request; it never invokes a release workflow action."""
     def post(self, request, pk):
@@ -144,6 +155,9 @@ class AiSummary(OwnedView):
         return Response(ai_summary.summarize(request.user, pk, data.get('version')))
 
 
+@extend_schema_view(post=extend_schema(operation_id='release_case_action', parameters=docs.ACTION_PARAMS,
+    description='All actions require version. Approve/reject also need instrument_version and reason. Issue/revoke need reason. Penalties accept reason and kind/base_paise or confirm_id. Complete requires instrument_version, notes and exactly one new document PDF; refund_reference is optional.',
+    request={'application/json': docs.ACTION, 'multipart/form-data': docs.ACTION}, responses=responses(docs.CASE)))
 class CaseAction(OwnedView):
     def post(self, request, pk, action):
         if action == 'complete':
@@ -177,6 +191,7 @@ class CaseAction(OwnedView):
         return Response(case_json(request.user, case))
 
 
+@extend_schema_view(post=extend_schema(request={'application/json': docs.CLEARANCE_INPUT}, responses=responses(docs.CASE)))
 class Clearance(OwnedView):
     def post(self, request, pk, unit):
         data = body(request, {'version','status','reason','evidence_ref','evidence_id'})
@@ -185,6 +200,9 @@ class Clearance(OwnedView):
         return Response(case_json(request.user, case))
 
 
+@extend_schema_view(
+    get=extend_schema(operation_id='clearance_evidence_list', responses=responses(docs.EVIDENCE_LIST)),
+    post=extend_schema(operation_id='clearance_evidence_upload', request={'multipart/form-data': docs.EVIDENCE_UPLOAD}, responses=responses(docs.EVIDENCE_CREATED, 201)))
 class ClearanceEvidenceList(OwnedView):
     def get(self, request, pk, unit):
         case = services.get_case(request.user, pk)
@@ -205,6 +223,8 @@ class ClearanceEvidenceList(OwnedView):
         return Response({'version': case.version, 'evidence': evidence_json(item)}, status=201)
 
 
+@extend_schema_view(get=extend_schema(operation_id='clearance_evidence_download', responses={(200, 'application/pdf'): FILE, **{
+    status: shape for status, shape in responses(docs.EVIDENCE).items() if status != 200}}))
 class ClearanceEvidenceDownload(OwnedView):
     def get(self, request, pk, unit, evidence_id):
         case = services.get_case(request.user, pk)
@@ -222,6 +242,7 @@ class ClearanceEvidenceDownload(OwnedView):
         return response
 
 
+@extend_schema_view(get=extend_schema(parameters=PAGINATION, responses=responses(docs.QUEUE)))
 class ClearanceQueue(OwnedView):
     def get(self, request):
         tasks = ClearanceTask.objects.filter(case__in=services.scoped_cases(request.user)).select_related('case__release')
@@ -234,6 +255,7 @@ class ClearanceQueue(OwnedView):
                          'results': visible[start:start+size]})
 
 
+@extend_schema_view(get=extend_schema(responses={(200, "application/pdf"): FILE}))
 class LetterDownload(OwnedView):
     def get(self, request, pk):
         case = services.get_case(request.user, pk)
@@ -245,6 +267,7 @@ class LetterDownload(OwnedView):
         return response
 
 
+@extend_schema_view(get=extend_schema(auth=[], responses=responses(docs.PUBLIC)))
 class PublicVerify(OwnedView):
     authentication_classes = []
     permission_classes = []

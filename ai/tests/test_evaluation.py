@@ -49,4 +49,3 @@ class EvaluationTests(TestCase):
         output['fields']['bank']['page'] = None
         with self.assertRaises(ValueError):
             validate_output(output, 1)
-

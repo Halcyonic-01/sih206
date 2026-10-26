@@ -2,25 +2,26 @@ import type { ThemeConfig } from 'antd'
 
 /**
  * Design tokens for the whole portal. The same values exist as CSS variables in styles.css; change both together.
- * Every text colour here meets WCAG 2.1 AA (4.5:1) on its background and every control border meets 3:1.
+ * Warm cream, navy and orange reference the observed official internship portal.
+ * Orange is decorative; darkened orange is used for text so contrast is retained.
  */
 export const colors = {
-  primary: '#1a3f7a',
-  primaryHover: '#2a55a0',
-  navy: '#0f2447',
-  navyActive: '#1f4a8c',
-  accent: '#e8791d',
-  accentText: '#a8480a',
+  primary: '#172554',
+  primaryHover: '#30467f',
+  navy: '#172554',
+  navyActive: '#30467f',
+  accent: '#e85d04',
+  accentText: '#a94400',
   success: '#14703a',
   warning: '#8a4b08',
   error: '#b42318',
-  text: '#1b2433',
-  textSecondary: '#4b586b',
-  textMuted: '#5f6b7d',
-  border: '#dde3ec',
-  borderStrong: '#7b889c',
+  text: '#1b1140',
+  textSecondary: '#525767',
+  textMuted: '#626474',
+  border: '#e7e2d8',
+  borderStrong: '#8a8791',
   surface: '#ffffff',
-  page: '#f3f5f9',
+  page: '#fffcf6',
 } as const
 
 export const fontFamily =
@@ -69,17 +70,21 @@ export const theme: ThemeConfig = {
       darkItemSelectedBg: colors.navyActive,
       darkItemSelectedColor: '#ffffff',
       darkGroupTitleColor: '#8fa3c4',
-      itemBorderRadius: 8,
+      itemBorderRadius: 6,
       itemMarginInline: 12,
-      itemHeight: 42,
+      itemHeight: 44,
+      itemSelectedBg: '#fff1e5',
+      itemSelectedColor: '#8f3b00',
+      itemHoverBg: '#faf6ee',
+      itemColor: colors.textSecondary,
       iconSize: 17,
     },
     Card: { headerFontSize: 16, headerHeight: 52, bodyPadding: 20, bodyPaddingSM: 14 },
     Table: {
-      headerBg: '#eef2f8',
+      headerBg: '#f5f2eb',
       headerColor: colors.text,
       headerSplitColor: 'transparent',
-      rowHoverBg: '#f6f8fc',
+      rowHoverBg: '#fff9ed',
       cellPaddingBlock: 12,
       cellPaddingInline: 14,
       borderColor: colors.border,
@@ -89,6 +94,6 @@ export const theme: ThemeConfig = {
     Form: { labelColor: colors.text, verticalLabelPadding: '0 0 6px' },
     Tag: { defaultBg: '#eceff4', defaultColor: '#3a465a' },
     Alert: { withDescriptionPadding: '14px 16px' },
-    Segmented: { trackBg: '#e6ebf3' },
+    Segmented: { trackBg: '#f0ece3' },
   },
 }

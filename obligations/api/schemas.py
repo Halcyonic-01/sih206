@@ -121,6 +121,13 @@ class ObligationUpdate(VersionedUpdate, ObligationCreate):
     pass
 
 
+class ProofReceiptInput(s.Serializer):
+    version = s.IntegerField(min_value=1)
+    payment_proof_on = s.DateField(allow_null=True, required=False)
+    affidavit_on = s.DateField(allow_null=True, required=False)
+    reason = s.CharField(max_length=2000)
+
+
 class VersionedUpdateSchema(OpenApiSerializerExtension):
     """PATCH is partial in data fields, but version and reason are still required."""
     target_class = VersionedUpdate

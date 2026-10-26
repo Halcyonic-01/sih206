@@ -1,4 +1,8 @@
 """Y3/Y5 feature endpoints. K1 mounts records_urls under /api/."""
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from .schema_types import PAGINATION, FILE, responses
+from . import records_schema as docs
+
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db import DatabaseError, transaction
 from django.http import FileResponse, Http404
@@ -98,6 +102,9 @@ def detail(user, item):
     return result
 
 
+@extend_schema_view(
+    get=extend_schema(operation_id='records_list', parameters=docs.FILTERS + PAGINATION, responses=responses(docs.REGISTER)),
+    post=extend_schema(request=docs.RecordCreate, responses=responses(docs.DETAIL, 201)))
 class Records(RecordEndpoint):
     def get(self, request):
         records, _ = record_reporting.query_records(request.user, request.query_params)
@@ -117,6 +124,9 @@ class Records(RecordEndpoint):
         return Response(detail(request.user, item), status=201)
 
 
+@extend_schema_view(
+    get=extend_schema(responses=responses(docs.DETAIL)),
+    patch=extend_schema(request=docs.RecordUpdate, responses=responses(docs.DETAIL)))
 class RecordDetail(RecordEndpoint):
     def get(self, request, pk):
         return Response(detail(request.user, item_for(request.user, pk)))
@@ -130,7 +140,12 @@ class RecordDetail(RecordEndpoint):
         return Response(detail(request.user, item))
 
 
+@extend_schema_view(post=extend_schema(
+    description='Requires the current version. Review also requires decision and reason; observations require document ID, severity and comment; resolution requires resolution text. Renewal requires new deposit fields. Upload requires a PDF and kind.',
+    responses={**responses(docs.DETAIL), 201: docs.DETAIL}))
 class RecordAction(RecordEndpoint):
+    schema = docs.RecordActionSchema()
+
     @transaction.atomic
     def post(self, request, pk, action, observation_pk=None):
         item = item_for(request.user, pk)
@@ -182,6 +197,7 @@ class RecordAction(RecordEndpoint):
         return Response(result)
 
 
+@extend_schema_view(post=extend_schema(request=docs.CORRECTION, responses=responses(docs.DETAIL)))
 class CorrectRecord(RecordEndpoint):
     def post(self, request, pk):
         item = item_for(request.user, pk)
@@ -197,6 +213,7 @@ class CorrectRecord(RecordEndpoint):
         return Response(detail(request.user, corrected))
 
 
+@extend_schema_view(get=extend_schema(responses={**{code: value for code, value in responses(FILE).items() if code != 200}, (200, 'application/pdf'): FILE}))
 class Download(RecordEndpoint):
     def get(self, request, pk):
         document = get_object_or_404(Document.objects.filter(instrument__in=scoped_instruments(request.user)), pk=pk)
@@ -212,6 +229,8 @@ class Download(RecordEndpoint):
         return response
 
 
+@extend_schema_view(get=extend_schema(parameters=docs.FILTERS,
+    responses={(200, 'text/csv'): {'type': 'string'}}))
 class Export(RecordEndpoint):
     def get(self, request):
         records, as_of = record_reporting.query_records(request.user, request.query_params)
@@ -220,6 +239,7 @@ class Export(RecordEndpoint):
         return register_csv(records, as_of)
 
 
+@extend_schema_view(get=extend_schema(parameters=docs.FILTERS, responses=responses(docs.DASHBOARD)))
 class Dashboard(RecordEndpoint):
     def get(self, request):
         return Response(record_reporting.dashboard(request.user, request.query_params))

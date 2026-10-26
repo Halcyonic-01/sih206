@@ -7,4 +7,3 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DI
 MEDIA_ROOT = BASE_DIR / 'data' / 'documents'
 AI_ENABLED = True
 OCR_ENABLED = True
-
