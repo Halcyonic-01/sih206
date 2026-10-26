@@ -19,8 +19,8 @@ and the portal never executes a payment, so the first question is always whether
 |---|---|---|
 | Requested, clearances pending | A request only | Reject it (authority). Nothing to repair |
 | Officer review done | Clearances, penalty decisions | Reject it (authority) |
-| Authorised, no letter | An authorisation event | Reject is no longer available once approved; revoke applies only to a letter, so continue with step 3 |
-| Letter issued | Letter and public token | Revoke the letter (step 1) |
+| Authorised, no letter | An authorisation event | Approve and reject are only offered while the case is pending, so there is no cancel. Completion needs an issued letter, so **do not issue one**; the case stays "authorised, completion pending" and the instrument stays in monitoring |
+| Letter issued, not completed | Letter and public token | Revoke the letter (step 1). Completion is only offered while the letter is not revoked, so this also stops completion |
 | **Completed** | `released_at` set on the instrument, completion evidence PDF, `RELEASE_COMPLETED` audit event | Revoke the letter; the instrument stays out of maturity monitoring |
 
 Never delete the release request, the evidence document or any audit row: they are the record of the mistake.
