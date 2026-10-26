@@ -1,37 +1,14 @@
 import {test, expect, type Page} from '@playwright/test';
-import {readFileSync} from 'node:fs';
 import path from 'node:path';
-
-const root = path.resolve('..');
-const passwords = Object.fromEntries(readFileSync(process.env.DEMO_CREDENTIALS_FILE || path.join(root, 'data/demo-credentials.txt'), 'utf8')
-  .split(/\r?\n/).filter(line => line.includes(': ')).map(line => line.split(': ')));
+import {openRecord, root, signIn} from './support';
 
 async function login(page: Page, username: string) {
-  await page.goto('/login');
-  await page.getByLabel('Username').fill(username);
-  await page.getByLabel('Password').fill(passwords[username]);
-  await page.getByRole('button', {name: 'Sign in', exact: true}).click();
-  await expect(page.getByRole('heading', {level: 1, name: /^Welcome/})).toBeVisible();
+  await signIn(page, username);
   await page.goto('/records');
   await expect(page.getByRole('heading', {level: 1, name: 'Deposit records'})).toBeVisible();
 }
 
-async function openRecord(page: Page, reference: string) {
-  await page.goto('/records');
-  await page.getByLabel('Global record search').fill(reference);
-  // A matching row can still belong to the previous list while the search navigation settles.
-  await Promise.all([
-    page.waitForResponse(response => {
-      const url = new URL(response.url());
-      return url.pathname === '/api/instruments/' && url.searchParams.get('q') === reference && response.status() === 200;
-    }),
-    page.getByLabel('Global record search').press('Enter'),
-  ]);
-  await page.getByRole('button', {name: reference, exact: true}).click();
-  await expect(page.getByRole('heading', {level: 1, name: reference, exact: true})).toBeVisible();
-}
-
-test('submission, PDF review, discrepancy, correction, acceptance and renewal', async ({browser}) => {
+test('submission, PDF review, discrepancy, correction, acceptance and renewal', async ({browser}, testInfo) => {
   const ownerContext = await browser.newContext();
   const officerContext = await browser.newContext();
   const owner = await ownerContext.newPage();
@@ -53,7 +30,8 @@ test('submission, PDF review, discrepancy, correction, acceptance and renewal', 
   await owner.getByRole('button', {name: 'Extract with AI', exact: true}).click();
   await expect(owner.getByText('AI is off. Continue manual document review.', {exact: true})).toBeVisible();
   await owner.getByRole('button', {name: 'Read with local OCR', exact: true}).click();
-  await expect(owner.getByText('Processed locally. Low-confidence, missing and conflicting fields require manual entry.', {exact: true})).toBeVisible();
+  // The label is shown whether or not the optional local OCR engine is installed; manual entry stays available.
+  await expect(owner.getByText('OCR suggestions: verify against the document', {exact: true})).toBeVisible();
   await owner.getByRole('button', {name: 'Submit for review', exact: true}).click();
   await owner.getByRole('button', {name: 'Record action', exact: true}).click();
   await expect(owner.locator('.page-header').getByText('Submitted', {exact: true})).toBeVisible();
@@ -93,7 +71,7 @@ test('submission, PDF review, discrepancy, correction, acceptance and renewal', 
   await expect(officer.locator('.page-header').getByText('Accepted', {exact: true})).toBeVisible();
   await officer.getByRole('tab', {name: 'Verification', exact: true}).click();
   await expect(officer.getByText('Officer review', {exact: true})).toBeVisible();
-  await officer.screenshot({path: path.join(root, '../../outputs/verification-workspace.png'), fullPage: true});
+  await officer.screenshot({path: testInfo.outputPath('verification-workspace.png'), fullPage: true});
 
   await openRecord(owner, reference);
   await owner.getByRole('button', {name: 'Create renewal', exact: true}).click();
@@ -105,12 +83,12 @@ test('submission, PDF review, discrepancy, correction, acceptance and renewal', 
   await ownerContext.close(); await officerContext.close();
 });
 
-test('dashboard, responsive list, and synthetic reconciliation preview', async ({page}) => {
+test('dashboard, responsive list, and synthetic reconciliation preview', async ({page}, testInfo) => {
   await login(page, 'officer');
   await page.getByRole('menuitem', {name: 'Overview', exact: true}).click();
   await page.getByRole('link', {name: 'Dashboard', exact: true}).click();
   await expect(page.getByText('Maturities by month', {exact: true})).toBeVisible();
-  await page.screenshot({path: path.join(root, '../../outputs/dashboard-workspace.png'), fullPage: true});
+  await page.screenshot({path: testInfo.outputPath('dashboard-workspace.png'), fullPage: true});
   await page.getByRole('menuitem', {name: 'Deposits', exact: true}).click();
   await page.getByRole('link', {name: 'Reconciliation', exact: true}).click();
   await page.locator('input[type=file]').setInputFiles(path.join(root, 'fixtures/synthetic-statement.csv'));
@@ -119,7 +97,7 @@ test('dashboard, responsive list, and synthetic reconciliation preview', async (
   const reconciliation = page.locator('#main');
   await expect(reconciliation.getByText('Match', {exact: true})).toBeVisible();
   await expect(reconciliation.getByText('Discrepancy', {exact: true})).toBeVisible();
-  await page.getByRole('button', {name: 'Record previewed batch', exact: true}).click();
+  await page.getByRole('button', {name: /Record previewed batch/}).click();
   await expect(page.getByText(/Statement batch \d+ recorded|already imported/)).toBeVisible();
   await page.setViewportSize({width: 390, height: 844});
   await page.getByRole('button', {name: 'Open navigation'}).click();

@@ -1,9 +1,10 @@
 """Shared bounded PDF checks; not malware scanning or authenticity verification."""
 from pathlib import Path
+import hashlib
 import json
 import subprocess
 import sys
-from tempfile import TemporaryDirectory
+from tempfile import SpooledTemporaryFile, TemporaryDirectory
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -56,3 +57,53 @@ def validate_pdf_upload(upload):
         upload.seek(0)
     from .scanning import scan_upload
     return scan_upload(upload)  # malware scan after the structure checks; records upload.scan_status
+
+
+class DocumentIntegrityError(Exception):
+    """The stored bytes no longer match the SHA-256 recorded when the document was uploaded."""
+
+    def __init__(self, document, actual_sha256):
+        super().__init__(f'Document {document.pk} no longer matches its recorded SHA-256.')
+        self.document = document
+        self.actual_sha256 = actual_sha256
+
+
+def open_verified(document):
+    """Return the stored file as a seekable file object, after checking it against `document.sha256`.
+
+    The bytes are hashed while they are copied into a temporary file that is then served, so what is checked is
+    exactly what is sent (a file swapped on disk between the check and the response cannot slip through).
+    Raises FileNotFoundError when the file is missing and DocumentIntegrityError on a mismatch.
+    """
+    digest = hashlib.sha256()
+    copy = SpooledTemporaryFile(max_size=settings.MAX_UPLOAD_BYTES)
+    try:
+        with document.file.open('rb') as stored:
+            for chunk in iter(lambda: stored.read(1024 * 1024), b''):
+                digest.update(chunk)
+                copy.write(chunk)
+    except BaseException:
+        copy.close()
+        raise
+    actual = digest.hexdigest()
+    if actual != document.sha256:
+        copy.close()
+        raise DocumentIntegrityError(document, actual)
+    copy.seek(0)
+    return copy
+
+
+def record_integrity_failure(error, actor):
+    """Audit and announce a failed check. Call it where the transaction will commit (not before raising)."""
+    from notifications.recipients import officers
+    from notifications.service import notify
+    from . import services
+    document = error.document
+    item = document.instrument
+    services.event(item, actor, 'DOCUMENT_INTEGRITY_FAILED', services.snapshot(item),
+                   reason='Stored file does not match the SHA-256 recorded at upload; the download was refused.',
+                   after_extra={'document_id': document.pk, 'document_name': document.original_name,
+                                'expected_sha256': document.sha256, 'actual_sha256': error.actual_sha256})
+    notify(officers(), 'document_integrity_failed',
+           {'reference': item.reference, 'document': document.original_name, 'url': f'/records/{item.pk}'},
+           key=f'document:{document.pk}:integrity:{error.actual_sha256[:16]}')

@@ -27,7 +27,7 @@ DETAIL = obj({**BRIEF['properties'], 'obligation_id': nullable(INTEGER), 'ifsc':
         'can_request_bank', 'can_review', 'can_observe', 'can_correct', 'can_renew',
         'can_upload_release_documents', 'can_request_release')}),
     'release_case_id': nullable(INTEGER), 'documents': array(DOCUMENT),
-    'observations': array(OBSERVATION), 'history': array(HISTORY), 'findings': array(JSON),
+    'observations': array(OBSERVATION), 'history': array(HISTORY), 'findings': array(JSON), 'field_provenance': JSON,
     'lineage': obj({key: nullable(obj({'id': INTEGER, 'reference': TEXT}))
                     for key in ('predecessor', 'successor')}), 'maturity': JSON,
     'notification_queued': BOOLEAN,

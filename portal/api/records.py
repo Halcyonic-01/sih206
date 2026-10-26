@@ -23,7 +23,9 @@ from portal.models import Document, Instrument
 from portal.notification_hook import notify_record
 from portal.permissions import institution_for, role, scoped_instruments
 from portal.scanning import downloadable
+from portal.uploads import DocumentIntegrityError, open_verified, record_integrity_failure
 from portal.validation import run_checks
+from verification.services import field_provenance
 from .records_serializers import ActionInput, RecordWrite, UploadInput
 
 
@@ -97,6 +99,7 @@ def detail(user, item):
         history=[{'id': e.pk, 'action': e.action, 'reason': e.reason, 'actor_id': e.actor_id,
                   'at': e.created_at, 'before': e.before, 'after': e.after} for e in item.audit_events.all()],
         findings=[f.as_dict() for f in run_checks(item)],
+        field_provenance=field_provenance(item),
         lineage={'predecessor': visible.filter(pk=item.predecessor_id).values('id', 'reference').first(),
                  'successor': visible.filter(predecessor=item).values('id', 'reference').first()},
         maturity=classify_maturity(item.maturity_date, business_today()).__dict__)
@@ -224,9 +227,16 @@ class Download(RecordEndpoint):
                              'This document has not been scanned yet and cannot be downloaded.',
                              'code': 'document_quarantined' if quarantined else 'document_not_scanned'}, status=409)
         try:
-            file = document.file.open('rb')
+            file = open_verified(document)
         except FileNotFoundError:
             raise Http404 from None
+        except DocumentIntegrityError as error:
+            with transaction.atomic():
+                record_integrity_failure(error, request.user)
+            log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document,
+                       detail=f'instrument={document.instrument_id} refused=integrity')
+            return Response({'detail': 'This document failed its integrity check and cannot be downloaded. '
+                                       'The officers have been told.', 'code': 'document_integrity_failed'}, status=409)
         log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document, detail=f'instrument={document.instrument_id}')
         response = FileResponse(file, content_type='application/pdf', as_attachment=True,
                                 filename=document.original_name)

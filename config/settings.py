@@ -232,6 +232,8 @@ NOTIFICATION_EMAIL_ENABLED = env_bool('NOTIFICATION_EMAIL_ENABLED', False)
 BANK_CONTACTS = json.loads(os.environ.get('BANK_CONTACTS_JSON', '{}'))
 BANK_CONFIRMATION_SIMULATED = env_bool('BANK_CONFIRMATION_SIMULATED', True)
 BANK_PUBLIC_BASE_URL = os.environ.get('BANK_PUBLIC_BASE_URL', PORTAL_BASE_URL)
+# Draft AICTE check (docs/checks.md): when true, an FDR recorded with no lien marked cannot be accepted. Off = advisory.
+FDR_LIEN_CHECK_BLOCKING = env_bool('FDR_LIEN_CHECK_BLOCKING', False)
 AI_ENABLED = env_bool('AI_ENABLED', False)
 # Google Gemini (free tier available). The key is read from GEMINI_API_KEY by the AI worker process only.
 AI_MODEL = os.environ.get('AI_MODEL', '') or 'gemini-3.5-flash-lite'

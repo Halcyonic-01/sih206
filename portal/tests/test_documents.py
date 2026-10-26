@@ -67,3 +67,47 @@ class DocumentTests(PortalTestCase):
         self.assertFalse(Instrument.objects.exists())
         self.assertFalse(Document.objects.exists())
         self.assertEqual(set(Path(self.storage_dir).rglob('*.pdf')), before)
+
+
+class DocumentIntegrityTests(PortalTestCase):
+    def tamper(self, doc):
+        with doc.file.open('rb') as stored:
+            original = stored.read()
+        from pathlib import Path
+        Path(doc.file.path).write_bytes(original + b'\n% swapped on disk')
+
+    def test_download_refused_audited_and_announced_when_the_stored_file_changed(self):
+        from notifications.models import Notification
+        from portal.models import AuditEvent
+        record = self.draft()
+        doc = record.documents.get()
+        self.tamper(doc)
+        self.client.force_login(self.a)
+        response = self.client.get(f'/api/documents/{doc.pk}/download/')
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()['code'], 'document_integrity_failed')
+        event = AuditEvent.objects.get(instrument=record, action='DOCUMENT_INTEGRITY_FAILED')
+        self.assertEqual(event.after['expected_sha256'], doc.sha256)
+        self.assertNotEqual(event.after['actual_sha256'], doc.sha256)
+        self.assertTrue(Notification.objects.filter(recipient=self.officer, template_id='document_integrity_failed').exists())
+        legacy = self.client.get(reverse('document_download', args=[doc.pk]))
+        self.assertEqual(legacy.status_code, 409)
+
+    def test_repeated_attempts_do_not_repeat_the_notification(self):
+        from notifications.models import Notification
+        record = self.draft()
+        doc = record.documents.get()
+        self.tamper(doc)
+        self.client.force_login(self.a)
+        for _ in range(3):
+            self.client.get(f'/api/documents/{doc.pk}/download/')
+        self.assertEqual(Notification.objects.filter(template_id='document_integrity_failed', recipient=self.officer).count(), 1)
+
+    def test_an_untouched_file_still_downloads(self):
+        record = self.draft()
+        doc = record.documents.get()
+        self.client.force_login(self.a)
+        response = self.client.get(f'/api/documents/{doc.pk}/download/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b''.join(response.streaming_content), sample_pdf())
+        response.close()
