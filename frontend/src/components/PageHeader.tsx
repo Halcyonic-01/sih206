@@ -10,14 +10,16 @@ export function PageHeader({ title, subtitle, extra, breadcrumb }: {
 }) {
   // Feature components can render without a router (they take navigation as props); then crumbs are plain text.
   const routed = useInRouterContext()
+  const crumbs = breadcrumb ?? (routed && typeof title === 'string'
+    ? [{ label: 'Home', to: '/' }, { label: title }] : undefined)
   return (
     <header className="page-header">
-      {breadcrumb && (
+      {crumbs && (
         <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>
-            {breadcrumb.map((item, index) => (
+            {crumbs.map((item, index) => (
               <li key={item.label}>{item.to && routed ? <Link to={item.to}>{item.label}</Link>
-                : <span aria-current={index === breadcrumb.length - 1 ? 'page' : undefined}>{item.label}</span>}</li>
+                : <span aria-current={index === crumbs.length - 1 ? 'page' : undefined}>{item.label}</span>}</li>
             ))}
           </ol>
         </nav>

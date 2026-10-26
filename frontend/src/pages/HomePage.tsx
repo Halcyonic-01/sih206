@@ -13,8 +13,10 @@ export default function HomePage() {
   const first = user?.display_name?.split(' ')[0] || user?.username || ''
   return (
     <>
-      <PageHeader title={`Welcome, ${first}`}
+      <section className="workspace-intro">
+        <PageHeader title={`Welcome, ${first}`}
                   subtitle={[user?.role ? ROLE_LABELS[user.role] : null, user?.institution?.name].filter(Boolean).join(' · ')} />
+      </section>
       {items.length === 0 ? (
         <EmptyState title="No screens are available for your account" detail="Ask the portal administrator to assign a role." />
       ) : (

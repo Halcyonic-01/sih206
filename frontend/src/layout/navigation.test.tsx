@@ -58,9 +58,9 @@ describe('shared components', () => {
     expect(screen.getByText('IFSC').nextElementSibling).toHaveTextContent('SBIN0001234')
   })
 
-  it('keeps the logo decorative next to the name, and labelled on its own', () => {
+  it('uses the supplied wordmark with accessible product and tagline text', () => {
     const { container } = render(<Brand />)
-    expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
-    expect(screen.getByText('Pramaan')).toBeInTheDocument()
+    expect(container.querySelector('svg')).not.toBeInTheDocument()
+    expect(screen.getByRole('img', {name: 'Pramaan — Trust backed by evidence'})).toHaveAttribute('src', '/pramaan-logo.png')
   })
 })

@@ -2,7 +2,7 @@ import { useCallback, useRef, useState, useSyncExternalStore, type ReactNode } f
 import { useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Brand } from '@/components/Logo'
+import { PortalFooter, PortalIdentity } from '@/components/PortalChrome'
 import { PageHeader } from '@/components/PageHeader'
 import { Panel } from '@/components/Panel'
 import { StatusTag } from '@/components/StatusTag'
@@ -133,11 +133,16 @@ export function ClearanceQueuePage() {
 export function PublicVerificationPage() {
   const token = useParams().token
   const valid = token && /^[A-Za-z0-9_-]{20,100}$/.test(token)
-  return <main className="verify-page">
-    <Brand size={42} />
-    <div className="verify-card native-ui">
-      {valid ? <PublicVerification client={platformTransport} token={token} />
-        : <section><h1>Verify letter</h1><p role="alert">Verification record unavailable.</p></section>}
-    </div>
-  </main>
+  return <div className="portal-frame public-verification">
+    <a className="skip-link" href="#main">Skip to main content</a>
+    <header className="portal-masthead"><PortalIdentity /></header>
+    <div className="service-bar"><span className="service-bar__name">Letter verification</span></div>
+    <main id="main" tabIndex={-1} className="verify-page">
+      <div className="verify-card native-ui">
+        {valid ? <PublicVerification client={platformTransport} token={token} />
+          : <section><h1>Verify letter</h1><p role="alert">Verification record unavailable.</p></section>}
+      </div>
+    </main>
+    <PortalFooter />
+  </div>
 }
