@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import { useCallback, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
@@ -17,6 +18,7 @@ import { routeIdentity } from './InstitutionPages'
 /** Session-bound wrapper for the release screens. It deliberately does not
  * manufacture a questionnaire, document capability, or clearance assignment. */
 function ReleaseSession({ children }: { children: (identityKey: string) => ReactNode }) {
+  useLanguage();
   const auth = useAuth()
   const cache = useQueryClient()
   const subscribe = useCallback((notify: () => void) => cache.getQueryCache().subscribe(event => {
@@ -48,6 +50,7 @@ interface Requirements {
 function RequestWithRequirements({ identityKey, instrumentId, obligationId, instrumentVersion, onCreated }: {
   identityKey: string; instrumentId: number; obligationId: number; instrumentVersion: number; onCreated: (id: number) => void
 }) {
+  useLanguage();
   const [path, setPath] = useState('TERM_COMPLETE')
   const remote = useRemote<Requirements>(platformTransport,
     `releases/requirements?instrument=${instrumentId}&obligation=${obligationId}&path=${path}`, identityKey)
@@ -59,12 +62,12 @@ function RequestWithRequirements({ identityKey, instrumentId, obligationId, inst
   if (!requirements) return <Loading />
   const current = remote.data !== undefined
   const documents = <>
-    <ul aria-label="Required documents" className="checklist">{requirements.documents.map(d => <li key={d.name}>
+    <ul aria-label={tr("Required documents")} className="checklist">{requirements.documents.map(d => <li key={d.name}>
       <StatusTag value={d.parsed ? 'CLEARED' : d.present ? 'HOLD' : 'OBJECTION'} />
-      {' '}{humanize(d.name)}: {d.parsed ? 'uploaded and readable' : d.present ? 'uploaded, but could not be read' : 'missing'}
+      {' '}{humanize(d.name)}: {d.parsed ? tr("uploaded and readable") : d.present ? tr("uploaded, but could not be read") : tr("missing")}
     </li>)}</ul>
-    {!requirements.documents_ready && <p role="alert">Upload the missing documents on the <Link to={`/records/${instrumentId}`}>record page</Link> (Upload release document), then reload this page.</p>}
-    {path === 'TERM_COMPLETE' && !requirements.term_elapsed && <p role="alert">The obligation term ends on {requirements.term_end ?? 'an unknown date'}; a term-complete release is blocked until it has elapsed.</p>}
+    {!requirements.documents_ready && <p role="alert">{tr("Upload the missing documents on the  ")}<Link to={`/records/${instrumentId}`}>{tr("record page")}</Link> {tr("  (Upload release document), then reload this page.")}</p>}
+    {path === 'TERM_COMPLETE' && !requirements.term_elapsed && <p role="alert">{tr("The obligation term ends on  ")}{requirements.term_end ?? 'an unknown date'}{tr("; a term-complete release is blocked until it has elapsed.")}</p>}
   </>
   return <ReleaseWizard client={platformTransport} identityKey={identityKey} onCreated={onCreated} inputs={{
     instrumentId, obligationId, instrumentVersion: requirements.instrument_version ?? instrumentVersion,
@@ -75,6 +78,7 @@ function RequestWithRequirements({ identityKey, instrumentId, obligationId, inst
 }
 
 export function ReleaseRequestPage() {
+  useLanguage();
   const [query] = useSearchParams()
   const navigate = useNavigate()
   const instrumentId = requestedIdentity(query.get('instrument'))
@@ -82,8 +86,8 @@ export function ReleaseRequestPage() {
   const instrumentVersion = requestedIdentity(query.get('version'))
   return <ReleaseSession>{identityKey => {
     if (instrumentId === null || obligationId === null || instrumentVersion === null) return <>
-      <h1>Request release</h1><p role="alert">Open a current accepted record that is linked to an obligation and choose <strong>Request release</strong> there.</p>
-      <Link to="/records">Go to records</Link>
+      <h1>{tr("Request release")}</h1><p role="alert">{tr("Open a current accepted record that is linked to an obligation and choose  ")}<strong>{tr("Request release")}</strong> {tr("  there.")}</p>
+      <Link to="/records">{tr("Go to records")}</Link>
     </>
     return <RequestWithRequirements identityKey={identityKey} instrumentId={instrumentId} obligationId={obligationId}
       instrumentVersion={instrumentVersion} onCreated={id => navigate(`/releases/${id}`)} />
@@ -92,55 +96,60 @@ export function ReleaseRequestPage() {
 
 /** Officers, the authority and institutions find their cases here; clearance units use their queue. */
 export function ReleaseCasesPage() {
+  useLanguage();
   const [page, setPage] = useState(1)
   return <ReleaseSession>{identityKey => <CaseList identityKey={identityKey} page={page} setPage={setPage} />}</ReleaseSession>
 }
 
 function CaseList({ identityKey, page, setPage }: { identityKey: string; page: number; setPage: (page: number) => void }) {
+  useLanguage();
   const remote = useRemote<Page<Case>>(platformTransport, `releases?page=${page}`, identityKey)
   if (remote.error) return <ErrorBox error={remote.error} />
   if (!remote.data) return <Loading />
   return <section>
-    <PageHeader title="Release cases" subtitle="Release requests from submission through clearances, decision, letter and completion." />
+    <PageHeader title={tr("Release cases")} subtitle={tr("Release requests from submission through clearances, decision, letter and completion.")} />
     <Notice />
     <Panel flush>
       <Table<Case> rowKey="id" size="middle" scroll={{ x: 760 }} dataSource={remote.data.results}
-        locale={{ emptyText: 'No release cases yet. An institution requests release from an accepted deposit record.' }}
+        locale={{ emptyText: tr("No release cases yet. An institution requests release from an accepted deposit record.") }}
         pagination={{ current: page, pageSize: 25, total: remote.data.count ?? 0, onChange: setPage, hideOnSinglePage: true, showSizeChanger: false }}
         columns={[
-          { title: 'Case', dataIndex: 'id', render: (id: number) => <Link to={`/releases/${id}`}>Case {id}</Link> },
-          { title: 'Path', dataIndex: 'path', render: (v: string) => RELEASE_PATH_LABELS[v] ?? humanize(v) },
-          { title: 'Type', dataIndex: 'mode', width: 90 },
-          { title: 'Status', dataIndex: 'status', render: (v: string) => <StatusTag value={v} /> },
-          { title: 'Clearances', render: (_, c) => `${c.clearances.filter(t => t.status === 'CLEARED').length} of ${c.clearances.length} cleared` },
-          { title: 'Next step', dataIndex: 'next_action' }]} />
+          { title: tr("Case"), dataIndex: 'id', render: (id: number) => <Link to={`/releases/${id}`}>{tr("Case  ")}{id}</Link> },
+          { title: tr("Path"), dataIndex: 'path', render: (v: string) => RELEASE_PATH_LABELS[v] ?? humanize(v) },
+          { title: tr("Type"), dataIndex: 'mode', width: 90 },
+          { title: tr("Status"), dataIndex: 'status', render: (v: string) => <StatusTag value={v} /> },
+          { title: tr("Clearances"), render: (_, c) => `${c.clearances.filter(t => t.status === 'CLEARED').length} of ${c.clearances.length} cleared` },
+          { title: tr("Next step"), dataIndex: 'next_action' }]} />
     </Panel>
   </section>
 }
 
 export function ReleaseCasePage() {
+  useLanguage();
   const id = routeIdentity(useParams().caseId)
   return <ReleaseSession>{identityKey => id === null ? <ErrorBox error={{ status: 404 }} /> :
     <ReleaseCase client={platformTransport} identityKey={identityKey} caseId={id} />}</ReleaseSession>
 }
 
 export function ClearanceQueuePage() {
+  useLanguage();
   const navigate = useNavigate()
   return <ReleaseSession>{identityKey => <ClearanceQueue client={platformTransport} identityKey={identityKey}
     onSelect={id => navigate(`/releases/${id}`)} />}</ReleaseSession>
 }
 
 export function PublicVerificationPage() {
+  useLanguage();
   const token = useParams().token
   const valid = token && /^[A-Za-z0-9_-]{20,100}$/.test(token)
   return <div className="portal-frame public-verification">
-    <a className="skip-link" href="#main">Skip to main content</a>
+    <a className="skip-link" href="#main">{tr("Skip to main content")}</a>
     <header className="portal-masthead"><PortalIdentity /></header>
-    <div className="service-bar"><span className="service-bar__name">Letter verification</span></div>
+    <div className="service-bar"><span className="service-bar__name">{tr("Letter verification")}</span></div>
     <main id="main" tabIndex={-1} className="verify-page">
       <div className="verify-card native-ui">
         {valid ? <PublicVerification client={platformTransport} token={token} />
-          : <section><h1>Verify letter</h1><p role="alert">Verification record unavailable.</p></section>}
+          : <section><h1>{tr("Verify letter")}</h1><p role="alert">{tr("Verification record unavailable.")}</p></section>}
       </div>
     </main>
     <PortalFooter />

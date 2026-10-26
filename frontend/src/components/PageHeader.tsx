@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import type { ReactNode } from 'react'
 import { Link, useInRouterContext } from 'react-router-dom'
 
@@ -8,14 +9,15 @@ export function PageHeader({ title, subtitle, extra, breadcrumb }: {
   extra?: ReactNode
   breadcrumb?: { label: string; to?: string }[]
 }) {
+  useLanguage();
   // Feature components can render without a router (they take navigation as props); then crumbs are plain text.
   const routed = useInRouterContext()
   const crumbs = breadcrumb ?? (routed && typeof title === 'string'
-    ? [{ label: 'Home', to: '/' }, { label: title }] : undefined)
+    ? [{ label: tr("Home"), to: '/' }, { label: title }] : undefined)
   return (
     <header className="page-header">
       {crumbs && (
-        <nav aria-label="Breadcrumb" className="breadcrumb">
+        <nav aria-label={tr("Breadcrumb")} className="breadcrumb">
           <ol>
             {crumbs.map((item, index) => (
               <li key={item.label}>{item.to && routed ? <Link to={item.to}>{item.label}</Link>

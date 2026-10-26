@@ -11,7 +11,8 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:translations": "node scripts/check-translations.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "6.3.4",

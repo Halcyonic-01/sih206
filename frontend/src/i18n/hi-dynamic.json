@@ -1,0 +1,21 @@
+{
+  "{0} events":"{0} घटनाएँ",
+  ", {0} of them sealed late because they existed before sealing was switched on":", इनमें से {0} घटनाएँ बाद में मुहरबंद हुईं क्योंकि वे मुहरबंदी शुरू होने से पहले की हैं",
+  "{0} event(s) have no seal":"{0} घटनाओं पर मुहर नहीं है",
+  "Unread{0}":"अपठित{0}",
+  "Differs from the record: {0}":"अभिलेख से अलग: {0}",
+  "Record says {0}; the document suggests {1}. Needs human review.":"अभिलेख का मान {0} है; दस्तावेज़ से {1} सुझाया गया है। मानवीय समीक्षा आवश्यक है।",
+  "Position as of {0}.":"{0} की स्थिति।",
+  "PDF page {0}":"PDF पृष्ठ {0}",
+  "Documents ({0})":"दस्तावेज़ ({0})",
+  "Document {0}, page {1}":"दस्तावेज़ {0}, पृष्ठ {1}",
+  "{0} records":"{0} अभिलेख",
+  "2. Preview: {0} of {1} lines match":"2. पूर्वावलोकन: {1} में से {0} पंक्तियाँ मेल खाती हैं",
+  "{0} pages":"{0} पृष्ठ",
+  "Institution code {0}":"संस्थान कोड {0}",
+  "received {0}":"प्राप्ति {0}",
+  "Release case {0}":"मुक्ति प्रकरण {0}",
+  "Case {0}":"प्रकरण {0}",
+  "Decision for case {0}":"प्रकरण {0} का निर्णय",
+  "2. Preview: {0}":"2. पूर्वावलोकन: {0}"
+}

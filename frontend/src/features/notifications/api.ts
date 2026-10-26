@@ -11,6 +11,7 @@ export interface AppNotification {
   created_at: string
   read_at: string | null
   is_read: boolean
+  translations?: {hi?: {subject: string; body: string}}
 }
 
 const KEY = ['notifications'] as const
