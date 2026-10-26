@@ -1,3 +1,7 @@
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from portal.api.schema_types import responses
+from .schema import CONSENT, EXTRACTION
+
 from django.shortcuts import get_object_or_404
 from django.urls import path
 from rest_framework.response import Response
@@ -9,6 +13,7 @@ from .services import extract
 from .ocr import extract_local
 
 
+@extend_schema_view(post=extend_schema(request={'application/json': CONSENT}, responses=responses(EXTRACTION)))
 class Extract(RecordEndpoint):
     def post(self, request, pk):
         document = get_object_or_404(Document.objects.filter(instrument__in=scoped_instruments(request.user)), pk=pk)
@@ -16,6 +21,7 @@ class Extract(RecordEndpoint):
                                 synthetic=request.data.get('synthetic') is True))
 
 
+@extend_schema_view(post=extend_schema(request=None, responses=responses(EXTRACTION)))
 class LocalOcr(RecordEndpoint):
     def post(self, request, pk):
         document = get_object_or_404(Document.objects.filter(instrument__in=scoped_instruments(request.user)), pk=pk)

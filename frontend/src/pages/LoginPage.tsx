@@ -5,7 +5,7 @@ import { matchPath, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '@/api/client'
 import { applyFieldErrors } from '@/api/forms'
 import { useAuth } from '@/auth/AuthProvider'
-import { Brand } from '@/components/Logo'
+import { PortalFooter, PortalIdentity } from '@/components/PortalChrome'
 import { appRoutes } from '@/routes/registry'
 
 interface LoginValues { username: string; password: string }
@@ -46,39 +46,42 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="auth-page">
-      <aside className="auth-aside" aria-label="About the portal">
-        <Brand inverse size={44} />
-        <div>
-          <h2>Security deposits, tracked from submission to release</h2>
-          <p>One place for institutions and AICTE officers to record, review and follow every deposit.</p>
-          <ul className="auth-points">
-            <li>FDR, RTGS and RPGF deposits with their supporting documents</li>
-            <li>Reminders before maturity and follow-up on overdue items</li>
-            <li>A complete, tamper-evident record of every change</li>
-          </ul>
-        </div>
-        <small>All India Council for Technical Education</small>
-      </aside>
-      <div className="auth-main">
-        <div className="auth-mobile-brand"><Brand size={42} /></div>
-        <div className="auth-card">
-          <h1>Sign in</h1>
-          <p className="muted">Use the account issued to your institution or office.</p>
-          {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} role="alert" />}
-          <Form form={form} layout="vertical" size="large" onFinish={submit} requiredMark={false} disabled={busy}>
-            <Form.Item name="username" label="Username" rules={[{ required: true, message: 'Enter your username.' }]}>
-              <Input prefix={<UserOutlined aria-hidden />} autoComplete="username" autoFocus />
-            </Form.Item>
-            <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Enter your password.' }]}>
-              <Input.Password prefix={<LockOutlined aria-hidden />} autoComplete="current-password" />
-            </Form.Item>
-            <Button type="primary" htmlType="submit" block loading={busy}>Sign in</Button>
-          </Form>
-          <p className="auth-help">After five failed attempts the account is locked for a few minutes.</p>
-        </div>
-        <p className="auth-foot">Acceptance of a deposit record is for tracking and is not verification by the bank.</p>
-      </div>
-    </main>
+    <div className="auth-page">
+      <a className="skip-link" href="#sign-in">Skip to sign in</a>
+      <header className="portal-masthead"><PortalIdentity /></header>
+      <div className="service-bar"><span className="service-bar__name">Security Deposit Management</span>
+        <span className="service-bar__context">Institution &amp; officer access</span></div>
+      <main className="auth-layout">
+        <section className="auth-introduction" aria-label="About the portal">
+          <span className="eyebrow">ONE PORTAL. A CLEARER PROCESS.</span>
+          <h2>Every deposit.{' '}<br />Every decision.{' '}<br /><em>Accounted for.</em></h2>
+          <p className="auth-lead">A shared workspace for institutions and reviewing teams to manage
+            security deposits, supporting evidence and the next action.</p>
+          <p className="prototype-note">Independent student prototype. No official AICTE endorsement is implied.</p>
+        </section>
+        <section className="auth-main" aria-labelledby="sign-in">
+          <div className="auth-card">
+            <span className="eyebrow">ACCESS YOUR WORKSPACE</span>
+            <h1 id="sign-in" tabIndex={-1}>Sign in</h1>
+            <p className="muted">Use the account issued to your institution or office.</p>
+            {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} role="alert" />}
+            <Form form={form} layout="vertical" size="large" onFinish={submit} requiredMark={false} disabled={busy}>
+              <Form.Item name="username" label="Username" rules={[{ required: true, message: 'Enter your username.' }]}>
+                <Input prefix={<UserOutlined aria-hidden />} autoComplete="username" autoFocus />
+              </Form.Item>
+              <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Enter your password.' }]}>
+                <Input.Password prefix={<LockOutlined aria-hidden />} autoComplete="current-password" />
+              </Form.Item>
+              <Button type="primary" htmlType="submit" block loading={busy}>Sign in</Button>
+            </Form>
+            <p className="auth-help"><LockOutlined aria-hidden /> Access is limited to your assigned role and institution.</p>
+            <div className="auth-security-note">After five failed attempts the account is locked for a few minutes.
+              Contact your project administrator if you need account access.</div>
+          </div>
+          <p className="auth-foot">Acceptance of a deposit record is for tracking and is not verification by the bank.</p>
+        </section>
+      </main>
+      <PortalFooter />
+    </div>
   )
 }

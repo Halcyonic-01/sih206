@@ -178,6 +178,9 @@ class ObligationDetail(ChildDetail):
     model = DepositObligation
 
 
+@extend_schema_view(post=extend_schema(
+    request=schemas.ProofReceiptInput,
+    responses=schemas.responses(schemas.ObligationDetailRead)))
 class ProofReceipts(OwnedView):
     """Officer records when deposit proof and Affidavit-3 were received (empty = reviewed, not received)."""
     def post(self, request, pk):

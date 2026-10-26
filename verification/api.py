@@ -1,3 +1,7 @@
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from portal.api.schema_types import INTEGER, array, obj, responses
+from . import schema as docs
+
 import json
 
 from django.shortcuts import get_object_or_404
@@ -10,6 +14,7 @@ from .services import checks, import_statement, plan_matches
 from .bank import request_confirmation
 
 
+@extend_schema_view(get=extend_schema(responses=responses(docs.EVIDENCE)))
 class Evidence(RecordEndpoint):
     def get(self, request, pk):
         item = item_for(request.user, pk)
@@ -20,6 +25,9 @@ class Evidence(RecordEndpoint):
             'notice': 'Document review and simulated matches do not establish bank authenticity.'})
 
 
+@extend_schema_view(
+    get=extend_schema(responses=responses(array(docs.IMPORT))),
+    post=extend_schema(request={'multipart/form-data': docs.STATEMENT_INPUT}, responses=responses(docs.STATEMENT_RESULT)))
 class Statements(RecordEndpoint):
     def get(self, request):
         require_officer(request.user)
@@ -43,6 +51,9 @@ class Statements(RecordEndpoint):
             'rows': list(batch.lines.values('number', 'utr', 'amount_paise', 'value_date', 'result', 'instrument_id'))})
 
 
+@extend_schema_view(
+    get=extend_schema(responses=responses(array(docs.BANK_REQUEST))),
+    post=extend_schema(request={'application/json': obj({'version': INTEGER})}, responses=responses(docs.BANK_CREATED, 201)))
 class BankRequests(RecordEndpoint):
     def get(self, request, pk):
         item = item_for(request.user, pk)

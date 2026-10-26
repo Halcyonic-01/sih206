@@ -6,10 +6,11 @@ import { useAuth } from '@/auth/AuthProvider'
 import { ROLE_LABELS } from '@/auth/types'
 import { Brand } from '@/components/Logo'
 import { LoadingState } from '@/components/states'
+import { PortalFooter, PortalIdentity } from '@/components/PortalChrome'
 import { appRoutes, BellSlot, HeaderSearchSlot } from '@/routes/registry'
 import { GROUPS, navItemsFor, selectedPath } from './navigation'
 
-const { Header, Sider, Content, Footer } = Layout
+const { Content } = Layout
 
 function initials(name: string) {
   const letters = name.trim().split(/\s+/).map((part) => part[0]).filter(Boolean)
@@ -39,76 +40,63 @@ export function AppShell() {
     navigate('/login', { replace: true })
   }
 
-  const menu = (
-    <Menu theme="dark" mode="inline" selectedKeys={selectedPath(items, location.pathname)}
-          items={GROUPS.map((group) => ({
-            type: 'group' as const, key: group, label: group,
-            children: items.filter((item) => item.group === group).map((item) => ({
-              key: item.path, icon: item.icon, label: <Link to={item.path}>{item.label}</Link>,
-            })),
-          })).filter((group) => group.children.length > 0)} />
-  )
-  const account = (
-    <div className="sider-user">
-      <strong>{user?.display_name}</strong>
-      {user?.institution?.name ?? (user?.unit ? `${user.unit} unit` : 'AICTE')}
-    </div>
-  )
+  const categories = GROUPS.map((group) => ({
+    key: group,
+    label: <span>{group} <DownOutlined aria-hidden className="category-chevron" /></span>,
+    children: items.filter((item) => item.group === group).map((item) => ({
+      key: item.path, icon: item.icon, label: <Link to={item.path}>{item.label}</Link>,
+    })),
+  })).filter((group) => group.children.length > 0)
+  const menuItems = [{ key: '/', label: <Link to="/">Home</Link> }, ...categories]
+  const selection = location.pathname === '/' ? ['/'] : selectedPath(items, location.pathname)
 
   return (
-    <Layout className="app-shell" hasSider>
+    <div className="portal-frame">
       <a className="skip-link" href="#main">Skip to main content</a>
-      {desktop && (
-        <Sider className="app-sider" width={264} theme="dark" aria-label="Primary navigation">
-          <div className="sider-brand"><Link to="/" aria-label="Pramaan home"><Brand inverse /></Link></div>
-          <nav className="sider-nav" aria-label="Main">{menu}</nav>
-          {account}
-        </Sider>
-      )}
+      <header className="portal-masthead">
+        <PortalIdentity />
+        <div className="masthead-actions">
+          {/* Keep search and notifications beside the account, without another toolbar. */}
+          {HeaderSearchSlot && items.some((item) => item.path === '/records') &&
+            <div className="header-search"><HeaderSearchSlot /></div>}
+          {BellSlot && <BellSlot />}
+          <Dropdown trigger={['click']} placement="bottomRight" menu={{ items: [
+            { key: 'who', disabled: true, label: user?.institution?.name ?? 'Pramaan workspace' },
+            { type: 'divider' },
+            { key: 'logout', icon: <LogoutOutlined />, label: 'Sign out', onClick: () => void signOut() },
+          ] }}>
+            <Button type="text" className="account-button" aria-label="Account menu">
+              <span className="avatar" aria-hidden>{initials(user?.display_name ?? '')}</span>
+              <span className="account-text"><span>{user?.display_name}</span>
+                {user?.role && <small>{ROLE_LABELS[user.role]}</small>}</span>
+              <DownOutlined aria-hidden />
+            </Button>
+          </Dropdown>
+        </div>
+      </header>
+      <nav className="category-navigation" aria-label="Main">
+        {desktop ? <Menu theme="dark" mode="horizontal" className="category-menu"
+          selectedKeys={selection} items={menuItems} triggerSubMenuAction="click" /> :
+          <Button className="menu-toggle" type="text" aria-label="Open navigation" icon={<MenuOutlined />}
+            onClick={() => setDrawerOpen(true)}>Select section <DownOutlined aria-hidden /></Button>}
+      </nav>
       {!desktop && (
         <Drawer placement="left" width={288} open={drawerOpen} onClose={() => setDrawerOpen(false)} closable
-                title={<Brand compact size={30} />} styles={{ body: { padding: 0, background: '#0f2447' }, header: { background: '#fff' } }}>
-          <nav className="sider-nav" aria-label="Main">{menu}</nav>
-          {account}
+                title={<Brand compact size={30} />} styles={{ body: { padding: 0, background: '#fff' }, header: { background: '#fff' } }}>
+          <nav className="mobile-category-nav" aria-label="Sections">
+            <Menu theme="light" mode="inline" selectedKeys={selection} items={menuItems}
+              defaultOpenKeys={items.filter(item => selection.includes(item.path)).map(item => item.group)} />
+          </nav>
         </Drawer>
       )}
-      <Layout>
-        <Header className="shell-header">
-          <Button className="menu-toggle" type="text" size="large" aria-label="Open navigation" icon={<MenuOutlined />}
-                  onClick={() => setDrawerOpen(true)} />
-          <Link to="/" className="header-brand" aria-label="Pramaan home"><Brand compact size={30} /></Link>
-          {/* Search opens the records list, so it is offered only to accounts that can open it. */}
-          <div className="header-search">{HeaderSearchSlot && items.some((item) => item.path === '/records') && <HeaderSearchSlot />}</div>
-          <div className="header-actions">
-            {BellSlot && <BellSlot />}
-            <Dropdown trigger={['click']} placement="bottomRight" menu={{
-              items: [
-                { key: 'who', disabled: true, label: <span>{user?.institution?.name ?? (user?.unit ? `${user.unit} unit` : 'AICTE')}</span> },
-                { type: 'divider' },
-                { key: 'logout', icon: <LogoutOutlined />, label: 'Sign out', onClick: () => void signOut() },
-              ],
-            }}>
-              <Button type="text" className="account-button" aria-label="Account menu">
-                <span className="avatar" aria-hidden>{initials(user?.display_name ?? '')}</span>
-                <span className="account-text">
-                  <span>{user?.display_name}</span>
-                  {user?.role && <small>{ROLE_LABELS[user.role]}</small>}
-                </span>
-                <DownOutlined aria-hidden />
-              </Button>
-            </Dropdown>
-          </div>
-        </Header>
+      <Layout className="app-shell">
         <Content id="main" tabIndex={-1} className="shell-content">
           <Suspense fallback={<LoadingState />}>
             <Outlet />
           </Suspense>
         </Content>
-        <Footer className="shell-footer">
-          <p>© All India Council for Technical Education · Pramaan Security Deposit Portal</p>
-          <p>“Accepted” means accepted for tracking. It is not verification by the bank.</p>
-        </Footer>
+        <PortalFooter />
       </Layout>
-    </Layout>
+    </div>
   )
 }
