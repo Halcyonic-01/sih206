@@ -14,6 +14,7 @@ Standard library only; run it with any Python 3.12. It re-uses `.venv`, skips wo
 done (hash markers) and never resets existing data. Local synthetic data only.
 """
 import argparse
+import base64
 import hashlib
 import os
 import secrets
@@ -117,6 +118,23 @@ def prod_secret():
     return path.read_text().strip()
 
 
+def new_document_key():
+    return base64.urlsafe_b64encode(secrets.token_bytes(32)).decode('ascii').rstrip('=')
+
+
+def prod_document_key():
+    """Stable document master key for production-like local runs, kept in git-ignored data/ (like prod_secret)."""
+    path = ROOT / 'data' / '.document_key'
+    path.parent.mkdir(exist_ok=True)
+    if not path.exists():
+        path.write_text(new_document_key())
+        try:
+            path.chmod(0o600)
+        except OSError:
+            pass
+    return path.read_text().strip()
+
+
 def django_env(prod):
     env = os.environ.copy()
     env['PYTHONUNBUFFERED'] = '1'
@@ -124,6 +142,7 @@ def django_env(prod):
         env['DJANGO_DEBUG'] = 'false'
         # The .env key first, so `manage.py` commands run by hand sign links with the same key as the server.
         env.setdefault('DJANGO_SECRET_KEY', dotenv_settings().get('DJANGO_SECRET_KEY') or prod_secret())
+        env.setdefault('DOCUMENT_ENCRYPTION_KEY', dotenv_settings().get('DOCUMENT_ENCRYPTION_KEY') or prod_document_key())
     return env
 
 
@@ -170,6 +189,8 @@ def prepare_database(env, force_seed, prod):
     manage('migrate', '--noinput', env=env)
     check_seeded_database()
     manage('seal_audit_chain', env=env)  # seals audit events written before the hash chain existed
+    if env.get('DOCUMENT_ENCRYPTION_KEY') or dotenv_settings().get('DOCUMENT_ENCRYPTION_KEY'):
+        manage('encrypt_documents', env=env, check=False)  # encrypts files stored before the key was set; idempotent
     seed_env = {**env, 'DJANGO_DEBUG': 'true'}  # generated credentials are allowed in local DEBUG only
     steps = []
     if force_seed or not CREDENTIALS.exists():
@@ -306,6 +327,8 @@ def ensure_env_file():
             line = 'DJANGO_SECRET_KEY=' + secrets.token_urlsafe(50)
         elif line.startswith('AUDIT_CHAIN_KEY='):
             line = 'AUDIT_CHAIN_KEY=' + secrets.token_hex(32)
+        elif line.startswith('DOCUMENT_ENCRYPTION_KEY='):
+            line = 'DOCUMENT_ENCRYPTION_KEY=' + new_document_key()
         lines.append(line)
     ENV_FILE.write_text('\n'.join(lines) + '\n', encoding='utf-8')
     try:

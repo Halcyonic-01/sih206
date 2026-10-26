@@ -249,6 +249,9 @@ The local demo runs with no `.env` at all.
 | `AUDIT_CHAIN_KEY` | derived from the secret key | HMAC key for the audit chain. Set a separate long value in production. Changing it breaks verification of existing events. |
 | `MAX_UPLOAD_MB` | `10` | Largest PDF upload. |
 | `BUSINESS_TIMEZONE` | `Asia/Kolkata` | Timezone for dates and deadlines. |
+| `DOCUMENT_ENCRYPTION_KEY` | empty | Master key (32 random bytes, URL-safe base64) for AES-256-GCM encryption of stored PDFs. **Required when `DJANGO_DEBUG=false`.** Generate with `python -c "from config.documentkey import generate_key; print(generate_key())"`. Empty in local DEBUG keeps files in plain form. |
+| `DOCUMENT_ENCRYPTION_OLD_KEYS` | empty | Previous master keys, comma-separated, still accepted while `manage.py encrypt_documents` moves files to the current key. |
+| `DOCUMENT_ALLOW_PLAINTEXT` | `true` | Whether files stored before encryption was on may still be read. Set `false` once `encrypt_documents` has run. |
 | `REMINDER_DAYS` | `30,15,7` | Reminder thresholds used by the due-actions report. |
 
 ### Sign-in protection
@@ -505,6 +508,10 @@ append-only tables. Migrations are committed and `makemigrations --check` runs i
 * **Lockout and throttling.** Five failed sign-ins lock an account for 15 minutes. The sign-in endpoint is rate limited.
 * **Uploads.** Extension, type, size, header and trailer are checked, then the PDF is parsed. Encrypted files, files
   with JavaScript and files with embedded content are rejected. Storage names are generated and the SHA-256 is kept.
+* **Encryption at rest.** With `DOCUMENT_ENCRYPTION_KEY` set, every stored PDF is encrypted with its own AES-256-GCM key,
+  wrapped by the master key; a copied disk or backup does not expose documents. The SHA-256 is over the plaintext.
+  `manage.py encrypt_documents` encrypts older files and moves files to a new master key. The key must live in a secret store,
+  not next to the data.
 * **Headers.** A Content-Security-Policy, `X-Content-Type-Options`, same-origin referrer and opener policies, and
   no-store caching on API responses. Same-origin framing is allowed only for the PDF viewer.
 * **Tamper evidence.** Audit events are chained with an HMAC key. `manage.py verify_audit_chain` and the Audit screen
@@ -665,5 +672,5 @@ this README are current.
 * **AI is advisory.** It never decides anything and the portal works without it.
 * **Local file storage.** Uploaded PDFs are stored on the server's disk under `data/documents`, so a hosted
   deployment needs a persistent volume at `data/`.
-* **Not yet hardened for real data.** Before real use it would need object storage, encryption at rest, a restricted
+* **Not yet hardened for real data.** Before real use it would need object storage, a restricted
   database role, a managed secret store, a formal accessibility audit and an approved rule set.

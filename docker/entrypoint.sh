@@ -13,8 +13,21 @@ if [ -z "${DJANGO_SECRET_KEY:-}" ]; then
   export DJANGO_SECRET_KEY
 fi
 
+# Document encryption key: same pattern. In a real deployment set DOCUMENT_ENCRYPTION_KEY from a secret store; a key kept in
+# the data volume is only as safe as the volume, so it does not protect a copied volume snapshot.
+if [ -z "${DOCUMENT_ENCRYPTION_KEY:-}" ]; then
+  if [ ! -s data/.document_key ]; then
+    python -c "from config.documentkey import generate_key; print(generate_key())" > data/.document_key
+    chmod 600 data/.document_key
+  fi
+  DOCUMENT_ENCRYPTION_KEY="$(cat data/.document_key)"
+  export DOCUMENT_ENCRYPTION_KEY
+fi
+
 python manage.py migrate --noinput
 python manage.py seal_audit_chain
+# Encrypt documents stored before encryption was on (idempotent); a problem is reported but does not stop start-up.
+python manage.py encrypt_documents || echo "encrypt_documents reported a problem; see above"
 
 # Synthetic demo accounts on the first start only. Generated passwords are written to the data volume
 # (never printed); read them with: docker compose exec web cat data/demo-credentials.txt
