@@ -37,6 +37,7 @@ jobs:
           DJANGO_SECURE_COOKIES: 'true'
           DJANGO_SECURE_SSL_REDIRECT: 'true'
           DJANGO_HSTS_SECONDS: '31536000'
+          DOCUMENT_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         run: python manage.py check --deploy --fail-level WARNING
       - name: OpenAPI schema is valid (warnings are informational)
         continue-on-error: true

@@ -97,6 +97,22 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # No MEDIA_URL route: all document reads go through an ownership-checked view.
 MEDIA_ROOT = BASE_DIR / 'data' / 'documents'
+# Encryption at rest for stored PDFs (portal/storage.py). With no key (local DEBUG only) files stay in plain form.
+DOCUMENT_ENCRYPTION_KEY = os.environ.get('DOCUMENT_ENCRYPTION_KEY', '').strip()
+DOCUMENT_ENCRYPTION_OLD_KEYS = [key.strip() for key in os.environ.get('DOCUMENT_ENCRYPTION_OLD_KEYS', '').split(',') if key.strip()]
+DOCUMENT_ALLOW_PLAINTEXT = env_bool('DOCUMENT_ALLOW_PLAINTEXT', True)
+if not DOCUMENT_ENCRYPTION_KEY and not DEBUG:
+    raise ImproperlyConfigured('Set DOCUMENT_ENCRYPTION_KEY when DJANGO_DEBUG=false '
+                               '(python -c "from config.documentkey import generate_key; print(generate_key())").')
+if DOCUMENT_ENCRYPTION_KEY:
+    from .documentkey import parse_key
+    for _key in [DOCUMENT_ENCRYPTION_KEY, *DOCUMENT_ENCRYPTION_OLD_KEYS]:
+        parse_key(_key)
+STORAGES = {
+    'default': {'BACKEND': 'portal.storage.EncryptedFileSystemStorage' if DOCUMENT_ENCRYPTION_KEY
+                else 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+}
 try:
     MAX_UPLOAD_BYTES = int(os.environ.get('MAX_UPLOAD_MB', '10')) * 1024 * 1024
 except ValueError:

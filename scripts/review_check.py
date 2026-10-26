@@ -22,7 +22,7 @@ NPM = shutil.which('npm')
 PRODUCTION_ENV = {
     'DJANGO_DEBUG': 'false', 'DJANGO_SECRET_KEY': 'review-check-not-a-real-secret-0123456789abcdefghijklmnop',
     'DJANGO_ALLOWED_HOSTS': 'example.org', 'DJANGO_SECURE_COOKIES': 'true', 'DJANGO_SECURE_SSL_REDIRECT': 'true',
-    'DJANGO_HSTS_SECONDS': '31536000',
+    'DJANGO_HSTS_SECONDS': '31536000', 'DOCUMENT_ENCRYPTION_KEY': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
 }
 results = []
 
