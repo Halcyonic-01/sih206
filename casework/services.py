@@ -22,6 +22,7 @@ from obligations.models import ClearanceTask, DepositObligation, IssuedLetter, M
 from obligations.release_prerequisites import evaluate_prerequisites, PrerequisiteInputError, SECTIONS, TOP
 from obligations.rules import rule_snapshot
 from obligations.services import DependencyUnavailable, expected_version, reason_text
+from . import governance
 from .letters import render_letter
 from .facts import assemble as assemble_facts
 
@@ -77,6 +78,8 @@ def record(case, actor, action, reason):
 def case_snapshot(case):
     return {'case_version': case.version, 'release_status': str(case.release.status),
         'rule_sha256': case.rule_sha256, 'penalty_review_complete': case.penalty_review_complete,
+        'approval_policy': case.approval_policy, 'basis_fingerprint': case.basis_fingerprint,
+        'signatures': [{'actor_id': a.get('actor_id'), 'at': a.get('at')} for a in (case.approvals or [])],
         'clearances': list(case.clearances.order_by('unit').values('unit','status','decided_by_id','reason','evidence_ref')),
         'penalties': list(case.penalties.order_by('pk').values('id','kind','base_paise','amount_paise','status','decided_by_id','reason')),
         'letters': [{'serial': l.serial, 'sha256': l.sha256,
@@ -169,6 +172,13 @@ def require_gate(result, outcome):
         raise WorkflowError('Prerequisites do not permit this action: ' + result['outcome'])
 
 
+def require_unchanged_basis(case):
+    """An authorisation covers the case as it was approved. Refuse (409) once documents, clearances or penalties moved."""
+    if governance.basis_matches(case) is False:
+        raise WorkflowError('This case changed after it was authorised (documents, clearances or penalties). '
+                            'The authorisation no longer covers it; reject it and start a new request.')
+
+
 @transaction.atomic
 def request_case(actor, *, instrument_id, obligation_id, instrument_version, path, declarations, reason, template_ref):
     owner = institution_for(actor)
@@ -199,7 +209,8 @@ def request_case(actor, *, instrument_id, obligation_id, instrument_version, pat
     release = legacy.request_release(actor, instrument.pk, instrument_version, reason)
     case = ReleaseCase.objects.create(release=release, institution=owner, obligation=obligation,
         rule_version=obligation.rule_version, rule_sha256=rule.sha256,
-        path=path, mode=mode, declarations=declarations, template_ref=template_ref)
+        path=path, mode=mode, declarations=declarations, template_ref=template_ref,
+        approval_policy=governance.policy_for(instrument.amount_paise, timezone.localdate()))
     units = facts.get('required_units')
     if type(units) is not list or not all(type(u) is str for u in units) or not {'PGRC','VIGILANCE','GRANTS'} <= set(units) or len(units) != len(set(units)):
         raise DependencyUnavailable('Complete applicable clearance units unavailable.')
@@ -302,6 +313,28 @@ def decide(actor, case_id, version, instrument_version, decision, reason):
         raise WorkflowError('STALE_INSTRUMENT_VERSION')
     result = assessment(actor, case, 'APPROVE' if decision == 'approve' else 'REJECT', reason=reason)
     require_gate(result, 'AUTHORIZATION_RECORDABLE_IN_DEMO' if decision == 'approve' else 'REJECTION_RECORDABLE_IN_DEMO')
+    if decision == 'approve':
+        basis = governance.fingerprint(case)
+        approvals = list(case.approvals or [])
+        voided = bool(approvals) and approvals[0].get('fingerprint') != basis
+        if approvals and not voided and any(a.get('actor_id') == actor.pk for a in approvals):
+            raise PermissionDenied('A different authority user must give the second signature.')
+        if voided:
+            approvals = []  # the case changed after the first signature: it no longer covers what is on the case
+        approvals.append({'actor_id': actor.pk, 'at': timezone.now().isoformat(), 'fingerprint': basis, 'reason': reason})
+        if len(approvals) < governance.required_signatures(case):
+            bump(case, version)
+            case.approvals = approvals
+            case.save(update_fields=['approvals'])
+            record(case, actor, 'CASE_SIGNATURE_VOIDED_AND_RESTARTED' if voided else 'CASE_FIRST_SIGNATURE', reason)
+            from notifications import recipients
+            from notifications.service import notify
+            notify([u for u in recipients.authorities() if u.pk != actor.pk], 'release_second_signature',
+                   {'reference': case.release.instrument.reference, 'url': f'/releases/{case.pk}'},
+                   f's5:{case.pk}:second-signature:{case.version}')
+            return case
+        case.approvals, case.basis_fingerprint = approvals, basis
+        case.save(update_fields=['approvals', 'basis_fingerprint'])
     bump(case, version)
     legacy.decide_release(actor, case.release.instrument_id, case.release_id, instrument_version, decision, reason,
                           _casework_token=legacy._OWNED_CASE_TOKEN)
@@ -316,6 +349,7 @@ def issue(actor, case_id, version, reason):
     require_authority(actor)
     check_version(case, version)
     reason = reason_text(reason)
+    require_unchanged_basis(case)
     result = assessment(actor, case, 'ISSUE_LETTER', reason=reason)
     require_gate(result, 'LETTER_PREREQUISITES_MET_IN_DEMO')
     base = getattr(settings, 'SAKSHAM_PUBLIC_BASE_URL', '')
@@ -349,6 +383,10 @@ def _complete(actor, case_id, version, instrument_version, notes, document, refu
         raise ValidationError('Invalid recorded refund reference.')
     if instrument_version != case.release.instrument.version:
         raise WorkflowError('STALE_INSTRUMENT_VERSION')
+    require_unchanged_basis(case)
+    if governance.must_use_different_completer() and case.approvals and any(
+            a.get('actor_id') == actor.pk for a in case.approvals):
+        raise PermissionDenied('The person who authorised this release cannot also record its completion.')
     # TODO(Y2): parse a NEW upload using Yash's real bounded validator first.
     validator = getattr(settings, 'SAKSHAM_COMPLETION_VALIDATOR', None)
     if document is None or not callable(validator):

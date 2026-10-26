@@ -105,6 +105,8 @@ if SCAN_REQUIRED and not CLAMAV_HOST:
 MFA_REQUIRED = env_bool('MFA_REQUIRED', False)
 MFA_STEP_UP_SECONDS = env_int('MFA_STEP_UP_SECONDS', 600, minimum=60)
 MFA_ISSUER = os.environ.get('MFA_ISSUER', 'Pramaan').strip() or 'Pramaan'
+# Release governance (casework/governance.py): the person who authorised a release may not also record its completion.
+RELEASE_REQUIRE_DIFFERENT_COMPLETER = env_bool('RELEASE_REQUIRE_DIFFERENT_COMPLETER', False)
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # No MEDIA_URL route: all document reads go through an ownership-checked view.

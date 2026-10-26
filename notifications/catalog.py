@@ -49,6 +49,10 @@ TEMPLATES = {
     'penalty_proposed': Template(
         'Penalty proposed on FDR {reference}',
         'A penalty assessment is waiting for a decision on FDR {reference}.', 'warning'),
+    'release_second_signature': Template(
+        'Second signature needed on FDR {reference}',
+        'A first authority signature was recorded on the release of FDR {reference}. A different authority user must give '
+        'the second signature before the release is authorised.', 'warning'),
     'release_decided': Template(
         'Release decision on FDR {reference}',
         'A decision was recorded on the release request for FDR {reference}.'),

@@ -17,7 +17,7 @@ from portal.permissions import role
 from access import mfa
 from access.logging import log_access
 from access.models import AccessLog
-from . import services
+from . import governance, services
 from . import ai_summary
 
 
@@ -32,6 +32,11 @@ def case_json(actor, case):
     independent = independent and not case.clearances.filter(decided_by=actor).exists()
     ready = readiness is not None and readiness['outcome'] == 'READY_FOR_AUTHORITY_REVIEW'
     letter = IssuedLetter.objects.filter(case=case).first()
+    approvals = list(case.approvals or [])
+    needed = governance.required_signatures(case)
+    pending_basis = bool(approvals) and case.release.status == 'PENDING'
+    voided = pending_basis and approvals[0].get('fingerprint') != governance.fingerprint(case)
+    signed_by_me = any(a.get('actor_id') == actor.pk for a in approvals) and not voided
     history = MasterAudit.objects.filter(entity='releasecase', entity_id=case.pk, institution_id=case.institution_id).order_by('-pk')
     return {'id': case.pk, 'institution_id': case.institution_id, 'obligation_id': case.obligation_id,
         'instrument_id': case.release.instrument_id, 'version': case.version,
@@ -61,9 +66,16 @@ def case_json(actor, case):
             'base_paise': p.base_paise, 'rate_bps': p.rate_bps, 'clause': p.clause,
             'status': p.status, 'reason': p.reason} for p in case.penalties.order_by('pk')],
         'penalty_review_complete': case.penalty_review_complete,
+        'approval': {'required_signatures': needed, 'signatures_given': 0 if voided else len(approvals),
+            'threshold_paise': (case.approval_policy or {}).get('threshold_paise'),
+            'second_signature_required': needed > 1 and case.release.status == 'PENDING',
+            'signature_voided': bool(voided), 'signed_by_me': signed_by_me,
+            'basis_matches': governance.basis_matches(case),
+            'policy_source': (case.approval_policy or {}).get('source', ''),
+            'policy_label': (case.approval_policy or {}).get('label', 'DRAFT_DEMO_NOT_APPROVED')},
         'letter': None if letter is None else {'serial': letter.serial, 'kind': letter.kind,
             'revoked': letter.revoked_at is not None, 'unsigned_demo': True},
-        'actions': {'can_approve': independent and ready, 'can_reject': independent and ready,
+        'actions': {'can_approve': independent and ready and not signed_by_me, 'can_reject': independent and ready,
             'can_ai_summary': role(actor) in {'clearance', 'authority'},
             'can_review_penalties': role(actor) == 'officer' and case.release.status == 'PENDING',
             'can_issue': independent and case.release.status == 'APPROVED' and letter is None,

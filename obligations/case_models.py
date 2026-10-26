@@ -22,6 +22,11 @@ class ReleaseCase(models.Model):
     version = models.PositiveIntegerField(default=1)
     penalty_review_complete = models.BooleanField(default=False)
     completion_reference = models.CharField(max_length=200, blank=True)
+    # Governance (casework/governance.py): the approval policy copied when the case opened, the authority signatures given
+    # so far, and the fingerprint of what was approved. Completion and letter issue refuse if the basis changed since.
+    approval_policy = models.JSONField(default=dict, blank=True)
+    approvals = models.JSONField(default=list, blank=True)
+    basis_fingerprint = models.CharField(max_length=64, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
