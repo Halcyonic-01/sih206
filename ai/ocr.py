@@ -96,6 +96,9 @@ def extract_local(actor, document):
             raise ValueError('OCR_NOT_CONFIGURED')
         if document.page_count is None or not 1 <= document.page_count <= 5 or document.size_bytes > 10 * 1024 * 1024:
             raise ValueError('DOCUMENT_LIMIT')
+        from portal.scanning import downloadable
+        if not downloadable(document):
+            raise ValueError('DOCUMENT_NOT_SCANNED')
         if AiRun.objects.filter(actor=actor, operation='LOCAL_OCR', created_at__gte=timezone.now()-timedelta(hours=1)).count() > 10:
             raise ValueError('RATE_LIMIT')
         with document.file.open('rb') as source:
@@ -118,7 +121,7 @@ def extract_local(actor, document):
         run.status = 'FAILED'
         run.error_code = ('TIMEOUT' if isinstance(exc, subprocess.TimeoutExpired) else
                           str(exc) if isinstance(exc, ValueError) and str(exc) in
-                          ('OCR_NOT_CONFIGURED', 'DOCUMENT_LIMIT', 'RATE_LIMIT', 'DOCUMENT_INTEGRITY') else 'OCR_FAILED')
+                          ('OCR_NOT_CONFIGURED', 'DOCUMENT_LIMIT', 'RATE_LIMIT', 'DOCUMENT_INTEGRITY', 'DOCUMENT_NOT_SCANNED') else 'OCR_FAILED')
         return result | {'status': 'unavailable', 'detail': 'Local OCR unavailable. Continue manual entry.', 'code': run.error_code}
     finally:
         run.duration_ms = int((monotonic()-start)*1000)

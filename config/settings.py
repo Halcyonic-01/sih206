@@ -93,6 +93,13 @@ if not REMINDER_DAYS or any(day < 1 for day in REMINDER_DAYS):
     raise ImproperlyConfigured('REMINDER_DAYS must contain positive integer day thresholds.')
 USE_I18N = True
 USE_TZ = True
+# Malware scan of uploads through ClamAV's clamd (portal/scanning.py). SCAN_REQUIRED=true refuses uploads when the scanner is down.
+CLAMAV_HOST = os.environ.get('CLAMAV_HOST', '').strip()
+CLAMAV_PORT = int(os.environ.get('CLAMAV_PORT', '3310') or 3310)
+CLAMAV_TIMEOUT = float(os.environ.get('CLAMAV_TIMEOUT', '15') or 15)
+SCAN_REQUIRED = env_bool('SCAN_REQUIRED', False)
+if SCAN_REQUIRED and not CLAMAV_HOST:
+    raise ImproperlyConfigured('SCAN_REQUIRED=true needs CLAMAV_HOST (and CLAMAV_PORT) to point at a clamd service.')
 # Two-factor sign-in for staff (access/mfa.py). MFA_REQUIRED=true makes enrolment compulsory for officer, authority,
 # clearance and auditor accounts; step-up applies to release authorisation, letter issue, completion and officer correction.
 MFA_REQUIRED = env_bool('MFA_REQUIRED', False)
@@ -102,6 +109,22 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # No MEDIA_URL route: all document reads go through an ownership-checked view.
 MEDIA_ROOT = BASE_DIR / 'data' / 'documents'
+# Encryption at rest for stored PDFs (portal/storage.py). With no key (local DEBUG only) files stay in plain form.
+DOCUMENT_ENCRYPTION_KEY = os.environ.get('DOCUMENT_ENCRYPTION_KEY', '').strip()
+DOCUMENT_ENCRYPTION_OLD_KEYS = [key.strip() for key in os.environ.get('DOCUMENT_ENCRYPTION_OLD_KEYS', '').split(',') if key.strip()]
+DOCUMENT_ALLOW_PLAINTEXT = env_bool('DOCUMENT_ALLOW_PLAINTEXT', True)
+if not DOCUMENT_ENCRYPTION_KEY and not DEBUG:
+    raise ImproperlyConfigured('Set DOCUMENT_ENCRYPTION_KEY when DJANGO_DEBUG=false '
+                               '(python -c "from config.documentkey import generate_key; print(generate_key())").')
+if DOCUMENT_ENCRYPTION_KEY:
+    from .documentkey import parse_key
+    for _key in [DOCUMENT_ENCRYPTION_KEY, *DOCUMENT_ENCRYPTION_OLD_KEYS]:
+        parse_key(_key)
+STORAGES = {
+    'default': {'BACKEND': 'portal.storage.EncryptedFileSystemStorage' if DOCUMENT_ENCRYPTION_KEY
+                else 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+}
 try:
     MAX_UPLOAD_BYTES = int(os.environ.get('MAX_UPLOAD_MB', '10')) * 1024 * 1024
 except ValueError:

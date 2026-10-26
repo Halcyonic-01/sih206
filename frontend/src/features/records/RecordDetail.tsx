@@ -19,6 +19,8 @@ const DOCUMENT_KINDS = ['FDR', 'PAYMENT_PROOF', 'RPGF_PROOF', 'AFFIDAVIT_3', 'AF
 const RELEASE_KINDS = ['REQUEST_LETTER', 'AFFIDAVIT_6', 'APPROVAL_LETTER', 'STUDENT_CLEARANCE', 'EXTERNAL_NOC']
 const kindOptions = (kinds: string[]) => kinds.map((value) => ({ value, label: humanize(value) }))
 
+const SCAN_NOTE: Record<string, string> = { PENDING: ' · not scanned for malware', CLEAN: '', REJECTED: ' · quarantined (malware found)' }
+
 const MODAL_TITLES: Record<string, string> = {
   edit: 'Edit draft', renew: 'Create renewal', submit: 'Submit for review', accept: 'Accept for tracking',
   changes: 'Request corrections', correct: 'Officer correction', observations: 'Add observation',
@@ -123,8 +125,11 @@ export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number
         { key: 'documents', label: `Documents (${docs.length})`, children: docs.length ? (
           <div className="stack">
             <Select aria-label="Supporting document" style={{ width: '100%', maxWidth: 480 }} value={selected}
-                    options={docs.map((d) => ({ value: d.id, label: `${d.name} · ${humanize(d.kind)}` }))}
+                    options={docs.map((d) => ({ value: d.id, label: `${d.name} · ${humanize(d.kind)}${SCAN_NOTE[d.scan_status ?? 'CLEAN']}` }))}
                     onChange={(value) => { setDoc(value); setPage(1) }} />
+            {docs.find((d) => d.id === selected)?.scan_status === 'REJECTED' && (
+              <Alert type="error" showIcon message="This document was quarantined by the malware scan and cannot be opened." />
+            )}
             {selected && <Panel><PdfViewer api={api} id={selected} page={page} onPage={setPage} /></Panel>}
             {selected && (
               <Collapse items={[{ key: 'extract', label: 'Read details from this document', children: (

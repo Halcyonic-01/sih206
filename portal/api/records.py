@@ -23,6 +23,7 @@ from portal.exports import register_csv
 from portal.models import Document, Instrument
 from portal.notification_hook import notify_record
 from portal.permissions import institution_for, role, scoped_instruments
+from portal.scanning import downloadable
 from portal.uploads import DocumentIntegrityError, open_verified, record_integrity_failure
 from portal.validation import run_checks
 from verification.services import field_provenance
@@ -93,7 +94,7 @@ def detail(user, item):
     visible = scoped_instruments(user)
     result.update(actions=actions(user, item), release_case_id=release_case_id(user, item),
         documents=[{'id': d.pk, 'name': d.original_name, 'kind': d.kind,
-            'page_count': d.page_count, 'sha256': d.sha256, 'uploaded_at': d.created_at,
+            'page_count': d.page_count, 'sha256': d.sha256, 'uploaded_at': d.created_at, 'scan_status': d.scan_status,
             'download_url': f'/api/documents/{d.pk}/download/'} for d in item.documents.all()],
         observations=[services.observation_snapshot(o) for o in item.observations.all()],
         history=[{'id': e.pk, 'action': e.action, 'reason': e.reason, 'actor_id': e.actor_id,
@@ -222,6 +223,11 @@ class CorrectRecord(RecordEndpoint):
 class Download(RecordEndpoint):
     def get(self, request, pk):
         document = get_object_or_404(Document.objects.filter(instrument__in=scoped_instruments(request.user)), pk=pk)
+        if not downloadable(document):
+            quarantined = document.scan_status == 'REJECTED'
+            return Response({'detail': 'This document was quarantined by the malware scan.' if quarantined else
+                             'This document has not been scanned yet and cannot be downloaded.',
+                             'code': 'document_quarantined' if quarantined else 'document_not_scanned'}, status=409)
         try:
             file = open_verified(document)
         except FileNotFoundError:

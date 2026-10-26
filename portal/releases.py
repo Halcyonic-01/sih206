@@ -8,6 +8,7 @@ from django.utils import timezone
 from .models import Document, Instrument, ReleaseRequest
 from .permissions import institution_for, require_authority
 from .services import WorkflowError, _compare_and_update, event, snapshot
+from .scanning import scan_fields
 from .uploads import validate_pdf_upload
 
 # S5-owned extension guard. Existing requests without casework are unchanged.
@@ -94,7 +95,7 @@ def complete_release(actor, instrument_id, release_id, expected_version, notes, 
             evidence = Document(instrument=instrument, kind=Document.Kind.RELEASE_EVIDENCE,
                                 original_name=document.name[:255], size_bytes=document.size,
                                 sha256=digest.hexdigest(), uploaded_by=actor,
-                                page_count=document.validated_page_count)
+                                page_count=document.validated_page_count, **scan_fields(document))
             evidence.file.save(document.name, document, save=False)
             stored_file = evidence.file
             evidence.save()
