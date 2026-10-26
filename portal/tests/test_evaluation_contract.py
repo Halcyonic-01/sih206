@@ -43,4 +43,4 @@ class EvaluationContractTests(PortalTestCase):
         run_checks(item)
         event.refresh_from_db()
         self.assertEqual(event.after, before)
-        self.assertEqual(CHECKS_VERSION, 'technical-v2')
+        self.assertEqual(CHECKS_VERSION, 'technical-v3')
