@@ -1,0 +1,530 @@
+{
+  "schema": 1,
+  "synthetic_only": true,
+  "license": "CC0-1.0",
+  "label_review": "AUTHOR_LABELLED_NOT_INDEPENDENTLY_REVIEWED",
+  "purpose": "Small synthetic evaluation; not representative regulatory accuracy.",
+  "cases": [
+    {
+      "id": "T01",
+      "file": "T01.pdf",
+      "sha256": "41537ac7ed5f2d4a4213219f9cf755897e8ef038e4fdd4e7370643fb677bed39",
+      "page_count": 1,
+      "subset": "tuning",
+      "category": "clean",
+      "declared": {
+        "reference": "SYNTH-EVAL-T01",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-T01",
+          "page": 1
+        },
+        "bank": {
+          "value": "Fictional Evidence Bank",
+          "page": 1
+        },
+        "amount": {
+          "value": "500000.25",
+          "page": 1
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 1
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 1
+        },
+        "ifsc": {
+          "value": "DEMO0123456",
+          "page": 1
+        }
+      },
+      "expected_mismatches": []
+    },
+    {
+      "id": "T02",
+      "file": "T02.pdf",
+      "sha256": "9953c2aba06e55430efc48074036c043f32a785db8f611b2864c67087f9d5f4e",
+      "page_count": 2,
+      "subset": "tuning",
+      "category": "clean",
+      "declared": {
+        "reference": "SYNTH-EVAL-T02",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-T02",
+          "page": 1
+        },
+        "bank": {
+          "value": "Fictional Evidence Bank",
+          "page": 1
+        },
+        "amount": {
+          "value": "500000.25",
+          "page": 1
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 2
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 2
+        },
+        "ifsc": {
+          "value": "DEMO0123456",
+          "page": 2
+        }
+      },
+      "expected_mismatches": []
+    },
+    {
+      "id": "T03",
+      "file": "T03.pdf",
+      "sha256": "cbe6762cfe9532d10253e786c71ed1c03f680190a05cb82412e1126512be4349",
+      "page_count": 1,
+      "subset": "tuning",
+      "category": "clean",
+      "declared": {
+        "reference": "SYNTH-EVAL-T03",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-T03",
+          "page": 1
+        },
+        "bank": {
+          "value": "Fictional Evidence Bank",
+          "page": 1
+        },
+        "amount": {
+          "value": "500000.25",
+          "page": 1
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 1
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 1
+        },
+        "ifsc": {
+          "value": "DEMO0123456",
+          "page": 1
+        }
+      },
+      "expected_mismatches": []
+    },
+    {
+      "id": "T04",
+      "file": "T04.pdf",
+      "sha256": "68a919234301616cacd3a18ef7d8f8595a4e25c3586e6db1c5914e9a357a6a0c",
+      "page_count": 1,
+      "subset": "tuning",
+      "category": "clean",
+      "declared": {
+        "reference": "SYNTH-EVAL-T04",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-T04",
+          "page": 1
+        },
+        "bank": {
+          "value": "Fictional Evidence Bank",
+          "page": 1
+        },
+        "amount": {
+          "value": "500000.25",
+          "page": 1
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 1
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 1
+        },
+        "ifsc": {
+          "value": "DEMO0123456",
+          "page": 1
+        }
+      },
+      "expected_mismatches": []
+    },
+    {
+      "id": "S01",
+      "file": "S01.pdf",
+      "sha256": "56a95170d82ff6d3546be2294ef3245c09b0a6c9fa31d92fcffb10e83fc7777a",
+      "page_count": 1,
+      "subset": "tuning",
+      "category": "scan",
+      "declared": {
+        "reference": "SYNTH-EVAL-S01",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-S01",
+          "page": 1
+        },
+        "bank": {
+          "value": "Fictional Evidence Bank",
+          "page": 1
+        },
+        "amount": {
+          "value": "500000.25",
+          "page": 1
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 1
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 1
+        },
+        "ifsc": {
+          "value": "DEMO0123456",
+          "page": 1
+        }
+      },
+      "expected_mismatches": []
+    },
+    {
+      "id": "S02",
+      "file": "S02.pdf",
+      "sha256": "739f13e7d99502d12dd677f6b7a5851090ed597224bbc24cf64f3c1962f68bbb",
+      "page_count": 1,
+      "subset": "tuning",
+      "category": "scan",
+      "declared": {
+        "reference": "SYNTH-EVAL-S02",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-S02",
+          "page": 1
+        },
+        "bank": {
+          "value": "Fictional Evidence Bank",
+          "page": 1
+        },
+        "amount": {
+          "value": "500000.25",
+          "page": 1
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 1
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 1
+        },
+        "ifsc": {
+          "value": "DEMO0123456",
+          "page": 1
+        }
+      },
+      "expected_mismatches": []
+    },
+    {
+      "id": "S03",
+      "file": "S03.pdf",
+      "sha256": "adccd5fed9d2e7ee3390b32f857849b418be6b1f6014ba63faf43293791df36c",
+      "page_count": 1,
+      "subset": "heldout",
+      "category": "scan",
+      "declared": {
+        "reference": "SYNTH-EVAL-S03",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-S03",
+          "page": 1
+        },
+        "bank": {
+          "value": "Fictional Evidence Bank",
+          "page": 1
+        },
+        "amount": {
+          "value": "500000.25",
+          "page": 1
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 1
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 1
+        },
+        "ifsc": {
+          "value": "DEMO0123456",
+          "page": 1
+        }
+      },
+      "expected_mismatches": []
+    },
+    {
+      "id": "M01",
+      "file": "M01.pdf",
+      "sha256": "34ad8b8078fb6c3f63d2243678efbc5eab515882c6483c587d76521f1f08f279",
+      "page_count": 1,
+      "subset": "tuning",
+      "category": "mismatch",
+      "declared": {
+        "reference": "SYNTH-EVAL-M01",
+        "bank": "Fictional Evidence Bank",
+        "amount": "400000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-M01",
+          "page": 1
+        },
+        "bank": {
+          "value": "Fictional Evidence Bank",
+          "page": 1
+        },
+        "amount": {
+          "value": "500000.25",
+          "page": 1
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 1
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 1
+        },
+        "ifsc": {
+          "value": "DEMO0123456",
+          "page": 1
+        }
+      },
+      "expected_mismatches": [
+        "amount"
+      ]
+    },
+    {
+      "id": "M02",
+      "file": "M02.pdf",
+      "sha256": "69c5adba361d791c8ede21cff1d750b65b46479e8e9f930ba6685b2b03f27f1c",
+      "page_count": 1,
+      "subset": "heldout",
+      "category": "mismatch",
+      "declared": {
+        "reference": "SYNTH-EVAL-M02",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2035-01-01",
+        "ifsc": "TEST0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-M02",
+          "page": 1
+        },
+        "bank": {
+          "value": "Fictional Evidence Bank",
+          "page": 1
+        },
+        "amount": {
+          "value": "500000.25",
+          "page": 1
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 1
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 1
+        },
+        "ifsc": {
+          "value": "DEMO0123456",
+          "page": 1
+        }
+      },
+      "expected_mismatches": [
+        "maturity_date",
+        "ifsc"
+      ]
+    },
+    {
+      "id": "U01",
+      "file": "U01.pdf",
+      "sha256": "ca80450dc8d1eaa7917bb5720462b1bb21c8924b69814bc11e6a726c8937e064",
+      "page_count": 1,
+      "subset": "tuning",
+      "category": "unknown",
+      "declared": {
+        "reference": "SYNTH-EVAL-U01",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-U01",
+          "page": 1
+        },
+        "bank": {
+          "value": null,
+          "page": null
+        },
+        "amount": {
+          "value": "500000.25",
+          "page": 1
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 1
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 1
+        },
+        "ifsc": {
+          "value": null,
+          "page": null
+        }
+      },
+      "expected_mismatches": []
+    },
+    {
+      "id": "U02",
+      "file": "U02.pdf",
+      "sha256": "be51ec65694322fbe2cf069dd870ce3062f857f96c004ee137bb2caaae0c5a25",
+      "page_count": 2,
+      "subset": "heldout",
+      "category": "unknown",
+      "declared": {
+        "reference": "SYNTH-EVAL-U02",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": "SYNTH-EVAL-U02",
+          "page": 1
+        },
+        "bank": {
+          "value": "Fictional Evidence Bank",
+          "page": 1
+        },
+        "amount": {
+          "value": null,
+          "page": null
+        },
+        "issue_date": {
+          "value": "2026-01-01",
+          "page": 1
+        },
+        "maturity_date": {
+          "value": "2036-01-01",
+          "page": 1
+        },
+        "ifsc": {
+          "value": "DEMO0123456",
+          "page": 1
+        }
+      },
+      "expected_mismatches": []
+    },
+    {
+      "id": "U03",
+      "file": "U03.pdf",
+      "sha256": "b2b8b6fdde04061e6cf7d1e2db3a859352a1a942692d6509b5f89833647b572b",
+      "page_count": 1,
+      "subset": "heldout",
+      "category": "unknown",
+      "declared": {
+        "reference": "SYNTH-EVAL-U03",
+        "bank": "Fictional Evidence Bank",
+        "amount": "500000.25",
+        "issue_date": "2026-01-01",
+        "maturity_date": "2036-01-01",
+        "ifsc": "DEMO0123456"
+      },
+      "expected": {
+        "reference": {
+          "value": null,
+          "page": null
+        },
+        "bank": {
+          "value": null,
+          "page": null
+        },
+        "amount": {
+          "value": null,
+          "page": null
+        },
+        "issue_date": {
+          "value": null,
+          "page": null
+        },
+        "maturity_date": {
+          "value": null,
+          "page": null
+        },
+        "ifsc": {
+          "value": null,
+          "page": null
+        }
+      },
+      "expected_mismatches": []
+    }
+  ]
+}

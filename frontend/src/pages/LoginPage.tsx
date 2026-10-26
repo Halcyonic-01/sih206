@@ -10,8 +10,8 @@ import { appRoutes } from '@/routes/registry'
 
 interface LoginValues { username: string; password: string }
 
-/** Return to the page that asked for sign-in only if the account now signing in may open it. After a sign-out the
- * previous user's page is remembered too, and a different role would otherwise land on an access-denied screen. */
+/** Resume an interrupted session only if the account signing in may open the requested page.
+ * Explicit sign-out clears that destination in RequireRole, so the next login starts at home. */
 export function allowedDestination(destination: string, role: string | null | undefined): string {
   const pathname = destination.split(/[?#]/)[0] ?? '/'
   const route = appRoutes.find((entry) => matchPath({ path: entry.path, end: true }, pathname))

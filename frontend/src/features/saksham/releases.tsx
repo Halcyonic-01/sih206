@@ -6,7 +6,8 @@ import { Panel, SummaryList } from '@/components/Panel';
 import { StatusTag } from '@/components/StatusTag';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { humanize, RELEASE_PATH_LABELS } from '@/lib/labels';
-import {api, Case, Page, PublicRecord, publicRecord, Transport, money, paise, Failure} from './client';
+import {api, Case, Clearance, ClearanceEvidence, Page, PublicRecord, publicRecord, Transport, money, paise, Failure} from './client';
+import {ClearancePdf} from './ClearanceEvidence';
 import {ErrorBox, Loading, Notice, Readiness, useRemote} from './shared';
 
 export interface ReleaseInputs {
@@ -145,7 +146,13 @@ function CaseBody({client, identityKey, caseId}: {client: Transport; identityKey
       <Panel title="Clearances" flush>
         <Table rowKey="unit" size="middle" scroll={{x: 520}} pagination={false} dataSource={item.clearances} locale={{emptyText: 'No clearances required.'}} columns={[
           {title: 'Unit', dataIndex: 'unit'}, {title: 'Status', dataIndex: 'status', render: (v: string) => <StatusTag value={v} />},
-          {title: 'Reason', dataIndex: 'reason', render: (v: string) => v || '—'}]} />
+          {title: 'Reason', dataIndex: 'reason', render: (v: string) => v || '—'},
+          {title: 'Review and evidence', render: (_, t: Clearance) => <>
+            <p>{t.reviewer || 'No reviewer'} · {t.decided_at ? formatDateTime(t.decided_at) : 'Decision time not recorded'}</p>
+            <p>{t.evidence_ref || 'No reference'}</p>
+            {t.evidence ? <ClearancePdf key={t.evidence.id} evidence={t.evidence} /> :
+              <p>{t.evidence_state === 'LINKED_PDF' ? 'Protected PDF — access restricted to reviewing roles.' : 'Reference only — no linked PDF.'}</p>}
+          </>}]} />
       </Panel>
       <Panel title="Penalties">
         {item.penalties.length === 0 ? <p className="muted">No penalties proposed.</p> : <ul>{item.penalties.map(p => <li key={p.id}>{humanize(p.kind)}: {money(p.amount_paise)} <StatusTag value={p.status} /> <span className="muted">· clause {p.clause}</span>
@@ -192,43 +199,73 @@ function CaseBody({client, identityKey, caseId}: {client: Transport; identityKey
   </section>;
 }
 
-interface Task {case_id: number; version: number; unit: string; status: string; can_decide: boolean; due_date: string | null}
+interface Task extends Clearance {case_id: number; version: number; due_date: string | null}
 export function ClearanceQueue({client, identityKey, onSelect}: {client: Transport; identityKey: string; onSelect: (id: number) => void}) {
   return <QueueBody key={identityKey} client={client} identityKey={identityKey} onSelect={onSelect} />;
 }
 function QueueBody({client, identityKey, onSelect}: {client: Transport; identityKey: string; onSelect: (id: number) => void}) {
   const [page, setPage] = React.useState(1);
   const remote = useRemote<Page<Task>>(client, `clearance-tasks?page=${page}`, identityKey);
-  const [reason, setReason] = React.useState('');
-  const [evidence, setEvidence] = React.useState('');
-  const [error, setError] = React.useState<unknown>();
-  const [busy, setBusy] = React.useState(false);
-  async function decide(task: Task, status: string) {
-    setBusy(true); setError(undefined);
-    try {await client.post(api(`releases/${task.case_id}/clearances/${task.unit}`), {version: task.version, status, reason, evidence_ref: evidence}); setReason(''); setEvidence('');}
-    catch (e) {setError(e);} finally {remote.reload(); setBusy(false);}
-  }
   return <section>
     <PageHeader title="Clearance work" subtitle="Release cases waiting for your unit’s decision." />
     <Notice />
-    {!!remote.error && <ErrorBox error={remote.error} />} {!!error && <ErrorBox error={error} />}
+    {!!remote.error && <ErrorBox error={remote.error} />}
     {!remote.error && !remote.data && <Loading />}
-    <Panel title="Your decision">
-      <fieldset disabled={busy} style={{border: 0, padding: 0}}><legend className="sr-only">Clearance reason and evidence</legend>
-        <label>Reason <textarea maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
-        <label>Reviewed evidence reference <input maxLength={200} value={evidence} onChange={e => setEvidence(e.target.value)} /></label>
-        <p className="muted">Enter the reason and your unit’s file reference first, then choose a decision on a case below.</p></fieldset>
-    </Panel>
+    <p>Upload and review a supporting PDF for the specific case before recording your unit’s decision.</p>
     <h2>Cases</h2>
     {remote.data?.results.length === 0 && <p>No assigned clearance work. This does not mean all cases are cleared.</p>}
     <ul className="record-list">{remote.data?.results.map(t => <li key={`${t.case_id}:${t.unit}`} className="record-card">
       <div className="record-card__top"><button type="button" className="record-card__ref" onClick={() => onSelect(t.case_id)}>Case {t.case_id}</button><StatusTag value={t.status} /></div>
       <dl className="record-card__meta"><div><dt>Unit</dt><dd>{t.unit}</dd></div><div><dt>Due</dt><dd>{t.due_date ? formatDate(t.due_date) : 'Unavailable'}</dd></div></dl>
-      {t.can_decide && <div style={{marginTop: 12}}>{['CLEARED', 'OBJECTION', 'HOLD'].map(s => <button key={s} disabled={busy || !reason.trim() || !evidence.trim()} onClick={() => decide(t, s)}>{s.toLowerCase()}</button>)}</div>}
+      {t.can_decide ? <ClearanceDecision key={`${t.case_id}:${t.version}`} task={t} client={client} reload={remote.reload} /> :
+        t.evidence ? <ClearancePdf evidence={t.evidence} /> : <p>Reference only — no linked PDF.</p>}
     </li>)}</ul>
-    <nav aria-label="Task pages"><button disabled={page === 1 || busy} onClick={() => setPage(page - 1)}>Previous tasks</button>
-      <button disabled={page * 25 >= (remote.data?.count ?? 0) || busy} onClick={() => setPage(page + 1)}>Next tasks</button></nav>
+    <nav aria-label="Task pages"><button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous tasks</button>
+      <button disabled={page * 25 >= (remote.data?.count ?? 0)} onClick={() => setPage(page + 1)}>Next tasks</button></nav>
   </section>;
+}
+
+function ClearanceDecision({task, client, reload}: {task: Task; client: Transport; reload: () => void}) {
+  const base = `releases/${task.case_id}/clearances/${task.unit}`;
+  const remote = useRemote<{version: number; results: ClearanceEvidence[]}>(client, `${base}/evidence`, `${task.case_id}:${task.version}`);
+  const [file, setFile] = React.useState<File | null>(null);
+  const [selected, setSelected] = React.useState<number | null>(null);
+  const [reason, setReason] = React.useState('');
+  const [reference, setReference] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<unknown>();
+  const evidence = remote.data?.results.find(e => e.id === selected);
+  async function upload() {
+    if (!file || busy) return;
+    setBusy(true); setError(undefined);
+    const form = new FormData(); form.set('version', String(remote.data?.version ?? task.version)); form.set('document', file);
+    try {await client.post(api(`${base}/evidence`), form); reload();}
+    catch (e) {setError(e); setBusy(false);}
+  }
+  async function decide(status: string) {
+    if (!evidence || busy) return;
+    setBusy(true); setError(undefined);
+    try {await client.post(api(base), {version: remote.data?.version ?? task.version, status, reason,
+      evidence_ref: reference, evidence_id: evidence.id}); reload();}
+    catch (e) {setError(e); setBusy(false);}
+  }
+  return <fieldset disabled={busy} aria-label={`Decision for case ${task.case_id}`}>
+    <legend>Your decision — case {task.case_id}</legend>
+    {!!error && <ErrorBox error={error} />}{!!remote.error && <ErrorBox error={remote.error} />}
+    {!remote.data && !remote.error && <Loading />}
+    <label>Supporting clearance PDF <input type="file" accept="application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
+    <button disabled={!file || busy || !!remote.error} onClick={() => void upload()}>Upload supporting PDF</button>
+    <label>Reviewed supporting PDF <select value={selected ?? ''} onChange={e => setSelected(Number(e.target.value) || null)}>
+      <option value="">Select a PDF to review</option>{remote.data?.results.map(e => <option key={e.id} value={e.id}>{e.name} (#{e.id})</option>)}
+    </select></label>
+    {evidence && <ClearancePdf key={evidence.id} evidence={evidence} />}
+    <label>Reason <textarea maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
+    <label>Reviewed evidence reference <input maxLength={200} value={reference} onChange={e => setReference(e.target.value)} /></label>
+    {task.status !== 'OPEN' && <p>Re-attestation preserves the existing {task.status} decision; the prior review remains in history.</p>}
+    {(task.status === 'OPEN' ? ['CLEARED', 'OBJECTION', 'HOLD'] : [task.status]).map(s => <button key={s}
+      disabled={busy || !evidence || !reason.trim() || !reference.trim() || !!remote.error}
+      onClick={() => void decide(s)}>{s.toLowerCase()}</button>)}
+  </fieldset>;
 }
 
 export function PublicVerification({client, token}: {client: Transport; token: string}) {

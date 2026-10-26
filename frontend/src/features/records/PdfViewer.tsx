@@ -7,7 +7,7 @@ import type { Api } from './types'
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
 
-export function PdfViewer({ api, id, page, onPage }: { api: Api; id: number; page: number; onPage: (n: number) => void }) {
+export function PdfViewer({ api, id, page, onPage, downloadPath }: { api: Api; id: number; page: number; onPage: (n: number) => void; downloadPath?: string }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const [pdf, setPdf] = useState<pdfjs.PDFDocumentProxy>()
   const [error, setError] = useState('')
@@ -46,7 +46,7 @@ export function PdfViewer({ api, id, page, onPage }: { api: Api; id: number; pag
         <InputNumber aria-label="PDF page" min={1} max={pdf?.numPages || 1} value={page} onChange={(n) => onPage(Number(n) || 1)} style={{ width: 84 }} />
         <span className="muted">of {pdf?.numPages ?? '…'}</span>
         <Button icon={<RightOutlined />} disabled={!pdf || page >= pdf.numPages} onClick={() => onPage(page + 1)} aria-label="Next page" />
-        <Button type="link" icon={<DownloadOutlined />} href={`/api/documents/${id}/download/`} style={{ marginInlineStart: 'auto' }}>Download original</Button>
+        <Button type="link" icon={<DownloadOutlined />} href={downloadPath ?? `/api/documents/${id}/download/`} style={{ marginInlineStart: 'auto' }}>Download original</Button>
       </div>
       {error && <Alert type="error" showIcon message={error} style={{ marginTop: 12 }} />}
       <Spin spinning={busy}><div className="pdf-stage"><canvas ref={canvas} role="img" aria-label={`PDF page ${page}`} /></div></Spin>

@@ -10,7 +10,7 @@ import { useAuth } from './AuthProvider'
  * The server still enforces every rule; this just keeps people off screens that would only say 403.
  */
 export function RequireRole({ roles, children }: { roles?: Role[]; children: ReactNode }) {
-  const { status, user } = useAuth()
+  const { status, user, signedOut } = useAuth()
   const location = useLocation()
 
   if (status === 'loading') return <Spin fullscreen tip="Loading…" />
@@ -20,7 +20,7 @@ export function RequireRole({ roles, children }: { roles?: Role[]; children: Rea
   if (status === 'anonymous' || !user) {
     // The route change is a low-priority React transition; on a busy device it can take a moment. Say what is
     // happening (and offer the link) instead of showing a blank screen while it lands.
-    const from = { from: location.pathname + location.search }
+    const from = signedOut ? null : { from: location.pathname + location.search }
     return <>
       <Navigate to="/login" replace state={from} />
       <p role="status" className="session-ended">

@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import DatabaseError
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 
-from obligations.api.views import OwnedView, body, page, pagination
-from obligations.models import ClearanceTask, IssuedLetter, MasterAudit
+from obligations.api.views import OwnedView as PlatformOwnedView, Unavailable, body, page, pagination
+from obligations.models import ClearanceEvidence, ClearanceTask, IssuedLetter, MasterAudit
 from obligations.services import DependencyUnavailable
 from portal.models import Instrument
 from portal.permissions import role
@@ -13,6 +14,31 @@ from access.logging import log_access
 from access.models import AccessLog
 from . import services
 from . import ai_summary
+
+
+class OwnedView(PlatformOwnedView):
+    """Return a safe retryable response if case storage or access logging fails."""
+    def handle_exception(self, exc):
+        if isinstance(exc, (DatabaseError, OSError)):
+            exc = Unavailable()
+        return super().handle_exception(exc)
+
+
+def evidence_json(item):
+    return {'id': item.pk, 'name': item.original_name, 'page_count': item.page_count,
+        'size_bytes': item.size_bytes, 'sha256': item.sha256, 'uploaded_by': item.uploaded_by.get_username(),
+        'uploaded_at': item.created_at.isoformat(),
+        'download_path': f'/api/releases/{item.task.case_id}/clearances/{item.task.unit}/evidence/{item.pk}'}
+
+
+def clearance_json(actor, case, task):
+    readable = services.clearance_evidence_readable(actor, task)
+    return {'unit': task.unit, 'status': task.status, 'reason': task.reason,
+        'evidence_ref': task.evidence_ref, 'evidence_state': 'LINKED_PDF' if task.evidence_id else 'REFERENCE_ONLY' if task.status != 'OPEN' else 'MISSING',
+        'evidence': evidence_json(task.evidence) if task.evidence_id and readable else None,
+        'reviewer': task.decided_by.get_username() if task.decided_by_id else None,
+        'decided_at': task.decided_at.isoformat() if task.decided_at else None,
+        'can_decide': services.clearance_editable(case, task) and services.clearance_allowed(actor, task)}
 
 
 def case_json(actor, case):
@@ -48,9 +74,7 @@ def case_json(actor, case):
                        'Review prerequisites' if case.release.status == 'PENDING' else 'Read recorded history',
         'responsible_party': 'Authority and institution' if case.release.status == 'APPROVED' else
                              'Institution and reviewing units' if case.release.status == 'PENDING' else 'No pending release action',
-        'clearances': [{'unit': t.unit, 'status': t.status, 'reason': t.reason,
-            'evidence_ref': t.evidence_ref, 'can_decide': case.release.status == 'PENDING' and t.status == 'OPEN'
-            and services.clearance_allowed(actor, t)} for t in case.clearances.order_by('unit')],
+        'clearances': [clearance_json(actor, case, t) for t in case.clearances.select_related('evidence__task', 'decided_by').order_by('unit')],
         'penalties': [{'id': p.pk, 'kind': p.kind, 'amount_paise': p.amount_paise,
             'base_paise': p.base_paise, 'rate_bps': p.rate_bps, 'clause': p.clause,
             'status': p.status, 'reason': p.reason} for p in case.penalties.order_by('pk')],
@@ -155,18 +179,54 @@ class CaseAction(OwnedView):
 
 class Clearance(OwnedView):
     def post(self, request, pk, unit):
-        data = body(request, {'version','status','reason','evidence_ref'})
+        data = body(request, {'version','status','reason','evidence_ref','evidence_id'})
         case = services.decide_clearance(request.user, pk, unit, data.get('version'),
-            data.get('status'), data.get('reason'), data.get('evidence_ref'))
+            data.get('status'), data.get('reason'), data.get('evidence_ref'), data.get('evidence_id'))
         return Response(case_json(request.user, case))
+
+
+class ClearanceEvidenceList(OwnedView):
+    def get(self, request, pk, unit):
+        case = services.get_case(request.user, pk)
+        task = get_object_or_404(ClearanceTask, case=case, unit=unit)
+        if not services.clearance_evidence_readable(request.user, task):
+            raise Http404
+        return Response({'version': case.version, 'results': [evidence_json(e)
+            for e in task.evidence_items.select_related('task', 'uploaded_by').defer('pdf').order_by('pk')]})
+
+    def post(self, request, pk, unit):
+        if set(request.data) != {'version', 'document'} or len(request.FILES.getlist('document')) != 1:
+            raise ValidationError('Supply version and one supporting PDF only.')
+        try:
+            version = int(request.data['version'])
+        except (TypeError, ValueError):
+            raise ValidationError('Current version is required.') from None
+        case, item = services.upload_clearance_evidence(request.user, pk, unit, version, request.FILES['document'])
+        return Response({'version': case.version, 'evidence': evidence_json(item)}, status=201)
+
+
+class ClearanceEvidenceDownload(OwnedView):
+    def get(self, request, pk, unit, evidence_id):
+        case = services.get_case(request.user, pk)
+        task = get_object_or_404(ClearanceTask, case=case, unit=unit)
+        if not services.clearance_evidence_readable(request.user, task):
+            raise Http404
+        item = get_object_or_404(ClearanceEvidence, pk=evidence_id, task=task)
+        import hashlib
+        if hashlib.sha256(bytes(item.pdf)).hexdigest() != item.sha256:
+            raise DependencyUnavailable('Evidence integrity check failed.')
+        log_access(request, AccessLog.DOCUMENT_DOWNLOAD, item, detail='Protected clearance PDF')
+        response = HttpResponse(bytes(item.pdf), content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="clearance-evidence-{item.pk}.pdf"'
+        response['X-Content-Type-Options'] = 'nosniff'
+        return response
 
 
 class ClearanceQueue(OwnedView):
     def get(self, request):
         tasks = ClearanceTask.objects.filter(case__in=services.scoped_cases(request.user)).select_related('case__release')
-        visible = [{'case_id': t.case_id, 'version': t.case.version,
-            'unit': t.unit, 'status': t.status, 'due_date': t.due_date,
-            'can_decide': t.status == 'OPEN' and t.case.release.status == 'PENDING'}
+        visible = [{'case_id': t.case_id, 'version': t.case.version, 'due_date': t.due_date,
+            **clearance_json(request.user, t.case, t)}
             for t in tasks.order_by('pk') if services.clearance_allowed(request.user, t)]
         number, size = pagination(request)
         start = (number - 1) * size

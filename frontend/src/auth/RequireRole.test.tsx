@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import LoginPage from '@/pages/LoginPage'
-import { AuthProvider } from './AuthProvider'
+import { AuthProvider, useAuth } from './AuthProvider'
 import { RequireRole } from './RequireRole'
 
 const fetchMock = vi.fn<typeof fetch>()
@@ -12,6 +12,11 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
   status, headers: { 'Content-Type': 'application/json' },
 })
 const officer = { id: 1, username: 'officer', display_name: 'Officer', role: 'officer', institution: null }
+
+function ProtectedScreen() {
+  const { logout } = useAuth()
+  return <><p>Officer screen</p><button onClick={() => void logout().catch(() => {})}>Sign out</button></>
+}
 
 function mount(initial: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -21,7 +26,8 @@ function mount(initial: string) {
         <MemoryRouter initialEntries={[initial]}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/officer-only" element={<RequireRole roles={['officer']}><p>Officer screen</p></RequireRole>} />
+            <Route path="/" element={<RequireRole><p>Home screen</p></RequireRole>} />
+            <Route path="/officer-only" element={<RequireRole roles={['officer']}><ProtectedScreen /></RequireRole>} />
             <Route path="/authority-only" element={<RequireRole roles={['authority']}><p>Authority screen</p></RequireRole>} />
           </Routes>
         </MemoryRouter>
@@ -34,6 +40,25 @@ beforeEach(() => { vi.stubGlobal('fetch', fetchMock) })
 afterEach(() => { fetchMock.mockReset(); vi.unstubAllGlobals() })
 
 describe('RequireRole', () => {
+  it.each(['success', 'offline', 'expired'])('starts at home after explicit sign-out (%s)', async (result) => {
+    fetchMock.mockImplementation(async (url) => {
+      if (String(url) === '/api/auth/logout/') {
+        if (result === 'offline') throw new TypeError('Offline')
+        if (result === 'expired') return json(401, { detail: 'Session expired.', code: 'not_authenticated' })
+      }
+      return json(200, officer)
+    })
+    document.cookie = 'csrftoken=tok; path=/'
+    mount('/officer-only')
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Sign out' }))
+    await user.type(await screen.findByLabelText('Username'), 'officer')
+    await user.type(screen.getByLabelText('Password'), 'secret-password')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByText('Home screen')).toBeInTheDocument()
+    expect(screen.queryByText('Officer screen')).not.toBeInTheDocument()
+  })
+
   it('sends anonymous visitors to the login page', async () => {
     fetchMock.mockImplementation(async () => json(401, { detail: 'Auth.', code: 'not_authenticated' }))
     mount('/officer-only')

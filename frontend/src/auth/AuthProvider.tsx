@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ApiError, get, onUnauthorized, post, type Role } from '@/api/client'
 import type { CurrentUser } from './types'
 
@@ -8,6 +8,7 @@ type Status = 'loading' | 'authenticated' | 'anonymous' | 'error'
 interface AuthContextValue {
   user: CurrentUser | null
   status: Status
+  signedOut: boolean
   login: (username: string, password: string) => Promise<CurrentUser>
   logout: () => Promise<void>
   hasRole: (...roles: Role[]) => boolean
@@ -33,6 +34,7 @@ async function fetchMe(): Promise<CurrentUser | null> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const client = useQueryClient()
+  const [signedOut, setSignedOut] = useState(false)
   const me = useQuery({ queryKey: ME_KEY, queryFn: fetchMe, staleTime: 60_000, retry: false })
 
   // Any 401 from any request ends the local session and drops cached private data.
@@ -40,14 +42,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, password: string) => {
     const user = await post<CurrentUser>('/auth/login/', { username, password })
+    setSignedOut(false)
     dropPrivateData(client, user)
     return user
   }, [client])
 
   const logout = useCallback(async () => {
+    // Mark intent before the request: a 401 can also end the local session.
+    setSignedOut(true)
     try {
       await post('/auth/logout/')
     } finally {
+      // The guard may render before AppShell navigates away. Do not remember the old
+      // user's page as a login destination after an intentional sign-out.
       dropPrivateData(client, null)
     }
   }, [client])
@@ -55,9 +62,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const user = me.data ?? null
   const status: Status = me.isPending ? 'loading' : me.isError ? 'error' : user ? 'authenticated' : 'anonymous'
   const value = useMemo<AuthContextValue>(() => ({
-    user, status, login, logout,
+    user, status, signedOut, login, logout,
     hasRole: (...roles) => !!user?.role && roles.includes(user.role),
-  }), [user, status, login, logout])
+  }), [user, status, signedOut, login, logout])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
