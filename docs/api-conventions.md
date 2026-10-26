@@ -143,6 +143,8 @@ rejects a second seal with the same `prev_hash` (no forks).
 * `python manage.py seal_audit_chain` seals older events; they are marked `backfilled` ("sealed late"): this proves
   they were not changed since, not that they were correct when written. `run_portal.py` runs it after `migrate`.
 * Do not create audit events with `bulk_create` or raw SQL: they would be reported as unsealed.
-* Limits: this detects tampering after the fact. Stage 3 adds database triggers / INSERT-only roles and anchors
-  the chain head in write-once storage, so a database administrator cannot silently rebuild the chain.
+* On PostgreSQL, triggers (`audit.0002_append_only_triggers`) also reject `UPDATE` and `DELETE` on the event, seal, access-log
+  and verification-evidence tables; see [supabase](supabase.md). Run the app as a non-owner role.
+* Limits: the chain detects tampering after the fact and the triggers can be disabled by a table owner. Anchoring the chain
+  head in write-once storage is still open, so a database administrator could rebuild the chain.
 * SQLite now runs with `transaction_mode=IMMEDIATE` so writers queue instead of racing.

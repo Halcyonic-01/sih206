@@ -64,6 +64,43 @@ verification, obtain the project's CA certificate from Supabase and configure
 `DATABASE_SSLMODE=verify-full` plus `DATABASE_SSL_ROOT_CERT` with its absolute path.
 No live cloud connection is established until the actual URI is configured.
 
+## Append-only audit tables (database triggers)
+
+Migration `audit.0002_append_only_triggers` adds a `BEFORE UPDATE OR DELETE` trigger to `portal_auditevent`,
+`audit_auditseal`, `access_accesslog` and `verification_verificationevidence`. On PostgreSQL any `UPDATE` or `DELETE`
+on them fails with "is not allowed: the table is append-only", whoever is connected. SQLite (local demo and tests) is
+unchanged and keeps the application-level guards. The hash chain still detects tampering; the triggers prevent it.
+
+A table **owner** or superuser can still disable a trigger, and `TRUNCATE` is not covered. So use two roles:
+
+* **Migration role:** owns the tables, runs `check_supabase --initialize --migrate`. Use it only for deployments.
+* **Runtime role:** the one in the web process's `DATABASE_URL`. It must not own the tables and must not be a superuser.
+  Grant it only what the app needs:
+  ```sql
+  GRANT USAGE ON SCHEMA portal_app TO portal_runtime;
+  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA portal_app TO portal_runtime;
+  GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA portal_app TO portal_runtime;
+  ALTER ROLE portal_runtime SET search_path = portal_app;
+  ```
+  Run the grants again after a migration that adds tables (or set `ALTER DEFAULT PRIVILEGES` for the migration role).
+
+Check the result with the runtime role's connection string:
+
+```bash
+python manage.py check_supabase --privileges
+```
+
+It lists each trigger as `ok` or `WARN`, and warns when the connected role is a superuser or owns the audit tables.
+Verify by hand that the guard works (should fail with the message above):
+
+```sql
+UPDATE portal_app.portal_auditevent SET reason = 'x';
+```
+
+The seeds, scenarios, review seed and the audit-chain verification were run end to end as a non-owner role with the
+triggers active. If a future change needs to correct an audit row, it cannot be done in place: see
+[the broken-chain runbook](runbooks/broken-audit-chain.md).
+
 ## Existing data and accounts
 
 If this development project used Yash's prototype notification schema before the
