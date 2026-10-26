@@ -141,3 +141,10 @@ def checks(actor, item):
             findings.append({'code': 'CROSS_INSTITUTION_POSSIBLE_DUPLICATE', 'severity': 'warning',
                 'explanation': 'A visible submitted record has matching issuer/reference details. Review required.'})
     return findings
+
+
+def field_provenance(item):
+    """Per-field status for the record detail; see verification/provenance.py."""
+    from .provenance import derive
+    return derive(item, list(item.verification_evidence.all()),
+                  list(item.audit_events.filter(action='OFFICER_CORRECTION')))

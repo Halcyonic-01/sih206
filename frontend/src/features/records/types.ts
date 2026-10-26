@@ -1,3 +1,4 @@
+export type FieldProvenance = {status: 'DECLARED' | 'DOCUMENT_REVIEWED' | 'CONFIRMED' | 'MISMATCH'; source: string; simulated: boolean; evidence_id: number | null; at: string | null};
 export type Role = 'institution' | 'officer' | 'authority';
 export type Api = {
   request<T>(path: string, options?: {method?: string; body?: unknown}): Promise<T>;
@@ -13,6 +14,7 @@ export type RecordItem = {
   documents?: {id: number; name: string; kind: string; page_count: number | null; sha256: string}[];
   observations?: {id: number; document_id: number; page_number: number | null; severity: string;
     comment: string; resolution: string; resolved_at: string | null}[];
+  field_provenance?: Record<string, FieldProvenance>;
   findings?: {code: string; severity: string; explanation: string}[];
   history?: {id: number; action: string; reason: string; at: string}[];
   lineage?: {predecessor: {id: number; reference: string} | null; successor: {id: number; reference: string} | null};

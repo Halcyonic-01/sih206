@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Collapse, Empty, Form, Input, Modal, Select, Table, Tabs, Tag, Timeline, Upload } from 'antd'
@@ -10,6 +10,7 @@ import { formatDate, formatDateTime, formatInr } from '@/lib/format'
 import { findingLabel, humanize } from '@/lib/labels'
 import { AiExtraction } from './AiExtraction'
 import { PdfViewer } from './PdfViewer'
+import { ProvenanceTag } from './ProvenanceTag'
 import { RecordForm } from './RecordForm'
 import { VerificationTab } from './Verification'
 import type { Api, RecordItem } from './types'
@@ -45,6 +46,7 @@ export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number
   const docs = item.documents || []
   const selected = doc ?? docs[0]?.id
   const can = (key: string) => Boolean(item.actions?.[`can_${key}`])
+  const tagged = (value: ReactNode, field: string) => (value ? <>{value}<ProvenanceTag provenance={item.field_provenance?.[field]} /></> : value)
   function changed() { setAction(''); setError(''); setSuggestions(undefined); setFile(undefined); void cache.invalidateQueries({ queryKey: ['records'] }) }
   async function mutate(values: Record<string, unknown>) {
     setBusy(true); setError('')
@@ -100,15 +102,23 @@ export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number
             <Panel title="Deposit">
               <SummaryList items={[
                 { label: 'Institution', value: item.institution.name }, { label: 'Deposit type', value: item.mode },
-                { label: 'Amount', value: formatInr(item.amount) }, { label: 'Issue date', value: formatDate(item.issue_date) },
-                { label: 'Maturity date', value: formatDate(item.maturity_date) }, { label: 'Issuing bank', value: item.bank }]} />
+                { label: 'Amount', value: tagged(formatInr(item.amount), 'amount') }, { label: 'Issue date', value: tagged(formatDate(item.issue_date), 'issue_date') },
+                { label: 'Maturity date', value: tagged(formatDate(item.maturity_date), 'maturity_date') }, { label: 'Issuing bank', value: tagged(item.bank, 'bank') },
+                { label: 'Reference', value: tagged(item.reference, 'reference') }]} />
             </Panel>
             <Panel title="Bank and holders">
               <SummaryList items={[
-                { label: 'IFSC', value: item.ifsc }, { label: 'Branch', value: item.branch }, { label: 'Holder names', value: item.holder_names },
-                { label: 'UTR', value: item.utr }, { label: 'Lien', value: item.lien_marked == null ? 'Not stated' : item.lien_marked ? 'Marked' : 'Not marked' },
+                { label: 'IFSC', value: tagged(item.ifsc, 'ifsc') }, { label: 'Branch', value: item.branch }, { label: 'Holder names', value: tagged(item.holder_names, 'holder_names') },
+                { label: 'UTR', value: tagged(item.utr, 'utr') }, { label: 'Lien', value: tagged(item.lien_marked == null ? 'Not stated' : item.lien_marked ? 'Marked' : 'Not marked', 'lien_marked') },
                 { label: 'Obligation', value: item.obligation_id ? `#${item.obligation_id}` : 'Not linked' }]} />
             </Panel>
+            {item.field_provenance && (
+              <p className="muted" style={{ gridColumn: '1 / -1', margin: 0 }}>
+                <strong>Declared</strong>: entered by the institution. <strong>Document reviewed</strong>: an officer accepted the record for tracking.
+                {' '}<strong>Confirmed</strong>: the value agrees with a bank statement line or bank response (simulated in this prototype, not bank authenticity).
+                {' '}<strong>Mismatch</strong>: such a source shows a different value.
+              </p>
+            )}
           </div>) },
         { key: 'documents', label: `Documents (${docs.length})`, children: docs.length ? (
           <div className="stack">

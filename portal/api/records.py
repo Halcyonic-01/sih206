@@ -23,6 +23,7 @@ from portal.models import Document, Instrument
 from portal.notification_hook import notify_record
 from portal.permissions import institution_for, role, scoped_instruments
 from portal.validation import run_checks
+from verification.services import field_provenance
 from .records_serializers import ActionInput, RecordWrite, UploadInput
 
 
@@ -96,6 +97,7 @@ def detail(user, item):
         history=[{'id': e.pk, 'action': e.action, 'reason': e.reason, 'actor_id': e.actor_id,
                   'at': e.created_at, 'before': e.before, 'after': e.after} for e in item.audit_events.all()],
         findings=[f.as_dict() for f in run_checks(item)],
+        field_provenance=field_provenance(item),
         lineage={'predecessor': visible.filter(pk=item.predecessor_id).values('id', 'reference').first(),
                  'successor': visible.filter(predecessor=item).values('id', 'reference').first()},
         maturity=classify_maturity(item.maturity_date, business_today()).__dict__)
