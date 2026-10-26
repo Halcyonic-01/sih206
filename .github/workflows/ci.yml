@@ -64,6 +64,53 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  browser-scenarios:
+    name: PS scenarios in the browser (Playwright)
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PORTAL_URL: http://127.0.0.1:8013
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build, seed the review data and start the portal in the background
+        run: |
+          nohup python scripts/run_portal.py --port 8013 --no-scheduler --no-mailpit > portal.log 2>&1 &
+          for i in $(seq 1 120); do
+            curl -fsS http://127.0.0.1:8013/api/health/ > /dev/null 2>&1 && exit 0
+            sleep 5
+          done
+          cat portal.log
+          exit 1
+      - name: Add the synthetic RTGS and OCR examples the record specs use
+        run: |
+          .venv/bin/python manage.py seed_yash_examples
+          .venv/bin/python manage.py seed_ocr_example
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Run the scenario specs
+        working-directory: frontend
+        run: npx playwright test
+      - name: Keep traces and the report when a spec fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+            portal.log
+          retention-days: 7
+
   fresh-install:
     name: Fresh install smoke (${{ matrix.os }})
     needs: [backend, frontend]

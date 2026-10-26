@@ -13,6 +13,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--initialize', action='store_true')
         parser.add_argument('--migrate', action='store_true')
+        parser.add_argument('--privileges', action='store_true',
+            help='Also report the append-only audit triggers and whether the connected role could disable them.')
         parser.add_argument('--upgrade-legacy-notifications', action='store_true',
             help='Archive prototype notification history and create the authoritative shared outbox tables.')
 
@@ -49,5 +51,15 @@ class Command(BaseCommand):
             if options['migrate']:
                 call_command('migrate', interactive=False, verbosity=options['verbosity'])
             self.stdout.write(self.style.SUCCESS('PostgreSQL connection and private application schema are ready. Credentials were not printed.'))
+            if options['privileges']:
+                self.report_privileges(schema)
         except (DatabaseError, OSError, ValueError):
             raise CommandError('Could not complete the Supabase database check. Verify the dashboard connection URI, password, network access, TLS and schema permissions. No credentials were printed.') from None
+
+    def report_privileges(self, schema):
+        from django.apps import apps
+        from audit.append_only import report
+        with connection.cursor() as cursor:
+            findings = report(cursor, schema, apps)
+        for ok, message in findings:
+            self.stdout.write(self.style.SUCCESS(f'ok    {message}') if ok else self.style.WARNING(f'WARN  {message}'))
