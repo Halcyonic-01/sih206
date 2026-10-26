@@ -22,6 +22,22 @@ Positive amount, required fields and date ordering remain Milestone 1 form/datab
 
 Current findings are recalculated on detail views. GET requests do not write findings or audit records. Submission and officer decisions save the current checks version and finding values into the audit event's `after` snapshot. New snapshots use `technical-v3` (v2 added the Unicode-casefold duplicate match, v3 the two AICTE holder and lien checks); historical `technical-v1` and `technical-v2` snapshots are not rewritten. Existing Milestone 1 audit entries are retained without fabricated retrospective results.
 
+## Per-field provenance
+
+The record detail (`GET /api/instruments/{id}/`) carries `field_provenance`: for amount, reference, IFSC, bank, holder names,
+issue date, maturity date, UTR and lien, one of
+
+| Status | Meaning |
+|---|---|
+| `DECLARED` | Entered by the institution; nothing else has looked at it |
+| `DOCUMENT_REVIEWED` | An officer accepted the record for tracking (officer review evidence); not bank authenticity |
+| `CONFIRMED` | A bank statement line or bank response saw the **same value the record holds now** (both are SIMULATED in this prototype; `simulated: true`) |
+| `MISMATCH` | That source saw a different value, or the bank denied authenticity. Mismatch wins over every other status |
+
+It is derived on read from the append-only `VerificationEvidence` rows and the officer-correction audit events (`verification/provenance.py`); nothing new is stored. The latest evidence that looked at a field decides it, and a field an
+officer corrected after the review goes back to `DECLARED`. The Details tab shows the status next to each value.
+This refines the record-level verification level; it does not replace it. A filter on the records list is not part of this change.
+
 ## Manual observations
 
 An officer inspects an uploaded document and records:
