@@ -22,6 +22,7 @@ from portal.exports import register_csv
 from portal.models import Document, Instrument
 from portal.notification_hook import notify_record
 from portal.permissions import institution_for, role, scoped_instruments
+from portal.uploads import DocumentIntegrityError, open_verified, record_integrity_failure
 from portal.validation import run_checks
 from .records_serializers import ActionInput, RecordWrite, UploadInput
 
@@ -218,9 +219,16 @@ class Download(RecordEndpoint):
     def get(self, request, pk):
         document = get_object_or_404(Document.objects.filter(instrument__in=scoped_instruments(request.user)), pk=pk)
         try:
-            file = document.file.open('rb')
+            file = open_verified(document)
         except FileNotFoundError:
             raise Http404 from None
+        except DocumentIntegrityError as error:
+            with transaction.atomic():
+                record_integrity_failure(error, request.user)
+            log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document,
+                       detail=f'instrument={document.instrument_id} refused=integrity')
+            return Response({'detail': 'This document failed its integrity check and cannot be downloaded. '
+                                       'The officers have been told.', 'code': 'document_integrity_failed'}, status=409)
         log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document, detail=f'instrument={document.instrument_id}')
         response = FileResponse(file, content_type='application/pdf', as_attachment=True,
                                 filename=document.original_name)
