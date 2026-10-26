@@ -293,6 +293,7 @@ For local email testing, point `EMAIL_HOST=localhost`, `EMAIL_PORT=1025`, `EMAIL
 
 | Variable | Default | Purpose |
 |---|---|---|
+| `FDR_LIEN_CHECK_BLOCKING` | `false` | Draft AICTE check: when `true`, an FDR recorded with no lien marked cannot be accepted. Off, the `LIEN_NOT_MARKED` finding is advisory. |
 | `AI_ENABLED` | `false` | Master switch for Gemini features. |
 | `GEMINI_API_KEY` | empty | Key from https://aistudio.google.com/apikey. Read from the environment only. |
 | `AI_MODEL` | `gemini-3.5-flash-lite` | Primary model. |

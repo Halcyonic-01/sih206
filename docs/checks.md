@@ -11,11 +11,16 @@ This document covers the Milestone 2 scrutiny checks, preserved in Milestones 3â
 | `FDR_DOCUMENT_REQUIRED` | Blocking | No attached document record. Drafts can be saved; submission is blocked. |
 | `POSSIBLE_DUPLICATE` | Warning | Same institution, bank and reference, excluding the current instrument; compares both sides after Unicode casefold and trimming surrounding whitespace. Advisory only. |
 
+| `HOLDER_NOT_AICTE` | Warning | FDR mode only. Holder names are recorded but do not mention AICTE (the Member Secretary, AICTE, or the full council name). A blank value is "not recorded" and gives no finding. Draft rule: APH 1.12(iv)-(v). |
+| `LIEN_NOT_MARKED` | Warning, or Blocking when `FDR_LIEN_CHECK_BLOCKING=true` | FDR mode only. The record explicitly says no lien is marked. Unknown (`null`) is not treated as "no lien". When blocking, acceptance is refused until the record is corrected. Draft rule: APH 1.12 (exact wording to be confirmed). |
+
+The two AICTE checks are **advisory draft rules**: they read what the institution declared, they do not read the document, and their clause references live in `portal/validation.py` (`AICTE_CHECK_RULES`) because the obligations `RuleSet` payload schema v1 cannot carry new rules. They add `checks_version` `technical-v3`.
+
 Duplicate search is scoped to the current institution BEFORE matching, including that institution's drafts. It returns neither identifiers nor metadata of matching records. A matching record in another institution produces no finding. This is a limited duplicate heuristic, not a global identity check or a fraud decision. The release audit fixed SQLite's ASCII-only normalization mismatch by streaming scoped bank/reference values and comparing them consistently in Python. This is linear in an institution's record count, suitable for the small demo; no fuzzy matching or transliteration is performed.
 
 Positive amount, required fields and date ordering remain Milestone 1 form/database validation. They are not duplicated as a second validation subsystem. There are no regulatory amount/tenure/eligibility rules.
 
-Current findings are recalculated on detail views. GET requests do not write findings or audit records. Submission and officer decisions save the current checks version and finding values into the audit event's `after` snapshot. New snapshots use `technical-v2`; historical `technical-v1` snapshots are not rewritten. Existing Milestone 1 audit entries are retained without fabricated retrospective results.
+Current findings are recalculated on detail views. GET requests do not write findings or audit records. Submission and officer decisions save the current checks version and finding values into the audit event's `after` snapshot. New snapshots use `technical-v3` (v2 added the Unicode-casefold duplicate match, v3 the two AICTE holder and lien checks); historical `technical-v1` and `technical-v2` snapshots are not rewritten. Existing Milestone 1 audit entries are retained without fabricated retrospective results.
 
 ## Manual observations
 
