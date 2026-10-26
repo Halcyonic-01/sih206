@@ -14,7 +14,7 @@ RUN pip install -r requirements.txt
 COPY . .
 COPY --from=frontend /app/frontend/dist ./frontend/dist
 # Static files for the legacy pages and the API docs (a throwaway key is enough for this build step).
-RUN DJANGO_DEBUG=false DJANGO_SECRET_KEY=build-only-not-used-at-runtime python manage.py collectstatic --noinput -v 0 \
+RUN DJANGO_DEBUG=false DJANGO_SECRET_KEY=build-only-not-used-at-runtime DOCUMENT_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA python manage.py collectstatic --noinput -v 0 \
     && useradd --create-home --uid 10001 app \
     && mkdir -p data \
     && chown -R app:app data \
