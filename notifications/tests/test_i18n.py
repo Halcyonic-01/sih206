@@ -29,5 +29,14 @@ class NotificationLanguageTests(SimpleTestCase):
         item = SimpleNamespace(template_id='instrument_submitted', context={'reference': 'A'},
                                subject='A different historical message', body='Free text')
         self.assertEqual(display_translations(item), {})
+
+    def test_integrity_alert_keeps_document_and_record_references_without_rewriting_history(self):
+        context = {'reference': 'FDR/TEST-01', 'document': 'synthetic-proof.pdf'}
+        subject, body, _, _ = render('document_integrity_failed', context)
+        item = SimpleNamespace(template_id='document_integrity_failed', context=context, subject=subject, body=body)
+        result = display_translations(item)['hi']
+        self.assertIn(context['reference'], result['subject'])
+        self.assertIn(context['document'], result['body'])
+        self.assertEqual((item.subject, item.body), (subject, body))
         item.template_id = 'custom-message'
         self.assertEqual(display_translations(item), {})

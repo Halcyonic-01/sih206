@@ -27,6 +27,11 @@ TEMPLATES = {
         'Changes requested on FDR {reference}',
         'The officer asked for changes to FDR {reference}. Open the portal to see the observations.',
         'warning'),
+    'document_integrity_failed': Template(
+        'Stored document failed its integrity check: {reference}',
+        'The stored file {document} on FDR {reference} no longer matches the checksum recorded at upload, '
+        'so downloads were refused. Treat the document as unreliable and ask the institution to upload it again.',
+        'critical'),
     # Y6: verification
     'verification_discrepancy': Template(
         'Statement mismatch on FDR {reference}',

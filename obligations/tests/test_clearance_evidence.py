@@ -69,6 +69,31 @@ class ClearanceEvidenceTests(PortalTestCase):
         self.assertEqual(self.client.get(view).status_code, 401)
         self.assertEqual(ClearanceEvidence.objects.count(), 1)
 
+    def test_clearance_workflow_with_encrypted_document_storage(self):
+        from datetime import date
+        from decimal import Decimal
+        from config.documentkey import generate_key
+        from portal import storage
+        from portal.models import Document
+        from portal.services import save_draft
+        with override_settings(DOCUMENT_ENCRYPTION_KEY=generate_key(), DOCUMENT_ENCRYPTION_OLD_KEYS=[],
+                DOCUMENT_ALLOW_PLAINTEXT=True,
+                STORAGES={'default': {'BACKEND': 'portal.storage.EncryptedFileSystemStorage'},
+                    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'}}):
+            record = save_draft(self.a, self.payload(reference='SYNTHETIC-ENCRYPTED',
+                amount=Decimal('500000.25'), issue_date=date(2026, 1, 1), maturity_date=date(2027, 1, 1))
+                | {'document': self.pdf()})
+            document = Document.objects.get(instrument=record)
+            self.assertTrue(storage.is_encrypted(document.file.storage.raw_bytes(document.file.name)))
+            from portal.uploads import open_verified
+            with open_verified(document) as stream:
+                self.assertTrue(stream.read().startswith(b'%PDF'))
+            case, evidence = self.upload(self.case())
+            self.client.force_login(self.authority)
+            response = self.client.get(f'/api/releases/{case.pk}/clearances/PGRC/evidence/{evidence.pk}')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(hashlib.sha256(response.content).hexdigest(), evidence.sha256)
+
     def test_missing_foreign_or_stale_evidence_cannot_decide(self):
         case, item = self.upload(self.case(), unit='VIGILANCE')
         self.client.force_login(self.clearance['PGRC'])

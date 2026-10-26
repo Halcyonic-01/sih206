@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import path from 'node:path';
 
 const root=path.resolve('..');
-const privateDir=path.join(root,'data/semifinal/data');
+const privateDir=path.resolve(root,process.env.SEMIFINAL_DATA_DIR || 'data/semifinal/data');
 const passwords=Object.fromEntries(readFileSync(path.join(privateDir,'demo-credentials.txt'),'utf8').split(/\r?\n/)
   .filter(line=>line.includes(': ')).map(line=>line.split(': ')));
 test.beforeAll(()=>{if(process.env.SEMIFINAL_DISPOSABLE!=='1')throw new Error('Use the disposable rehearsal profile.');});

@@ -18,6 +18,7 @@ docker compose exec web cat data/demo-credentials.txt data/authority-credentials
 * Configuration: copy `.env.example` to `.env`; Compose reads it for the `${...}` variables. A random
   `DJANGO_SECRET_KEY` is created in the volume when you do not set one. For anything other than localhost set
   `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, `DJANGO_SECURE_COOKIES=true` and put TLS in front.
+* Stored PDFs are encrypted. Set `DOCUMENT_ENCRYPTION_KEY` (see `.env.example`); when it is not set the container creates one in `data/.document_key`, which is only as safe as the volume itself, so use a real secret store outside demos. Documents stored before this are encrypted at start-up.
 * Data lives in the `portal-data` volume (SQLite and uploaded PDFs). `docker compose down` keeps it;
   `docker compose down -v` deletes it.
 * This is a demo packaging with synthetic data. Stage 3 replaces SQLite and local files with PostgreSQL and

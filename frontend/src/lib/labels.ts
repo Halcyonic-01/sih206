@@ -84,6 +84,8 @@ const FINDINGS: Record<string, string> = {
   ISSUER_UNCONFIRMED: 'Issuing bank not independently confirmed',
   CROSS_INSTITUTION_POSSIBLE_DUPLICATE: 'Possible duplicate of another institution’s record',
   POSSIBLE_DUPLICATE: 'Possible duplicate record',
+  HOLDER_NOT_AICTE: 'Holder names do not include AICTE',
+  LIEN_NOT_MARKED: 'No lien marked in favour of AICTE',
   MISSING_FDR_DOCUMENT: 'Supporting document missing',
   AMOUNT_SHORTFALL: 'Deposit below the required amount',
   TERM_GAP: 'Coverage ends before the obligation term',

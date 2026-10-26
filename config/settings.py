@@ -97,6 +97,22 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # No MEDIA_URL route: all document reads go through an ownership-checked view.
 MEDIA_ROOT = BASE_DIR / 'data' / 'documents'
+# Encryption at rest for stored PDFs (portal/storage.py). With no key (local DEBUG only) files stay in plain form.
+DOCUMENT_ENCRYPTION_KEY = os.environ.get('DOCUMENT_ENCRYPTION_KEY', '').strip()
+DOCUMENT_ENCRYPTION_OLD_KEYS = [key.strip() for key in os.environ.get('DOCUMENT_ENCRYPTION_OLD_KEYS', '').split(',') if key.strip()]
+DOCUMENT_ALLOW_PLAINTEXT = env_bool('DOCUMENT_ALLOW_PLAINTEXT', True)
+if not DOCUMENT_ENCRYPTION_KEY and not DEBUG:
+    raise ImproperlyConfigured('Set DOCUMENT_ENCRYPTION_KEY when DJANGO_DEBUG=false '
+                               '(python -c "from config.documentkey import generate_key; print(generate_key())").')
+if DOCUMENT_ENCRYPTION_KEY:
+    from .documentkey import parse_key
+    for _key in [DOCUMENT_ENCRYPTION_KEY, *DOCUMENT_ENCRYPTION_OLD_KEYS]:
+        parse_key(_key)
+STORAGES = {
+    'default': {'BACKEND': 'portal.storage.EncryptedFileSystemStorage' if DOCUMENT_ENCRYPTION_KEY
+                else 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+}
 try:
     MAX_UPLOAD_BYTES = int(os.environ.get('MAX_UPLOAD_MB', '10')) * 1024 * 1024
 except ValueError:
@@ -225,6 +241,8 @@ NOTIFICATION_EMAIL_ENABLED = env_bool('NOTIFICATION_EMAIL_ENABLED', False)
 BANK_CONTACTS = json.loads(os.environ.get('BANK_CONTACTS_JSON', '{}'))
 BANK_CONFIRMATION_SIMULATED = env_bool('BANK_CONFIRMATION_SIMULATED', True)
 BANK_PUBLIC_BASE_URL = os.environ.get('BANK_PUBLIC_BASE_URL', PORTAL_BASE_URL)
+# Draft AICTE check (docs/checks.md): when true, an FDR recorded with no lien marked cannot be accepted. Off = advisory.
+FDR_LIEN_CHECK_BLOCKING = env_bool('FDR_LIEN_CHECK_BLOCKING', False)
 AI_ENABLED = env_bool('AI_ENABLED', False)
 # Google Gemini (free tier available). The key is read from GEMINI_API_KEY by the AI worker process only.
 AI_MODEL = os.environ.get('AI_MODEL', '') or 'gemini-3.5-flash-lite'

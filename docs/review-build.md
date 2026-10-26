@@ -71,3 +71,23 @@ git push origin review-1
 ```
 
 Hotfixes after the review get `review-1.1`, `review-1.2`, and the final submission build is tagged `submission-1`.
+
+## Browser scenarios (Playwright)
+
+`frontend/tests/` holds the problem-statement flows as browser specs: `records.spec.ts` (scenarios 1, 2, 5, 6) and
+`ps-scenarios.spec.ts` (3, 7 end to end from request to completed release, and 9). CI runs them in the
+`browser-scenarios` job: it starts the seeded portal with `run_portal.py`, adds the synthetic RTGS and OCR examples, runs
+`npx playwright test`, and uploads traces and the HTML report when a spec fails.
+
+To run them locally against a **fresh** database (the release spec completes `PS7-RELEASE-READY`, so a second run on the
+same data fails by design):
+
+```bash
+python scripts/run_portal.py --skip-build --no-scheduler   # first run seeds the demo data
+python manage.py seed_yash_examples && python manage.py seed_ocr_example
+cd frontend && npx playwright install chromium && npx playwright test
+```
+
+Passwords are read from `data/*-credentials.txt`; override with `DEMO_CREDENTIALS_FILE`, `STAFF_CREDENTIALS_FILE`,
+`AUTHORITY_CREDENTIALS_FILE`, `PORTAL_URL`, `PLAYWRIGHT_CHROMIUM_PATH` (use an installed Chromium) and
+`PLAYWRIGHT_OUTPUT_DIR`.

@@ -1,40 +1,15 @@
 import {test, expect, type Page} from '@playwright/test';
-import {readFileSync} from 'node:fs';
 import path from 'node:path';
-
-const root = path.resolve('..');
-// Use a disposable seeded server with AI_ENABLED=false and OCR_ENABLED=false.
-// These checks exercise manual fallbacks; live extraction has separate service tests.
-// PLAYWRIGHT_BASE_URL and DEMO_CREDENTIALS_FILE keep the recorded demo database untouched.
-const passwords = Object.fromEntries(readFileSync(process.env.DEMO_CREDENTIALS_FILE || path.join(root, 'data/demo-credentials.txt'), 'utf8')
-  .split(/\r?\n/).filter(line => line.includes(': ')).map(line => line.split(': ')));
+import {openRecord, root, signIn} from './support';
+// AI stays off; test the local OCR result label or its disabled fallback for this profile.
 
 async function login(page: Page, username: string) {
-  await page.goto('/login');
-  await page.getByLabel('Username').fill(username);
-  await page.getByLabel('Password').fill(passwords[username]);
-  await page.getByRole('button', {name: 'Sign in', exact: true}).click();
-  await expect(page.getByRole('heading', {level: 1, name: /^Welcome/})).toBeVisible();
+  await signIn(page, username);
   await page.goto('/records');
   await expect(page.getByRole('heading', {level: 1, name: 'Deposit records'})).toBeVisible();
 }
 
-async function openRecord(page: Page, reference: string) {
-  await page.goto('/records');
-  await page.getByLabel('Global record search').fill(reference);
-  // A matching row can still belong to the previous list while the search navigation settles.
-  await Promise.all([
-    page.waitForResponse(response => {
-      const url = new URL(response.url());
-      return url.pathname === '/api/instruments/' && url.searchParams.get('q') === reference && response.status() === 200;
-    }),
-    page.getByLabel('Global record search').press('Enter'),
-  ]);
-  await page.getByRole('button', {name: reference, exact: true}).click();
-  await expect(page.getByRole('heading', {level: 1, name: reference, exact: true})).toBeVisible();
-}
-
-test('submission, PDF review, discrepancy, correction, acceptance and renewal', async ({browser}) => {
+test('submission, PDF review, discrepancy, correction, acceptance and renewal', async ({browser}, testInfo) => {
   const ownerContext = await browser.newContext();
   const officerContext = await browser.newContext();
   const owner = await ownerContext.newPage();
@@ -56,6 +31,8 @@ test('submission, PDF review, discrepancy, correction, acceptance and renewal', 
   await owner.getByRole('button', {name: 'Extract with AI', exact: true}).click();
   await expect(owner.getByText('AI is off. Continue manual document review.', {exact: true})).toBeVisible();
   await owner.getByRole('button', {name: 'Read with local OCR', exact: true}).click();
+  // Both the advisory label and explicit disabled fallback must remain visible.
+  await expect(owner.getByText('OCR suggestions: verify against the document', {exact: true})).toBeVisible();
   await expect(owner.getByText('Local OCR is disabled. Continue manual entry.', {exact: true})).toBeVisible();
   await owner.getByRole('button', {name: 'Submit for review', exact: true}).click();
   await owner.getByRole('button', {name: 'Record action', exact: true}).click();
@@ -96,7 +73,7 @@ test('submission, PDF review, discrepancy, correction, acceptance and renewal', 
   await expect(officer.locator('.page-header').getByText('Accepted', {exact: true})).toBeVisible();
   await officer.getByRole('tab', {name: 'Verification', exact: true}).click();
   await expect(officer.getByText('Officer review', {exact: true})).toBeVisible();
-  await officer.screenshot({path: path.join(root, 'planning/browser-results/verification-workspace.png'), fullPage: true});
+  await officer.screenshot({path: testInfo.outputPath('verification-workspace.png'), fullPage: true});
 
   await openRecord(owner, reference);
   await owner.getByRole('button', {name: 'Create renewal', exact: true}).click();
@@ -108,12 +85,12 @@ test('submission, PDF review, discrepancy, correction, acceptance and renewal', 
   await ownerContext.close(); await officerContext.close();
 });
 
-test('dashboard, responsive list, and synthetic reconciliation preview', async ({page}) => {
+test('dashboard, responsive list, and synthetic reconciliation preview', async ({page}, testInfo) => {
   await login(page, 'officer');
   await page.getByRole('menuitem', {name: 'Overview', exact: true}).click();
   await page.getByRole('link', {name: 'Dashboard', exact: true}).click();
   await expect(page.getByText('Maturities by month', {exact: true})).toBeVisible();
-  await page.screenshot({path: path.join(root, 'planning/browser-results/dashboard-workspace.png'), fullPage: true});
+  await page.screenshot({path: testInfo.outputPath('dashboard-workspace.png'), fullPage: true});
   await page.getByRole('menuitem', {name: 'Deposits', exact: true}).click();
   await page.getByRole('link', {name: 'Reconciliation', exact: true}).click();
   await page.locator('input[type=file]').setInputFiles(path.join(root, 'fixtures/synthetic-statement.csv'));

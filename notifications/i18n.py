@@ -2,6 +2,7 @@
 from .catalog import render, _SafeDict
 
 HINDI = {
+    'document_integrity_failed': ('संग्रहीत दस्तावेज़ की अखंडता जाँच विफल: {reference}', 'FDR {reference} की संग्रहीत फ़ाइल {document} अब अपलोड के समय दर्ज चेकसम से मेल नहीं खाती, इसलिए डाउनलोड रोके गए हैं। दस्तावेज़ को अविश्वसनीय मानें और संस्थान से इसे फिर अपलोड करने को कहें।'),
     'instrument_submitted': ('समीक्षा के लिए नई जमा: {reference}', 'संस्थान ने FDR {reference} समीक्षा के लिए जमा की है। समीक्षा के लिए पोर्टल खोलें।'),
     'instrument_accepted': ('FDR {reference} निगरानी के लिए स्वीकृत', 'FDR {reference} निगरानी के लिए स्वीकार हुई है। यह बैंक का सत्यापन नहीं है।'),
     'instrument_changes_requested': ('FDR {reference} में सुधार माँगे गए', 'अधिकारी ने FDR {reference} में सुधार माँगे हैं। टिप्पणियाँ देखने के लिए पोर्टल खोलें।'),

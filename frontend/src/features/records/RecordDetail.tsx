@@ -1,6 +1,6 @@
 import { t as tr, useLanguage } from '@/i18n';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Collapse, Empty, Form, Input, Modal, Select, Table, Tabs, Tag, Timeline, Upload } from 'antd'
@@ -12,6 +12,7 @@ import { formatDate, formatDateTime, formatInr } from '@/lib/format'
 import { findingLabel, humanize } from '@/lib/labels'
 import { AiExtraction } from './AiExtraction'
 import { PdfViewer } from './PdfViewer'
+import { ProvenanceTag } from './ProvenanceTag'
 import { RecordForm } from './RecordForm'
 import { VerificationTab } from './Verification'
 import type { Api, RecordItem } from './types'
@@ -48,6 +49,7 @@ export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number
   const docs = item.documents || []
   const selected = doc ?? docs[0]?.id
   const can = (key: string) => Boolean(item.actions?.[`can_${key}`])
+  const tagged = (value: ReactNode, field: string) => (value ? <>{value}<ProvenanceTag provenance={item.field_provenance?.[field]} /></> : value)
   function changed() { setAction(''); setError(''); setSuggestions(undefined); setFile(undefined); void cache.invalidateQueries({ queryKey: ['records'] }) }
   async function mutate(values: Record<string, unknown>) {
     setBusy(true); setError('')
@@ -102,16 +104,24 @@ export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number
           <div className="two-col">
             <Panel title={tr("Deposit")}>
               <SummaryList items={[
-                { label: tr("Institution"), value: item.institution.name }, { label: tr("Deposit type"), value: item.mode },
-                { label: tr("Amount"), value: formatInr(item.amount) }, { label: tr("Issue date"), value: formatDate(item.issue_date) },
-                { label: tr("Maturity date"), value: formatDate(item.maturity_date) }, { label: tr("Issuing bank"), value: item.bank }]} />
+                { label: tr('Institution'), value: item.institution.name }, { label: tr('Deposit type'), value: item.mode },
+                { label: tr('Amount'), value: tagged(formatInr(item.amount), 'amount') }, { label: tr('Issue date'), value: tagged(formatDate(item.issue_date), 'issue_date') },
+                { label: tr('Maturity date'), value: tagged(formatDate(item.maturity_date), 'maturity_date') }, { label: tr('Issuing bank'), value: tagged(item.bank, 'bank') },
+                { label: tr('Reference'), value: tagged(item.reference, 'reference') }]} />
             </Panel>
             <Panel title={tr("Bank and holders")}>
               <SummaryList items={[
-                { label: 'IFSC', value: item.ifsc }, { label: tr("Branch"), value: item.branch }, { label: tr("Holder names"), value: item.holder_names },
-                { label: 'UTR', value: item.utr }, { label: tr("Lien"), value: item.lien_marked == null ? 'Not stated' : item.lien_marked ? 'Marked' : 'Not marked' },
-                { label: tr("Obligation"), value: item.obligation_id ? `#${item.obligation_id}` : 'Not linked' }]} />
+                { label: 'IFSC', value: tagged(item.ifsc, 'ifsc') }, { label: tr('Branch'), value: item.branch }, { label: tr('Holder names'), value: tagged(item.holder_names, 'holder_names') },
+                { label: 'UTR', value: tagged(item.utr, 'utr') }, { label: tr('Lien'), value: tagged(item.lien_marked == null ? tr('Not stated') : item.lien_marked ? tr('Marked') : tr('Not marked'), 'lien_marked') },
+                { label: tr('Obligation'), value: item.obligation_id ? `#${item.obligation_id}` : tr('Not linked') }]} />
             </Panel>
+            {item.field_provenance && (
+              <p className="muted" style={{ gridColumn: '1 / -1', margin: 0 }}>
+                <strong>{tr('Declared')}</strong>: {tr('Entered by the institution.')} <strong>{tr('Document reviewed')}</strong>: {tr('An officer accepted the record for tracking.')}
+                {' '}<strong>{tr('Confirmed')}</strong>: {tr('The value agrees with a bank statement line or bank response (simulated in this prototype, not bank authenticity).')}
+                {' '}<strong>{tr('Mismatch')}</strong>: {tr('Such a source shows a different value.')}
+              </p>
+            )}
           </div>) },
         { key: 'documents', label: tr("Documents ({0})", {"0": (docs.length)}), children: docs.length ? (
           <div className="stack">

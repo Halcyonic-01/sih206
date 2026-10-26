@@ -14,6 +14,7 @@ services:
       DJANGO_SECURE_COOKIES: ${DJANGO_SECURE_COOKIES:-false}
       DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-}
       AUDIT_CHAIN_KEY: ${AUDIT_CHAIN_KEY:-}
+      DOCUMENT_ENCRYPTION_KEY: ${DOCUMENT_ENCRYPTION_KEY:-}
       PORTAL_BASE_URL: ${PORTAL_BASE_URL:-http://localhost:8010}
       SEED_DEMO: ${SEED_DEMO:-true}
       EMAIL_HOST: ${EMAIL_HOST:-}
@@ -40,6 +41,7 @@ services:
     command:
       - |
         if [ -z "$$DJANGO_SECRET_KEY" ]; then export DJANGO_SECRET_KEY="$$(cat data/.secret_key)"; fi
+        if [ -z "$$DOCUMENT_ENCRYPTION_KEY" ]; then export DOCUMENT_ENCRYPTION_KEY="$$(cat data/.document_key)"; fi
         while true; do
           python manage.py send_notifications || true
           python manage.py deliver_bank_requests || true
@@ -52,6 +54,7 @@ services:
     environment:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-}
       AUDIT_CHAIN_KEY: ${AUDIT_CHAIN_KEY:-}
+      DOCUMENT_ENCRYPTION_KEY: ${DOCUMENT_ENCRYPTION_KEY:-}
       EMAIL_HOST: ${EMAIL_HOST:-}
       EMAIL_PORT: ${EMAIL_PORT:-587}
       EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}

@@ -10,9 +10,14 @@ from portal.models import Instrument
 
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument('--confirm-disposable', action='store_true',
+            help='Explicitly confirm this DEBUG SQLite database is disposable (for CI).')
+
     def handle(self, **options):
-        if not settings.DEBUG or settings.SETTINGS_MODULE != 'config.rehearsal_settings':
-            raise CommandError('Only the explicit disposable rehearsal profile may seed this scenario.')
+        if (not settings.DEBUG or settings.DATABASES['default']['ENGINE'] != 'django.db.backends.sqlite3'
+                or (settings.SETTINGS_MODULE != 'config.rehearsal_settings' and not options['confirm_disposable'])):
+            raise CommandError('Use the disposable rehearsal profile or explicitly confirm a DEBUG SQLite database with --confirm-disposable.')
         source = Instrument.objects.get(reference='PS7-RELEASE-READY')
         owner = get_user_model().objects.get(username='institution_a')
         officer = get_user_model().objects.get(username='officer')

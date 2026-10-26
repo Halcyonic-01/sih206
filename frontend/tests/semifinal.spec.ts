@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve('..');
-const privateDir = path.join(root, 'data/semifinal/data');
+const privateDir = path.resolve(root, process.env.SEMIFINAL_DATA_DIR || 'data/semifinal/data');
 function credentials() {
   return Object.fromEntries(['demo', 'authority', 'staff'].flatMap(name =>
     readFileSync(path.join(privateDir, `${name}-credentials.txt`), 'utf8').split(/\r?\n/)
@@ -19,8 +19,9 @@ async function login(page: Page, username: string) {
 }
 
 test.beforeAll(() => {
-  if (process.env.SEMIFINAL_DISPOSABLE !== '1' || !process.env.PLAYWRIGHT_BASE_URL?.endsWith(':8011')) {
-    throw new Error('Run prepare_semifinal.py, use port 8011, and set SEMIFINAL_DISPOSABLE=1. Never use the normal demo database.');
+  const url = new URL(process.env.PLAYWRIGHT_BASE_URL || process.env.PORTAL_URL || 'http://127.0.0.1:8010');
+  if (process.env.SEMIFINAL_DISPOSABLE !== '1' || !['127.0.0.1', 'localhost'].includes(url.hostname)) {
+    throw new Error('Use a seeded disposable loopback server and set SEMIFINAL_DISPOSABLE=1. Never use the normal demo database.');
   }
 });
 
