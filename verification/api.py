@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from portal.api.records import RecordEndpoint, item_for
 from portal.permissions import require_officer, scoped_instruments
 from .models import StatementImport
-from .services import checks, import_statement, plan_matches
+from .services import checks, describe_statement, import_statement, plan_matches
 from .bank import request_confirmation
 
 
@@ -39,11 +39,11 @@ class Statements(RecordEndpoint):
         file = request.FILES.get('document')
         if file is None or file.size > 1024 * 1024:
             from rest_framework.exceptions import ValidationError
-            raise ValidationError('A synthetic CSV file of at most 1 MB is required.')
+            raise ValidationError('A synthetic statement file (CSV, MT940 or CAMT.053 XML) of at most 1 MB is required.')
         content = file.read()
         if request.data.get('commit') != 'true':
             planned = plan_matches(request.user, content)
-            return Response({'simulated': True, 'rows': planned,
+            return Response({'simulated': True, 'rows': planned, **describe_statement(content),
                 'versions': {str(r['instrument_id']): r['version'] for r in planned if r['instrument_id']}})
         versions = json.loads(request.data.get('versions', '{}'))
         batch, existing = import_statement(request.user, content, request.data.get('source', ''), versions)
