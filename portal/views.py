@@ -17,6 +17,7 @@ from .forms import (InstrumentForm, ObservationForm, RenewalForm, ResolutionForm
                     ReleaseRequestForm, ReleaseDecisionForm, ReleaseCompletionForm)
 from .models import Document, Instrument, ReleaseRequest
 from .permissions import institution_for, require_authority, require_officer, role, scoped_instruments
+from . import auditor_downloads
 from .scanning import downloadable
 from .uploads import DocumentIntegrityError, open_verified, record_integrity_failure
 from .validation import CHECKS_VERSION, run_checks
@@ -317,6 +318,10 @@ def observation_resolve(request, pk, observation_pk):
 def document_download(request, pk):
     document = get_object_or_404(Document.objects.filter(
         instrument__in=scoped_instruments(request.user)), pk=pk)
+    try:
+        reason = auditor_downloads.reason_for(request)
+    except auditor_downloads.DownloadReasonRequired as error:
+        return HttpResponse(str(error), status=403, content_type='text/plain; charset=utf-8')
     if not downloadable(document):
         return HttpResponse('This document is quarantined or has not been scanned, so it cannot be downloaded.',
                             status=409, content_type='text/plain; charset=utf-8')
@@ -331,7 +336,8 @@ def document_download(request, pk):
                    detail=f'instrument={document.instrument_id} refused=integrity')
         return HttpResponse('This document failed its integrity check and cannot be downloaded. '
                             'The officers have been told.', status=409, content_type='text/plain; charset=utf-8')
-    log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document, detail=f'instrument={document.instrument_id}')
+    log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document, detail=auditor_downloads.log_detail(document, reason))
+    auditor_downloads.announce(document, request.user, reason)
     response = FileResponse(stored, as_attachment=True, filename=document.original_name, content_type='application/pdf')
     response['X-Content-Type-Options'] = 'nosniff'
     return response

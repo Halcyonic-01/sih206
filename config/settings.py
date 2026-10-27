@@ -114,6 +114,8 @@ LETTER_SIGNING_KEY = os.environ.get('LETTER_SIGNING_KEY', '').strip()
 if LETTER_SIGNING_KEY:
     from .documentkey import parse_key as _parse_letter_key
     _parse_letter_key(LETTER_SIGNING_KEY)
+# P2-10: also tell the dealing officers when an auditor downloads a document (the reason is always in the access log).
+AUDITOR_DOWNLOAD_NOTIFY = env_bool('AUDITOR_DOWNLOAD_NOTIFY', False)
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # No MEDIA_URL route: all document reads go through an ownership-checked view.

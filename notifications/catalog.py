@@ -49,6 +49,9 @@ TEMPLATES = {
     'penalty_proposed': Template(
         'Penalty proposed on FDR {reference}',
         'A penalty assessment is waiting for a decision on FDR {reference}.', 'warning'),
+    'auditor_document_download': Template(
+        'Auditor opened a document on FDR {reference}',
+        'The auditor {auditor} downloaded a document on FDR {reference}. Reason given: {reason}', 'info'),
     'alert_escalated': Template(
         'Not acknowledged for {days} days: {reference}',
         'An action on {reference} ({rule}) has been open for {days} days with nobody taking charge. Please look at it or '
