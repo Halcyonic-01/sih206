@@ -151,3 +151,15 @@ over those bytes (`casework/signing.py`). The verify page checks the signature *
 server's record, and says plainly when either fails. Anyone can check a printed letter offline with the public key from
 `GET /api/public/letter-key`. Outside DEBUG, `LETTER_SIGNING_KEY` is required to issue a letter (there is no built-in key);
 in DEBUG a development key is used and labelled DEVELOPMENT. This is a portal signature, not a DSC-signed PDF.
+
+## A second authority account
+
+The separate-completer rule and the second signature on large releases both need two different authority users. First-start seeding
+creates `authority` and `authority_second`. For an existing installation:
+
+```bash
+python manage.py seed_second_authority --generate-password     # local DEBUG: random password appended to data/authority-credentials.txt, not printed
+python manage.py seed_second_authority                         # otherwise: asks for a password (input hidden)
+```
+
+An existing account is never changed. Where two-factor sign-in is required, the new account sets up its authenticator app at first sign-in.

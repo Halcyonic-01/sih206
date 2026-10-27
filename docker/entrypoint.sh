@@ -45,6 +45,7 @@ if [ "${SEED_DEMO:-true}" = "true" ] && [ ! -f data/demo-credentials.txt ]; then
   echo "First start: creating synthetic demo accounts and scenario records"
   DJANGO_DEBUG=true python manage.py seed_demo --generate-password || true
   DJANGO_DEBUG=true python manage.py seed_demo --authority-only --generate-password || true
+  DJANGO_DEBUG=true python manage.py seed_second_authority --generate-password || true
   DJANGO_DEBUG=true python manage.py seed_staff --generate-password || true
   DJANGO_DEBUG=true python manage.py seed_scenarios || true
   DJANGO_DEBUG=true python manage.py seed_review || true

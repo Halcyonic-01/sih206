@@ -284,7 +284,7 @@ The local demo runs with no `.env` at all.
 | `NEAR_DUPLICATE_SCAN` | `true` | Compare the first page of uploads with other institutions' and released documents (officers only; needs Poppler's `pdftoppm`, otherwise silently off). |
 | `RETENTION_YEARS` | `10` | A released or renewed record becomes archival due this many years after it was settled. |
 | `AUDITOR_DOWNLOAD_NOTIFY` | `false` | When `true`, the dealing officers are notified whenever an auditor downloads a document. The reason is always in the access log. |
-| `RELEASE_REQUIRE_DIFFERENT_COMPLETER` | `false` | When `true`, the authority user who authorised a release cannot also record its completion (needs a second authority account). |
+| `RELEASE_REQUIRE_DIFFERENT_COMPLETER` | `false` | When `true`, the authority user who authorised a release cannot also record its completion. Needs a second authority account: `python manage.py seed_second_authority --generate-password` creates `authority_second` (first-start seeding already does). |
 | `API_DOCS_PUBLIC` | `DJANGO_DEBUG` | Whether `/api/docs/` is open without signing in. |
 
 ### Database
