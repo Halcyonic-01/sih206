@@ -157,7 +157,15 @@ def save_draft(actor, cleaned, instrument_id=None, predecessor_id=None):
                 document.file.save(upload.name, upload, save=False)
                 stored_file = document.file
                 document.save()
-            event(instrument, actor, action, before)
+            if predecessor:
+                reason = cleaned.get('renewal_reason') or 'ROUTINE_RENEWAL'
+                note = (cleaned.get('renewal_note') or '').strip()
+                if reason == 'OTHER' and not note:
+                    raise WorkflowError('Say why this deposit replaces the earlier one.')
+                event(instrument, actor, action, before, reason=note,
+                      after_extra={'renewal_link': {'predecessor_id': predecessor.pk, 'reason': reason, 'note': note}})
+            else:
+                event(instrument, actor, action, before)
             if predecessor:
                 # Do not expose the private draft's reference/ID/document through the parent's audit.
                 event(predecessor, actor, 'RENEWAL_STARTED', predecessor_before,

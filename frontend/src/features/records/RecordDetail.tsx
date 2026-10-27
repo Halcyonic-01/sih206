@@ -14,6 +14,7 @@ import { AiExtraction } from './AiExtraction'
 import { PdfViewer } from './PdfViewer'
 import { ProvenanceTag } from './ProvenanceTag'
 import { RecordForm } from './RecordForm'
+import { RENEWAL_REASONS } from './renewal'
 import { VerificationTab } from './Verification'
 import type { Api, RecordItem } from './types'
 
@@ -176,6 +177,10 @@ export function RecordDetail({ api, id, onBack, onOpen, readinessAction, readine
               label: key === 'predecessor' ? 'Renews' : 'Renewed by',
               value: item.lineage?.[key] ? <Button type="link" onClick={() => onOpen(item.lineage![key]!.id)}>{item.lineage[key]!.reference}</Button> : 'None',
             }))} />
+            {item.lineage?.link && (
+              <p><strong>Why it was renewed:</strong> {RENEWAL_REASONS[item.lineage.link.reason] ?? 'Not recorded'}
+                {item.lineage.link.note && ` — ${item.lineage.link.note}`}</p>
+            )}
             <p className="muted">{tr("The original deposit stays current until its renewal is accepted.")}</p>
           </Panel>) },
         { key: 'history', label: tr("History"), children: (

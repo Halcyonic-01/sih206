@@ -78,3 +78,27 @@ Every detail page says **Not independently bank-verified**, including accepted r
 Automated coverage: `portal/tests/test_validation.py` and `portal/tests/test_observations.py`, together with the original regression suite. Live HTTP scenario: `scripts/smoke_scrutiny.py`; restart verification: the same command with `--verify`.
 
 At Milestone 2 completion, 49 tests and both live/restart checks passed. The current Milestone 5 suite passes all 134 tests, including those original 49. Existing Milestone 1 rows were unchanged by the additive Milestone 2 migration. Visual browser QA remains manual; the live HTTP checks are not visual verification.
+
+## Bank and branch master (P2-7)
+
+`ISSUER_UNKNOWN` used a short prefix list. Once an IFSC directory is loaded the checks read it instead (the prefix list still applies
+while the directory is empty). Nothing is fetched at request time.
+
+```bash
+python manage.py load_ifsc_directory ifsc.csv --directory-version 2026-10      # columns IFSC,BANK,BRANCH,CITY,STATE; updates, never deletes
+python manage.py load_bank_successions fixtures/bank-successions-draft.csv     # stored UNVERIFIED
+python manage.py load_bank_successions checked.csv --verified                  # only after checking each row against its notification
+```
+
+| Finding | When |
+|---|---|
+| `ISSUER_UNCONFIRMED` (warning) | IFSC is listed; the text names the bank, branch and directory version. A listing does not confirm the deposit exists |
+| `ISSUER_NAME_MISMATCH`, `ISSUER_BRANCH_MISMATCH` (warning) | The declared bank or branch does not resemble the listed one (loose word comparison, either successor name accepted) |
+| `ISSUER_MERGED` (info) | The bank code was replaced after a merger (**verified** mappings only) |
+| `IFSC_NOT_IN_DIRECTORY` (warning) | The bank code is known but this IFSC is not listed |
+| `ISSUER_UNKNOWN` (warning) | Nothing matches, or no IFSC recorded |
+
+`fixtures/bank-successions-draft.csv` lists the 2019-2020 public-sector mergers as a **draft**: confirm each row against the
+Government/RBI notification before loading it with `--verified`. A renewal records why the deposit replaces the earlier one
+(`renewal_reason`: routine, bank merger replacement, re-issued by the bank, other with a note); the reason is stored on the successor's
+creation audit event and shown on the Renewal history tab from both ends.

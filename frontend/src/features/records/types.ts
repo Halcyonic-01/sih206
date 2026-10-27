@@ -18,7 +18,7 @@ export type RecordItem = {
   field_provenance?: Record<string, FieldProvenance>;
   findings?: {code: string; severity: string; explanation: string}[];
   history?: {id: number; action: string; reason: string; at: string}[];
-  lineage?: {predecessor: {id: number; reference: string} | null; successor: {id: number; reference: string} | null};
+  lineage?: {predecessor: {id: number; reference: string} | null; successor: {id: number; reference: string} | null; link?: {reason: string; note: string} | null};
 };
 export type Page = {count: number; page: number; page_size: number; results: RecordItem[]};
 export type Waiting = {working_days: number; calendar_days: number; limit: number; band: 'ok' | 'soon' | 'overdue'; since: string};

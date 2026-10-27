@@ -1,6 +1,7 @@
 import { t as tr, useLanguage } from '@/i18n';
 import { useState } from 'react'
 import { Alert, Button, Col, Form, Input, InputNumber, Row, Select, Upload } from 'antd'
+import { RENEWAL_REASONS } from './renewal'
 import type { Api, RecordItem } from './types'
 
 const half = { xs: 24, md: 12 }
@@ -53,6 +54,16 @@ export function RecordForm({ api, record, renewal, suggestions, onSaved, onCance
         <Col {...half}><Form.Item name="lien_marked" label={tr("Declared lien status")}><Select allowClear options={[
           { value: 'true', label: tr("Lien marked") }, { value: 'false', label: tr("No lien declared") }]} /></Form.Item></Col>
       </Row>
+      {renewal && (
+        <>
+          <h3>Why is this a renewal?</h3>
+          <Row gutter={16}>
+            <Col {...half}><Form.Item name="renewal_reason" label="Reason" initialValue="ROUTINE_RENEWAL"><Select options={
+              Object.entries(RENEWAL_REASONS).filter(([value]) => value !== 'NOT_RECORDED').map(([value, label]) => ({ value, label }))} /></Form.Item></Col>
+            <Col {...half}><Form.Item name="renewal_note" label="Note (required for Other)"><Input maxLength={300} /></Form.Item></Col>
+          </Row>
+        </>
+      )}
       <h3>{tr("Link and document")}</h3>
       <Row gutter={16}>
         <Col {...half}><Form.Item name="obligation_id" label={tr("Obligation ID (optional)")} extra={tr('Only an obligation of your institution is accepted.')}><InputNumber min={1} /></Form.Item></Col>

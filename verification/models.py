@@ -91,3 +91,31 @@ class BankConfirmation(models.Model):
     class Meta:
         constraints = [models.UniqueConstraint(fields=['instrument'], condition=models.Q(status__in=['PENDING', 'SENT']),
             name='bank_one_open_request')]
+
+
+class BankBranch(models.Model):
+    """One row of a published IFSC directory, loaded from a file (never fetched at request time)."""
+
+    ifsc = models.CharField(max_length=11, unique=True)
+    bank_code = models.CharField(max_length=4, db_index=True)
+    bank_name = models.CharField(max_length=200)
+    branch = models.CharField(max_length=200, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    directory_version = models.CharField(max_length=60)
+    loaded_at = models.DateTimeField(auto_now=True)
+
+
+class BankSuccession(models.Model):
+    """A bank code that was replaced by another after a merger. Only `verified` rows are used by the checks.
+
+    The mapping must be confirmed against the RBI / Government notification named in `source` before it is marked verified.
+    """
+
+    old_code = models.CharField(max_length=4, unique=True)
+    new_code = models.CharField(max_length=4)
+    old_name = models.CharField(max_length=200)
+    new_name = models.CharField(max_length=200)
+    effective_date = models.DateField(null=True, blank=True)
+    source = models.CharField(max_length=300, blank=True)
+    verified = models.BooleanField(default=False)
