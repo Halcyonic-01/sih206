@@ -281,6 +281,7 @@ The local demo runs with no `.env` at all.
 | `MFA_REQUIRED` | `false` | When `true`, officer, authority, clearance and auditor accounts must set up an authenticator app (TOTP) before using the portal. Off, staff may enrol voluntarily. |
 | `MFA_STEP_UP_SECONDS` | `600` | How long a code counts for release authorisation, letter issue, completion and officer correction. |
 | `MFA_ISSUER` | `Pramaan` | Name shown in the authenticator app. |
+| `NEAR_DUPLICATE_SCAN` | `true` | Compare the first page of uploads with other institutions' and released documents (officers only; needs Poppler's `pdftoppm`, otherwise silently off). |
 | `RETENTION_YEARS` | `10` | A released or renewed record becomes archival due this many years after it was settled. |
 | `AUDITOR_DOWNLOAD_NOTIFY` | `false` | When `true`, the dealing officers are notified whenever an auditor downloads a document. The reason is always in the access log. |
 | `RELEASE_REQUIRE_DIFFERENT_COMPLETER` | `false` | When `true`, the authority user who authorised a release cannot also record its completion (needs a second authority account). |
