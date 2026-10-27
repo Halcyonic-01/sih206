@@ -53,6 +53,12 @@ renewed or released, and every step leaves a tamper-evident audit trail.
 | **Audit** | A hash-chained audit trail of every state change, an access log of every download, export and staff search, and a one-click integrity check. |
 | **AI assistance** | Optional, advisory field extraction from a PDF and a short release-case summary using Google Gemini. The portal works fully with AI turned off. |
 
+### Local semifinal additions
+
+- **Deposit readiness:** open an institution to see six recorded milestones, applicable-step progress, proof deadlines and links to permitted existing forms. This is not a compliance certificate. See [readiness guide](docs/readiness/README.md).
+- **Weekly digest:** open **Notifications → Weekly email digest** to preview your scoped summary and save your email preference. Delivery is off by default (`WEEKLY_DIGEST_ENABLED=false`). Apply the new notification migration before using the preference panel. When enabled, the bundled launcher/Docker scheduler checks for Monday 09:00 IST delivery every five minutes and uses the existing email retry worker. See [digest setup and limitations](docs/owned/WEEKLY_DIGEST_PLAN.md).
+- The release-document pre-check (Feature 1) remains paused at its offline prototype; no pre-check API or review screen is enabled by these additions.
+
 ### Deposit status flow
 
 ```text

@@ -1,7 +1,7 @@
 import { t as tr, useLanguage } from '@/i18n';
 import { useCallback, useSyncExternalStore, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ME_KEY, useAuth } from '@/auth/AuthProvider';
 import type { Institution } from './client';
 import { Calculator, InstitutionDetail, InstitutionList } from './institutions';
@@ -46,8 +46,10 @@ export function InstitutionsPage() {
 export function InstitutionPage() {
   useLanguage();
   const id = routeIdentity(useParams().id);
+  const [query] = useSearchParams();
   return <InstitutionSession>{identityKey => id === null ? <ErrorBox error={{ status: 404 }} /> :
     <InstitutionDetail client={platformTransport} identityKey={identityKey} institutionId={id}
+      focusObligationId={routeIdentity(query.get('obligation') ?? undefined)} focusAction={query.get('readiness')}
       actions={<Link className="btn" to={`/institutions/${id}/calculator`}>{tr("Requirement calculator")}</Link>} />}</InstitutionSession>;
 }
 

@@ -27,7 +27,27 @@ class RunScriptTests(SimpleTestCase):
                 mock.patch.object(run_portal, 'background_command', return_value=1) as command:
             run_portal.scheduler_tick({}, {'next_send': 0, 'next_rules': 0})
         self.assertEqual([call.args[0] for call in command.call_args_list],
-                         ['send_notifications', 'deliver_bank_requests', 'run_due_rules'])
+                         ['send_weekly_digests', 'send_notifications', 'deliver_bank_requests', 'run_due_rules'])
+
+    def test_weekly_digest_checked_even_after_daily_rules_have_run(self):
+        with TemporaryDirectory() as folder, mock.patch.object(run_portal, 'ROOT', Path(folder)), \
+                mock.patch.object(run_portal, 'background_command', return_value=0) as command:
+            state = {'next_send': 0, 'next_rules': 0}
+            run_portal.scheduler_tick({}, state)
+            command.reset_mock()
+            state['next_send'] = 0
+            run_portal.scheduler_tick({}, state)
+            self.assertEqual(command.call_args_list, [
+                mock.call('send_weekly_digests', {}, '--queue'),
+                mock.call('send_notifications', {}), mock.call('deliver_bank_requests', {})])
+
+    def test_background_command_passes_digest_queue_argument_without_shell(self):
+        result = mock.Mock(returncode=0, stdout='disabled', stderr='')
+        with mock.patch.object(run_portal.subprocess, 'run', return_value=result) as runner, \
+                mock.patch.object(run_portal, 'say'):
+            self.assertEqual(run_portal.background_command('send_weekly_digests', {}, '--queue'), 0)
+        self.assertEqual(runner.call_args.args[0][-2:], ['send_weekly_digests', '--queue'])
+        self.assertNotIn('shell', runner.call_args.kwargs)
 
 
 class SeededDatabaseTests(SimpleTestCase):

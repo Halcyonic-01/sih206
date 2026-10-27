@@ -1,6 +1,6 @@
 import { t as tr, useLanguage } from '@/i18n';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Collapse, Empty, Form, Input, Modal, Select, Table, Tabs, Tag, Timeline, Upload } from 'antd'
@@ -27,7 +27,7 @@ const MODAL_TITLES: Record<string, string> = {
   documents: 'Upload document', 'release documents': 'Upload release document',
 }
 
-export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number; onBack: () => void; onOpen: (id: number) => void }) {
+export function RecordDetail({ api, id, onBack, onOpen, readinessAction, readinessKind }: { api: Api; id: number; onBack: () => void; onOpen: (id: number) => void; readinessAction?: string; readinessKind?: string }) {
   useLanguage();
   const cache = useQueryClient()
   const query = useQuery({ queryKey: ['records', id], queryFn: () => api.request<RecordItem>(`/api/instruments/${id}/`) })
@@ -39,6 +39,19 @@ export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number
   const [tab, setTab] = useState('details')
   const [file, setFile] = useState<File>()
   const [suggestions, setSuggestions] = useState<Record<string, string>>()
+  const [documentKind, setDocumentKind] = useState<string>()
+  const handledReadiness = useRef(false)
+  useEffect(() => {
+    const current = query.data
+    if (!current || handledReadiness.current) return
+    handledReadiness.current = true
+    if (readinessAction === 'verification') setTab('verification')
+    if (readinessAction === 'submit' && current.actions?.can_submit) setAction('submit')
+    if (readinessAction === 'upload' && current.actions?.can_upload &&
+      ['AFFIDAVIT_3', 'PAYMENT_PROOF'].includes(readinessKind || '')) {
+      setDocumentKind(readinessKind); setAction('documents')
+    }
+  }, [query.data, readinessAction, readinessKind])
   if (query.isPending) return <><PageHeader title={tr("Deposit record")} /><LoadingState rows={6} /></>
   if (query.error) {
     return <><Button className="back-link" type="link" onClick={onBack}>{tr("← All deposit records")}</Button><PageHeader title={tr("Deposit record")} />
@@ -170,7 +183,7 @@ export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number
                          action={<Button size="small" onClick={() => { changed(); void query.refetch() }}>{tr("Reload record")}</Button>} />}
         {formAction ? <RecordForm api={api} record={item} renewal={action === 'renew'} suggestions={action === 'edit' ? suggestions : undefined}
                                   onCancel={() => { setAction(''); setSuggestions(undefined) }} onSaved={(saved) => { changed(); onOpen(saved.id) }} />
-          : <Form layout="vertical" onFinish={mutate}>
+          : <Form key={`${action}:${documentKind || ''}`} layout="vertical" initialValues={{kind: documentKind}} onFinish={mutate}>
             {['accept', 'changes', 'correct'].includes(action) && <Form.Item name="reason" label={tr("Reason")} rules={[{ required: true }]}><Input.TextArea rows={3} maxLength={2000} /></Form.Item>}
             {action === 'correct' && <><Form.Item name="amount" label={tr("Corrected amount (INR)")}><Input inputMode="decimal" /></Form.Item><Form.Item name="bank" label={tr("Corrected bank")}><Input /></Form.Item></>}
             {action === 'observations' && <>

@@ -77,5 +77,12 @@
   "decision; the prior review remains in history.":"; पहले की समीक्षा इतिहास में सुरक्षित रहती है।",
   "valid rows of":"मान्य पंक्तियाँ, कुल",
   "when a bank statement line matches it.":"जब बैंक विवरणी की पंक्ति मेल खाती है।",
-  "when an officer checks the PDF, and to":"जब अधिकारी PDF जाँचता है, और फिर"
+  "when an officer checks the PDF, and to":"जब अधिकारी PDF जाँचता है, और फिर",
+  "Weekly email digest":"साप्ताहिक ईमेल सारांश",
+  "Monday 09:00 IST. Email summaries are in English. Individual workflow alerts remain enabled.":"सोमवार सुबह 09:00 भारतीय समय। ईमेल सारांश अंग्रेज़ी में हैं। व्यक्तिगत कार्य सूचनाएँ चालू रहेंगी।",
+  "Receive weekly email digest":"साप्ताहिक ईमेल सारांश प्राप्त करें",
+  "Digest dispatch enabled":"सारांश भेजना चालू है",
+  "Digest dispatch is disabled on this server":"इस सर्वर पर सारांश भेजना बंद है",
+  "Preview my digest":"मेरे सारांश का पूर्वावलोकन",
+  "Digest unavailable: no eligible email or preference is disabled.":"सारांश उपलब्ध नहीं: मान्य ईमेल नहीं है या आपकी प्राथमिकता बंद है।"
 }

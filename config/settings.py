@@ -263,3 +263,6 @@ SAKSHAM_PROOF_RECEIPTS = _integrations.proof_receipts
 SAKSHAM_NOTIFY = _integrations.notify
 # The QR code on an issued letter points here: PORTAL_BASE_URL + /verify/<token>.
 SAKSHAM_PUBLIC_BASE_URL = PORTAL_BASE_URL
+
+# Optional aggregate email; scheduler must invoke send_weekly_digests separately.
+WEEKLY_DIGEST_ENABLED = env_bool('WEEKLY_DIGEST_ENABLED', False)

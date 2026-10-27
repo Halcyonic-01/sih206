@@ -8,6 +8,7 @@ import { formatDate } from '@/lib/format';
 import { findingLabel, humanize } from '@/lib/labels';
 import {api, Approval, Institution, Obligation, ObligationDetail, Page, Transport, money} from './client';
 import {ErrorBox, Loading, Notice, useRemote} from './shared';
+import {DepositReadiness} from './DepositReadiness';
 
 function Pager({page, setPage, count, label}: {page: number; setPage: (n: number) => void; count?: number; label: string}) {
   useLanguage();
@@ -44,11 +45,11 @@ export function InstitutionList({client, identityKey, onSelect}: {client: Transp
   </section>;
 }
 
-export function InstitutionDetail({client, identityKey, institutionId, actions}: {client: Transport; identityKey: string; institutionId: number; actions?: React.ReactNode}) {
+export function InstitutionDetail({client, identityKey, institutionId, actions, focusObligationId, focusAction}: {client: Transport; identityKey: string; institutionId: number; actions?: React.ReactNode; focusObligationId?: number | null; focusAction?: string | null}) {
   useLanguage();
-  return <InstitutionDetailBody key={`${identityKey}:${institutionId}`} client={client} identityKey={identityKey} institutionId={institutionId} actions={actions} />;
+  return <InstitutionDetailBody key={`${identityKey}:${institutionId}`} client={client} identityKey={identityKey} institutionId={institutionId} actions={actions} focusObligationId={focusObligationId} focusAction={focusAction} />;
 }
-function InstitutionDetailBody({client, identityKey, institutionId, actions}: {client: Transport; identityKey: string; institutionId: number; actions?: React.ReactNode}) {
+function InstitutionDetailBody({client, identityKey, institutionId, actions, focusObligationId, focusAction}: {client: Transport; identityKey: string; institutionId: number; actions?: React.ReactNode; focusObligationId?: number | null; focusAction?: string | null}) {
   useLanguage();
   const base = `institutions/${institutionId}`;
   const [programmePage, setProgrammePage] = React.useState(1);
@@ -65,6 +66,9 @@ function InstitutionDetailBody({client, identityKey, institutionId, actions}: {c
       breadcrumb={[{label: tr("Institutions"), to: '/institutions'}, {label: detail.data.name}]} />
     <Notice />
     <div className="stack stack--lg">
+      <DepositReadiness client={client} identityKey={identityKey} institutionId={institutionId}
+        focusObligationId={focusObligationId} renderTarget={id => <ObligationCard client={client} identityKey={identityKey}
+          obligationId={id} focusAction={focusAction} />} />
       <Panel title={tr("Profile")}>
         {profile ? <SummaryList items={[
           {label: 'AICTE ID', value: profile.aicte_id}, {label: tr("Trust"), value: profile.trust_name},
@@ -80,17 +84,17 @@ function InstitutionDetailBody({client, identityKey, institutionId, actions}: {c
             {title: tr("Approval reference"), dataIndex: 'loa_ref'}, {title: tr("Approved on"), dataIndex: 'approved_on', render: (v: string) => formatDate(v)}]} />}
         <div className="panel__body" style={{paddingTop: 0}}><Pager page={programmePage} setPage={setProgrammePage} count={programmes.data?.count} label={tr("programmes")} /></div>
       </Panel>
-      <div className="stack">
+      {!focusObligationId && <div className="stack">
         <h2 style={{marginBottom: 0}}>{tr("Obligations")}</h2>
         {obligations.error ? <ErrorBox error={obligations.error} /> : !obligations.data ? <Loading /> :
           obligations.data.results.length ? obligations.data.results.map(o => <ObligationCard key={o.id} client={client} identityKey={identityKey} obligationId={o.id} />) : <p>{tr("No obligations recorded.")}</p>}
         <Pager page={obligationPage} setPage={setObligationPage} count={obligations.data?.count} label={tr("obligations")} />
-      </div>
+      </div>}
     </div>
   </section>;
 }
 
-export function ObligationCard({client, identityKey, obligationId}: {client: Transport; identityKey: string; obligationId: number}) {
+export function ObligationCard({client, identityKey, obligationId, focusAction}: {client: Transport; identityKey: string; obligationId: number; focusAction?: string | null}) {
   useLanguage();
   const remote = useRemote<ObligationDetail>(client, `obligations/${obligationId}`, identityKey);
   if (remote.error) return <ErrorBox error={remote.error} />;
@@ -115,7 +119,7 @@ export function ObligationCard({client, identityKey, obligationId}: {client: Tra
       {item.assessment.findings?.map(f => <Alert key={f.code} type="warning" showIcon message={findingLabel(f.code)} description={f.explanation} />)}
       {item.assessment.findings?.length === 0 && <Alert type="success" showIcon message={tr("No findings in the available draft assessment.")} />}
     </div>
-    <ProofReceipts client={client} item={item} onSaved={remote.reload} />
+    <ProofReceipts client={client} item={item} focus={focusAction === 'receipts'} onSaved={() => {remote.reload(); window.dispatchEvent(new Event('pramaan:readiness-changed'));}} />
     <div className="table-scroll"><table className="data-table"><caption>{tr("Scoped holding timeline")}</caption><thead><tr><th>{tr("Holding")}</th><th>{tr("Issue date")}</th><th>{tr("Maturity")}</th><th>{tr("Amount")}</th><th>{tr("Review state")}</th></tr></thead>
       <tbody>{item.assessment.holdings?.map(h => <tr key={h.id}><td>{h.id}</td><td>{formatDate(h.issue_date)}</td><td>{formatDate(h.maturity_date)}</td><td>{money(h.amount_paise)}</td><td><StatusTag value={h.status} /></td></tr>)}</tbody></table></div>
     {item.assessment.holdings == null && <p>{tr("Holding timeline unavailable.")}</p>}
@@ -126,7 +130,7 @@ export function ObligationCard({client, identityKey, obligationId}: {client: Tra
 }
 
 /** Deposit proof and Affidavit-3 receipt (APH 2.25(f)): shown to everyone, recorded by an officer. */
-function ProofReceipts({client, item, onSaved}: {client: Transport; item: ObligationDetail; onSaved: () => void}) {
+function ProofReceipts({client, item, onSaved, focus}: {client: Transport; item: ObligationDetail; onSaved: () => void; focus?: boolean}) {
   useLanguage();
   const review = item.proof_review;
   const [payment, setPayment] = React.useState(review?.payment_proof_on ?? '');
@@ -147,7 +151,7 @@ function ProofReceipts({client, item, onSaved}: {client: Transport; item: Obliga
       {item.assessment.proof_assessment !== 'AVAILABLE' && ' (an officer has not yet recorded the receipt review, or the intimation date is missing)'}.</p>
     {review ? <p>{tr("Officer review by  ")}{review.reviewed_by} {tr("  on  ")}{new Date(review.reviewed_at).toLocaleDateString('en-IN', {timeZone: 'Asia/Kolkata'})}{tr(": payment proof ")}{review.payment_proof_on ? tr("received {0}", {"0": (review.payment_proof_on)}) : tr("not received")}{tr(", Affidavit-3 ")}{review.affidavit_on ? tr("received {0}", {"0": (review.affidavit_on)}) : tr("not received")}.</p> : <p>{tr("No officer receipt review yet.")}</p>}
     {item.actions?.can_record_proof_receipts && <form onSubmit={save}><fieldset disabled={busy}><legend>{tr("Record receipt review")}</legend>
-      <label>{tr("Payment proof received on  ")}<input type="date" value={payment} onChange={e => setPayment(e.target.value)} /></label>
+      <label>{tr("Payment proof received on  ")}<input autoFocus={focus} type="date" value={payment} onChange={e => setPayment(e.target.value)} /></label>
       <label>{tr("Affidavit-3 received on  ")}<input type="date" value={affidavit} onChange={e => setAffidavit(e.target.value)} /></label>
       <p className="muted">{tr("Leave a date empty if that document has not been received.")}</p>
       <label>{tr("Reason  ")}<textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>

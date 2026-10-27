@@ -82,6 +82,10 @@ def notify(recipients, template, context, key):
 
 
 def _email_text(row):
+    if row.template_id == 'weekly_digest':
+        return (f'{row.body}\n\nThis optional digest contains aggregate activity counts. '
+                'Sign in to inspect supporting records. Manage weekly email in Notifications.\n'
+                'Pramaan - Trust Backed by Evidence.')
     link = f'{settings.PORTAL_BASE_URL.rstrip("/")}{row.link}' if row.link else settings.PORTAL_BASE_URL
     return (f'{row.body}\n\nOpen the portal: {link}\n\n'
             'This message contains no account or deposit details. Sign in to the portal to see them.\n'
@@ -108,6 +112,16 @@ def deliver_pending(now=None, limit=100, ids=None):
             continue  # another runner has it
         row = Notification.objects.get(pk=row_id)
         try:
+            if row.template_id == 'weekly_digest':
+                from .digest_sources import delivery_allowed
+                if not delivery_allowed(row):
+                    row.status = Notification.Status.FAILED
+                    row.last_error = 'SUPPRESSED: digest disabled or recipient eligibility/scope changed.'
+                    row.next_attempt_at = None
+                    row.save(update_fields=['status', 'last_error', 'next_attempt_at'])
+                    DeliveryAttempt.objects.create(notification=row, ok=False, error=row.last_error)
+                    failed += 1
+                    continue
             send_mail(row.subject, _email_text(row), settings.DEFAULT_FROM_EMAIL, [row.recipient_email],
                       fail_silently=False)
         except Exception as exc:  # SMTP, DNS, TLS, timeouts

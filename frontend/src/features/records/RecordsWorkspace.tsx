@@ -40,14 +40,15 @@ function RecordCards({ rows, onOpen }: { rows: RecordItem[]; onOpen: (id: number
   )
 }
 
-export function RecordsWorkspace({ api, role, globalQuery, initialRecordId, initialCategory }: {
-  api: Api; role: Role; globalQuery?: string; initialRecordId?: number; initialCategory?: string
+export function RecordsWorkspace({ api, role, globalQuery, initialRecordId, initialCategory, readinessAction, readinessKind, readinessObligation }: {
+  api: Api; role: Role; globalQuery?: string; initialRecordId?: number; initialCategory?: string;
+  readinessAction?: string; readinessKind?: string; readinessObligation?: string
 }) {
   useLanguage();
   const screens = Grid.useBreakpoint()
   const wide = screens.md === true
   const [selected, setSelected] = useState<number | undefined>(initialRecordId)
-  const [create, setCreate] = useState(false)
+  const [create, setCreate] = useState(role === 'institution' && readinessAction === 'new')
   const [q, setQ] = useState('')
   const [category, setCategory] = useState(initialCategory || 'all')
   const [mode, setMode] = useState('')
@@ -64,7 +65,8 @@ export function RecordsWorkspace({ api, role, globalQuery, initialRecordId, init
   if (from) params.set('maturity_from', from)
   if (to) params.set('maturity_to', to)
   const query = useQuery({ queryKey: ['records', 'list', params.toString()], queryFn: () => api.request<Page>(`/api/instruments/?${params}`) })
-  if (selected) return <RecordDetail key={selected} api={api} id={selected} onOpen={setSelected} onBack={() => setSelected(undefined)} />
+  if (selected) return <RecordDetail key={selected} api={api} id={selected} onOpen={setSelected} onBack={() => setSelected(undefined)}
+    readinessAction={readinessAction} readinessKind={readinessKind} />
 
   const rows = query.data?.results ?? []
   const total = query.data?.count ?? 0
@@ -133,7 +135,7 @@ export function RecordsWorkspace({ api, role, globalQuery, initialRecordId, init
       )}
 
       <Modal open={create} title={<div className="localized-modal-title"><span>{tr("New deposit")}</span><LanguageToggle /></div>} footer={null} destroyOnHidden width={720} onCancel={() => setCreate(false)}>
-        <RecordForm api={api} onCancel={() => setCreate(false)}
+        <RecordForm api={api} suggestions={readinessAction === 'new' && readinessObligation ? {obligation_id: readinessObligation} : undefined} onCancel={() => setCreate(false)}
                     onSaved={(item) => { setCreate(false); setSelected(item.id); void cache.invalidateQueries({ queryKey: ['records'] }) }} />
       </Modal>
     </div>

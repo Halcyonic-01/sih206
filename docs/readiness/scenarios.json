@@ -1,0 +1,804 @@
+{
+  "schema": 1,
+  "synthetic_only": true,
+  "provenance": "Wholly invented input snapshots and manually specified expected states; no applicant data.",
+  "cases": [
+    {
+      "id": "four_of_six",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 4,
+        "applicable": 6,
+        "percent": 67,
+        "affidavit_3": "INCOMPLETE",
+        "days_remaining": 8
+      }
+    },
+    {
+      "id": "complete",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": true,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": true,
+          "payment_proof_on": "2026-10-24",
+          "affidavit_on": "2026-10-25",
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 6,
+        "applicable": 6,
+        "percent": 100
+      }
+    },
+    {
+      "id": "simulated_not_confirmed",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "SIMULATED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 3,
+        "applicable": 6,
+        "percent": 50,
+        "bank_confirmation": "SIMULATED"
+      }
+    },
+    {
+      "id": "bank_discrepancy",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "DISCREPANCY"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 3,
+        "applicable": 6,
+        "percent": 50,
+        "bank_confirmation": "BLOCKED"
+      }
+    },
+    {
+      "id": "stale_bank",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "STALE"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 3,
+        "applicable": 6,
+        "percent": 50,
+        "bank_confirmation": "UNKNOWN"
+      }
+    },
+    {
+      "id": "source_unknown",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": null,
+          "payment_proof_uploaded": null,
+          "affidavit_3_uploaded": null,
+          "required_paise": null,
+          "held_paise": null,
+          "proof_reviewed": null,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "UNKNOWN"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 0,
+        "applicable": 6,
+        "percent": 0,
+        "unknown": 6
+      }
+    },
+    {
+      "id": "exempt_explicit",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": false,
+          "payment_proof": false,
+          "affidavit_3": false,
+          "amount_coverage": false,
+          "proof_receipt": false,
+          "bank_confirmation": false
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 0,
+        "applicable": 0,
+        "percent": null,
+        "status": "NOT_APPLICABLE"
+      }
+    },
+    {
+      "id": "mode_specific_rtgs",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "RTGS",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": false
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 3,
+        "applicable": 5,
+        "percent": 60
+      }
+    },
+    {
+      "id": "unknown_applicability",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": null
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 3,
+        "applicable": 6,
+        "percent": 50,
+        "bank_confirmation": "UNKNOWN"
+      }
+    },
+    {
+      "id": "due_today",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-11-04",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 4,
+        "applicable": 6,
+        "percent": 67,
+        "days_remaining": 0,
+        "deadline_state": "DUE_TODAY"
+      }
+    },
+    {
+      "id": "overdue",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-11-05",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 4,
+        "applicable": 6,
+        "percent": 67,
+        "days_remaining": -1,
+        "deadline_state": "OVERDUE"
+      }
+    },
+    {
+      "id": "year_boundary",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-12-28",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-12-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 4,
+        "applicable": 6,
+        "percent": 67,
+        "days_remaining": 7,
+        "due_on": "2027-01-04"
+      }
+    },
+    {
+      "id": "leap_day",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2028-02-29",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2028-02-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 4,
+        "applicable": 6,
+        "percent": 67,
+        "days_remaining": 6,
+        "due_on": "2028-03-06"
+      }
+    },
+    {
+      "id": "unknown_intimation",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": null,
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 4,
+        "applicable": 6,
+        "percent": 67,
+        "days_remaining": null,
+        "deadline_state": "UNKNOWN"
+      }
+    },
+    {
+      "id": "unknown_rule_days",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": null
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 4,
+        "applicable": 6,
+        "percent": 67,
+        "days_remaining": null,
+        "deadline_state": "UNKNOWN"
+      }
+    },
+    {
+      "id": "shortfall_one_paisa",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 49999999,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 3,
+        "applicable": 6,
+        "percent": 50,
+        "amount_coverage": "INCOMPLETE"
+      }
+    },
+    {
+      "id": "unknown_required",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": null,
+          "held_paise": 50000000,
+          "proof_reviewed": false,
+          "payment_proof_on": null,
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 3,
+        "applicable": 6,
+        "percent": 50,
+        "amount_coverage": "UNKNOWN"
+      }
+    },
+    {
+      "id": "reviewed_missing_receipt",
+      "snapshot": {
+        "schema": 1,
+        "institution_id": 1,
+        "obligation_id": 101,
+        "as_of": "2026-10-27",
+        "mode": "FDR",
+        "applicability": {
+          "accepted_deposit": true,
+          "payment_proof": true,
+          "affidavit_3": true,
+          "amount_coverage": true,
+          "proof_receipt": true,
+          "bank_confirmation": true
+        },
+        "facts": {
+          "accepted_current": true,
+          "payment_proof_uploaded": true,
+          "affidavit_3_uploaded": false,
+          "required_paise": 50000000,
+          "held_paise": 50000000,
+          "proof_reviewed": true,
+          "payment_proof_on": "2026-10-26",
+          "affidavit_on": null,
+          "bank_status": "CURRENT_CONFIRMED"
+        },
+        "deadline": {
+          "intimation_date": "2026-10-20",
+          "proof_days": 15
+        },
+        "allowed_actions": [
+          "UPLOAD_AFFIDAVIT_3",
+          "RECORD_PROOF_RECEIPTS"
+        ],
+        "policy_source": "SYNTHETIC rule context; not approved policy"
+      },
+      "expected": {
+        "completed": 4,
+        "applicable": 6,
+        "percent": 67,
+        "proof_receipt": "INCOMPLETE"
+      }
+    }
+  ]
+}

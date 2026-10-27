@@ -377,9 +377,9 @@ def start_mailpit(settings):
                             cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def background_command(name, env):
+def background_command(name, env, *arguments):
     """Run a short management command for the scheduler; print only its last line (or the failure)."""
-    result = subprocess.run([str(VENV_PYTHON), 'manage.py', name], cwd=ROOT, env=env, text=True,
+    result = subprocess.run([str(VENV_PYTHON), 'manage.py', name, *arguments], cwd=ROOT, env=env, text=True,
                             capture_output=True, check=False)
     tail = (result.stdout.strip().splitlines() or [''])[-1]
     if result.returncode:
@@ -390,10 +390,13 @@ def background_command(name, env):
 
 
 def scheduler_tick(env, state):
-    """Local stand-in for the Docker scheduler: e-mail and bank requests every 5 minutes, due rules once per day."""
+    """Email, optional weekly digest and bank requests every 5 minutes; daily rules once per day."""
     now = time.time()
     if now >= state['next_send']:
         state['next_send'] = now + SEND_EVERY_SECONDS
+        # The daily rules may have run before Monday 09:00 IST. Check the
+        # default-off, idempotent digest independently of that daily stamp.
+        background_command('send_weekly_digests', env, '--queue')
         background_command('send_notifications', env)
         background_command('deliver_bank_requests', env)
     stamp = ROOT / 'data' / f'.rules-ran-{datetime.now(timezone.utc):%Y-%m-%d}'

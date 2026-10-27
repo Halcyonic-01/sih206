@@ -1,0 +1,443 @@
+{
+  "schema": 1,
+  "synthetic_only": true,
+  "license": "CC0-1.0",
+  "label_review": "AUTHOR_LABELLED_NOT_INDEPENDENTLY_REVIEWED",
+  "cases": [
+    {
+      "id": "institution_month_and_observations",
+      "as_of": "2026-10-26T09:00:00+05:30",
+      "recipient": {
+        "id": 1,
+        "roles": [
+          "institution"
+        ],
+        "active": true,
+        "email_available": true,
+        "digest_enabled": true,
+        "scope_institution_ids": [
+          1
+        ]
+      },
+      "facts": {
+        "simulation_label": "SIMULATED",
+        "deposits": [
+          {
+            "id": 1,
+            "institution_id": 1,
+            "maturity_date": "2026-10-28",
+            "status": "ACCEPTED",
+            "released": false,
+            "superseded": false
+          },
+          {
+            "id": 2,
+            "institution_id": 1,
+            "maturity_date": "2026-10-31",
+            "status": "ACCEPTED",
+            "released": false,
+            "superseded": false
+          },
+          {
+            "id": 3,
+            "institution_id": 1,
+            "maturity_date": "2026-10-24",
+            "status": "ACCEPTED",
+            "released": false,
+            "superseded": false
+          },
+          {
+            "id": 4,
+            "institution_id": 1,
+            "maturity_date": "2026-11-01",
+            "status": "ACCEPTED",
+            "released": false,
+            "superseded": false
+          }
+        ],
+        "observations": [
+          {
+            "id": 5,
+            "institution_id": 1,
+            "resolved": false,
+            "requires_institution_action": true
+          },
+          {
+            "id": 6,
+            "institution_id": 1,
+            "resolved": true,
+            "requires_institution_action": true
+          }
+        ]
+      },
+      "expected": {
+        "expiring_this_month": 2,
+        "observations_needing_action": 1
+      }
+    },
+    {
+      "id": "officer_work_and_duration",
+      "as_of": "2026-10-26T09:00:00+05:30",
+      "recipient": {
+        "id": 1,
+        "roles": [
+          "officer"
+        ],
+        "active": true,
+        "email_available": true,
+        "digest_enabled": true,
+        "scope_institution_ids": [
+          1
+        ]
+      },
+      "facts": {
+        "simulation_label": "SIMULATED",
+        "submissions": [
+          {
+            "id": 1,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 2,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 3,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 4,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 5,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 6,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 7,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 8,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 9,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 10,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 11,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          },
+          {
+            "id": 12,
+            "institution_id": 1,
+            "status": "SUBMITTED"
+          }
+        ],
+        "discrepancies": [
+          {
+            "id": 1,
+            "institution_id": 1,
+            "unresolved": true,
+            "simulated": true
+          },
+          {
+            "id": 2,
+            "institution_id": 1,
+            "unresolved": true,
+            "simulated": true
+          },
+          {
+            "id": 3,
+            "institution_id": 1,
+            "unresolved": true,
+            "simulated": true
+          }
+        ],
+        "reviews": [
+          {
+            "id": 1,
+            "institution_id": 1,
+            "submitted_at": "2026-10-20T00:00:00+05:30",
+            "accepted_at": "2026-10-21T12:00:00+05:30",
+            "history_complete": true
+          },
+          {
+            "id": 2,
+            "institution_id": 1,
+            "submitted_at": "2026-10-22T09:36:00+05:30",
+            "accepted_at": "2026-10-24T12:00:00+05:30",
+            "history_complete": true
+          }
+        ]
+      },
+      "expected": {
+        "pending_submissions": 12,
+        "unresolved_discrepancies": 3,
+        "average_review_days": "1.8"
+      }
+    },
+    {
+      "id": "authority_decisions_and_recorded_escalation",
+      "as_of": "2026-10-26T09:00:00+05:30",
+      "recipient": {
+        "id": 1,
+        "roles": [
+          "authority"
+        ],
+        "active": true,
+        "email_available": true,
+        "digest_enabled": true,
+        "scope_institution_ids": [
+          1
+        ]
+      },
+      "facts": {
+        "simulation_label": "SIMULATED",
+        "releases": [
+          {
+            "id": 1,
+            "institution_id": 1,
+            "status": "PENDING",
+            "ready_for_authority": true
+          },
+          {
+            "id": 2,
+            "institution_id": 1,
+            "status": "PENDING",
+            "ready_for_authority": true
+          },
+          {
+            "id": 3,
+            "institution_id": 1,
+            "status": "PENDING",
+            "ready_for_authority": false
+          },
+          {
+            "id": 4,
+            "institution_id": 1,
+            "status": "APPROVED",
+            "ready_for_authority": true
+          }
+        ],
+        "escalations": [
+          {
+            "id": 1,
+            "institution_id": 1,
+            "unit": "PGRC",
+            "raised_at": "2026-10-23T10:00:00+05:30",
+            "unresolved": true
+          },
+          {
+            "id": 2,
+            "institution_id": 1,
+            "unit": "GRANTS",
+            "raised_at": "2026-10-23T10:00:00+05:30",
+            "unresolved": true
+          },
+          {
+            "id": 3,
+            "institution_id": 1,
+            "unit": "PGRC",
+            "raised_at": "2026-10-23T10:00:00+05:30",
+            "unresolved": false
+          }
+        ]
+      },
+      "expected": {
+        "awaiting_authority": 2,
+        "pgrc_escalations": 1
+      }
+    },
+    {
+      "id": "clearance_unit_only",
+      "as_of": "2026-10-26T09:00:00+05:30",
+      "recipient": {
+        "id": 1,
+        "roles": [
+          "clearance"
+        ],
+        "active": true,
+        "email_available": true,
+        "digest_enabled": true,
+        "scope_institution_ids": [
+          1
+        ],
+        "unit": "PGRC"
+      },
+      "facts": {
+        "simulation_label": "SIMULATED",
+        "clearances": [
+          {
+            "id": 1,
+            "institution_id": 1,
+            "unit": "PGRC",
+            "status": "OPEN"
+          },
+          {
+            "id": 2,
+            "institution_id": 1,
+            "unit": "PGRC",
+            "status": "CLEARED"
+          }
+        ]
+      },
+      "expected": {
+        "open_clearance_tasks": 1
+      }
+    },
+    {
+      "id": "auditor_alerts",
+      "as_of": "2026-10-26T09:00:00+05:30",
+      "recipient": {
+        "id": 1,
+        "roles": [
+          "auditor"
+        ],
+        "active": true,
+        "email_available": true,
+        "digest_enabled": true,
+        "scope_institution_ids": [
+          1
+        ]
+      },
+      "facts": {
+        "simulation_label": "SIMULATED",
+        "audit_alerts": [
+          {
+            "id": 1,
+            "institution_id": 1,
+            "unresolved": true
+          },
+          {
+            "id": 2,
+            "institution_id": 1,
+            "unresolved": false
+          }
+        ]
+      },
+      "expected": {
+        "audit_alerts": 1
+      }
+    },
+    {
+      "id": "unknown_is_not_zero",
+      "as_of": "2026-10-26T09:00:00+05:30",
+      "recipient": {
+        "id": 1,
+        "roles": [
+          "institution"
+        ],
+        "active": true,
+        "email_available": true,
+        "digest_enabled": true,
+        "scope_institution_ids": [
+          1
+        ]
+      },
+      "facts": {
+        "simulation_label": "SIMULATED"
+      },
+      "expected": {
+        "expiring_this_month": null,
+        "observations_needing_action": null
+      }
+    },
+    {
+      "id": "known_empty",
+      "as_of": "2026-10-26T09:00:00+05:30",
+      "recipient": {
+        "id": 1,
+        "roles": [
+          "institution"
+        ],
+        "active": true,
+        "email_available": true,
+        "digest_enabled": true,
+        "scope_institution_ids": [
+          1
+        ]
+      },
+      "facts": {
+        "simulation_label": "SIMULATED",
+        "deposits": [],
+        "observations": []
+      },
+      "expected": {
+        "expiring_this_month": 0,
+        "observations_needing_action": 0
+      }
+    },
+    {
+      "id": "no_review_cohort",
+      "as_of": "2026-10-26T09:00:00+05:30",
+      "recipient": {
+        "id": 1,
+        "roles": [
+          "officer"
+        ],
+        "active": true,
+        "email_available": true,
+        "digest_enabled": true,
+        "scope_institution_ids": [
+          1
+        ]
+      },
+      "facts": {
+        "simulation_label": "SIMULATED",
+        "submissions": [],
+        "discrepancies": [],
+        "reviews": []
+      },
+      "expected": {
+        "pending_submissions": 0,
+        "unresolved_discrepancies": 0,
+        "average_review_days": null
+      }
+    },
+    {
+      "id": "authority_escalation_source_unavailable",
+      "as_of": "2026-10-26T09:00:00+05:30",
+      "recipient": {
+        "id": 1,
+        "roles": [
+          "authority"
+        ],
+        "active": true,
+        "email_available": true,
+        "digest_enabled": true,
+        "scope_institution_ids": [
+          1
+        ]
+      },
+      "facts": {
+        "simulation_label": "SIMULATED",
+        "releases": []
+      },
+      "expected": {
+        "awaiting_authority": 0,
+        "pgrc_escalations": null
+      }
+    }
+  ]
+}

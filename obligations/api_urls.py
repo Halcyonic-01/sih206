@@ -2,10 +2,12 @@
 from django.urls import path
 from .api import views
 from .api import report_views
+from .api import readiness_views
 
 urlpatterns = [
     path('institutions', views.Institutions.as_view(), name='s2-institutions'),
     path('institutions/<int:pk>', views.InstitutionDetail.as_view(), name='s2-institution'),
+    path('institutions/<int:pk>/readiness', readiness_views.Readiness.as_view(), name='s2-institution-readiness'),
     path('institutions/<int:pk>/programme-approvals', views.Children.as_view(), name='s2-approvals'),
     path('programme-approvals/<int:pk>', views.ChildDetail.as_view(), name='s2-approval'),
     path('institutions/<int:pk>/obligations', views.Obligations.as_view(), name='s2-obligations'),
