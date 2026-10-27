@@ -130,4 +130,29 @@ describe('api client', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2) // one retry after a confirmed code, not more
     again()
   })
+
+  it('reuses one Idempotency-Key while a write is retried, and starts a new one after a final answer', async () => {
+    fetchMock.mockImplementation(async () => reply(503, { detail: 'down', code: 'unavailable' }))
+    await expect(api('/instruments/', { method: 'POST', json: { reference: 'A' } })).rejects.toBeInstanceOf(ApiError)
+    await expect(api('/instruments/', { method: 'POST', json: { reference: 'A' } })).rejects.toBeInstanceOf(ApiError)
+    const keys = fetchMock.mock.calls.map(([, init]) => (init!.headers as Record<string, string>)['Idempotency-Key'])
+    expect(keys[0]).toBeTruthy()
+    expect(keys[1]).toBe(keys[0])
+    fetchMock.mockImplementation(async () => reply(201, { id: 1 }))
+    await api('/instruments/', { method: 'POST', json: { reference: 'A' } })        // success: key still the same for this intent
+    await api('/instruments/', { method: 'POST', json: { reference: 'A' } })        // next attempt after success is new
+    await api('/instruments/', { method: 'POST', json: { reference: 'B' } })
+    const later = fetchMock.mock.calls.slice(2).map(([, init]) => (init!.headers as Record<string, string>)['Idempotency-Key'])
+    expect(later[0]).toBe(keys[0])
+    expect(new Set(later).size).toBe(3) // [A reused, A new, B new]
+    expect(later[1]).not.toBe(later[0])
+    expect(later[2]).not.toBe(later[1])
+  })
+
+  it('does not attach a key to reads or sign-in', async () => {
+    fetchMock.mockImplementation(async () => reply(200, {}))
+    await api('/things/')
+    await api('/auth/login/', { method: 'POST', json: { username: 'u', password: 'p' } })
+    for (const [, init] of fetchMock.mock.calls) expect((init!.headers as Record<string, string>)['Idempotency-Key']).toBeUndefined()
+  })
 })

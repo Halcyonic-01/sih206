@@ -148,3 +148,21 @@ rejects a second seal with the same `prev_hash` (no forks).
 * Limits: the chain detects tampering after the fact and the triggers can be disabled by a table owner. Anchoring the chain
   head in write-once storage is still open, so a database administrator could rebuild the chain.
 * SQLite now runs with `transaction_mode=IMMEDIATE` so writers queue instead of racing.
+
+## Idempotency-Key (P2-4)
+
+Writes under `/api/` (POST, PUT, PATCH, DELETE; not `/api/auth/*`) accept an `Idempotency-Key` header (8 to 100 letters, digits,
+`-` or `_`; a UUID is fine). For the same signed-in user and key:
+
+| Situation | Answer |
+|---|---|
+| First request | runs normally; a 2xx answer is stored for 24 hours |
+| Same request again after it succeeded | the stored response, with header `Idempotent-Replay: true`; nothing runs a second time |
+| Same request while the first is still running (double click) | 409 `request_in_progress` |
+| Same key, different path, method or body | 409 `idempotency_key_reused` |
+| The first request failed (4xx, 5xx, crash) | nothing stored; a retry simply runs again |
+
+Multipart uploads are fingerprinted by content type and length rather than read into memory. `manage.py cleanup_idempotency` removes
+records older than 24 hours (the Docker scheduler and `run_portal.py` run it every few minutes). The React client sends one key per
+user intent: the same write repeated within two minutes (a double click, a retry after a network error or 5xx) reuses its key, and a
+final answer from the server starts a new one.

@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'axes.middleware.AxesMiddleware',
+    'access.idempotency.IdempotencyMiddleware',
     'access.middleware.AccessLogMiddleware',
     'portal.middleware.SecurityHeadersMiddleware',
     'portal.middleware.OperationalSafetyMiddleware',
