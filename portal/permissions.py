@@ -45,9 +45,29 @@ def clearance_unit(user):
         raise PermissionDenied('No clearance unit is assigned to this account.') from None
 
 
+def officer_regions(user):
+    """The regions an officer is restricted to; an empty list means national scope."""
+    from access.models import RegionAssignment
+    return list(RegionAssignment.objects.filter(user=user).values_list('region', flat=True))
+
+
+def region_q(regions, prefix='deposit_profile__region'):
+    """Q matching institutions in any of `regions` (case-insensitive). `prefix` is the path to InstitutionProfile.region."""
+    from django.db.models import Q
+    query = Q(pk__in=[])
+    for region in regions:
+        query |= Q(**{f'{prefix}__iexact': region})
+    return query
+
+
 def scoped_instruments(user):
     current_role = role(user)
-    if current_role in ('officer', 'authority', 'auditor'):
+    if current_role == 'officer':
+        regions = officer_regions(user)
+        records = Instrument.objects.exclude(status=Instrument.Status.DRAFT)
+        # A regional officer sees only institutions whose profile region matches theirs; none without a profile (fail closed).
+        return records.filter(region_q(regions, 'institution__deposit_profile__region')) if regions else records
+    if current_role in ('authority', 'auditor'):
         # Drafts are private until the first submission. Corrected records stay visible.
         return Instrument.objects.exclude(status=Instrument.Status.DRAFT)
     if current_role == 'clearance':

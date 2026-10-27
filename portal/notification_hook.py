@@ -12,8 +12,8 @@ def notify_record(item, template):
     recipients = list(get_user_model().objects.filter(is_active=True,
         userprofile__institution_id=item.institution_id).values_list('pk', flat=True))
     if template == 'record_submitted':
-        recipients = list(get_user_model().objects.filter(is_active=True,
-            groups__name='Officer').values_list('pk', flat=True))
+        from notifications.recipients import officers
+        recipients = [user.pk for user in officers(item.institution)]
     template = {'record_submitted': 'instrument_submitted',
                 'record_reviewed': 'instrument_accepted' if item.status == 'ACCEPTED' else 'instrument_changes_requested'}.get(template, template)
     queued = import_string(path)(recipients=recipients, template=template,

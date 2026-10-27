@@ -18,6 +18,28 @@ class UnitAssignment(models.Model):
         return f'{self.user} -> {self.unit}'
 
 
+class RegionAssignment(models.Model):
+    """Restricts an officer to institutions whose AICTE profile region matches (P2-2).
+
+    An officer with no assignment keeps national scope (head office, the demo). `is_head` marks the regional head who
+    receives escalations for that region. Only the Officer role uses this; other roles stay national.
+    """
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='region_assignments')
+    region = models.CharField(max_length=100)
+    is_head = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'region'], name='region_assignment_unique')]
+
+    def save(self, *args, **kwargs):
+        self.region = ' '.join(self.region.split())
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.user} -> {self.region}{" (head)" if self.is_head else ""}'
+
+
 class MfaDevice(models.Model):
     """A staff member's authenticator app (TOTP). Unconfirmed until the first valid code is entered.
 

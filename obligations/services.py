@@ -32,7 +32,11 @@ def scoped_institutions(actor):
     current = role(actor)
     if current == 'institution':
         return Institution.objects.filter(pk=institution_for(actor).pk)
-    if current in {'officer', 'authority'}:
+    if current == 'officer':
+        from portal.permissions import officer_regions, region_q
+        regions = officer_regions(actor)
+        return Institution.objects.filter(region_q(regions)) if regions else Institution.objects.all()
+    if current == 'authority':
         return Institution.objects.all()
     raise PermissionDenied('An active unambiguous portal role is required.')
 

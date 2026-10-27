@@ -86,10 +86,16 @@ A user belongs to exactly one role group. A user with no group or more than one 
 | Role | Scope | Main abilities |
 |---|---|---|
 | **Institution** | Own institution only | Create, edit, submit and correct deposits; upload documents; request renewal and release; read own obligations, reports and KPIs; see own notifications. |
-| **Officer** | All institutions | Review submissions, add and resolve observations, accept or request changes, correct records with a stated reason, run reconciliation, import institutions, review penalties and proof-receipt dates, read every report. |
+| **Officer** | All institutions, or only their region(s) | Review submissions, add and resolve observations, accept or request changes, correct records with a stated reason, run reconciliation, import institutions, review penalties and proof-receipt dates, read every report. |
 | **Authority** | All institutions (read), decisions | Authorize or reject release, issue the letter, record completion. Receives escalations. |
 | **Clearance unit** | Cases assigned to its unit | Review a protected supporting PDF and record a clearance decision (cleared, hold, objection), reason and file number for PGRC, Vigilance or Grants. The reviewer and decision time remain linked to the evidence. |
 | **Auditor** | Read-only | Browse the audit trail and access log, export them, and verify the audit chain. |
+
+An officer can be limited to regions with `python manage.py assign_region <username> <region> [--head] [--remove]`
+(the region is the one on the institutions' AICTE profiles, for example `North`). A regional officer sees only those
+institutions' records, documents, reports and cases, and is notified only about them; an institution with no profile is
+hidden from regional officers. An officer with no region keeps national scope, so head office and the demo are unchanged.
+`--head` marks the regional head, who receives that region's escalations (renewal overdue, second-level correction reminders).
 
 Draft records are private to the institution. Every list, detail, download and export is filtered by the user's scope on
 the server, and the interface only shows buttons the server will allow.
