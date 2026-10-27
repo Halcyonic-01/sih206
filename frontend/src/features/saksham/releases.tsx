@@ -166,6 +166,19 @@ function CaseBody({client, identityKey, caseId}: {client: Transport; identityKey
         <p className="muted">{tr("Officer review complete:  ")}{item.penalty_review_complete ? tr("Yes") : tr("No")}{tr(". Confirming a penalty does not prove payment or authorise a deduction.")}</p>
       </Panel>
       <Panel title={tr("Decision and actions")}>
+        {item.approval && item.approval.required_signatures > 1 && item.status === 'PENDING' && (
+          <Alert type={item.approval.signature_voided ? 'warning' : 'info'} showIcon style={{marginBottom: 12}}
+            message={`Two authority signatures are required${item.approval.threshold_paise ? ` (deposit of ${money(item.approval.threshold_paise)} or more)` : ''}. Signatures: ${item.approval.signatures_given} of ${item.approval.required_signatures}.`}
+            description={<>
+              {item.approval.signature_voided && <p>The case changed after the first signature, so it was voided. The next authority user starts again.</p>}
+              {item.approval.signed_by_me ? <p>You have signed. A different authority user must give the second signature.</p>
+                : item.approval.signatures_given > 0 && <p>A different authority user already gave the first signature; yours would be the second.</p>}
+              <span className="muted">{item.approval.policy_label} · {item.approval.policy_source}</span></>} />
+        )}
+        {item.approval?.basis_matches === false && (
+          <Alert type="error" showIcon style={{marginBottom: 12}} message="This case changed after it was authorised"
+            description="Documents, clearances or penalties differ from what was approved, so a letter cannot be issued and completion cannot be recorded. Reject it and start a new request." />
+        )}
         <fieldset disabled={busy} style={{border: 0, padding: 0}}><legend className="sr-only">{tr("Human action and reason")}</legend>
           <label>{tr("Reason / completion notes  ")}<textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
           {item.actions.can_review_penalties && <>
@@ -173,7 +186,7 @@ function CaseBody({client, identityKey, caseId}: {client: Transport; identityKey
             <label>{tr("Reviewed penalty base (INR)  ")}<input inputMode="decimal" value={base} onChange={e => setBase(e.target.value)} /></label>
             <button disabled={!reason.trim() || !base} onClick={() => {try {void mutate('penalties', {kind: penalty, base_paise: paise(base)});} catch (e) {setError(e);}}}>{tr("Propose penalty for review")}</button>
             <button className="primary" disabled={!reason.trim()} onClick={() => mutate('penalties')}>{tr("Record officer checklist and penalty review complete")}</button></>}
-          {item.actions.can_approve && <button className="primary" disabled={!reason.trim()} onClick={() => mutate('approve')}>{tr("Record authority authorization")}</button>}
+          {item.actions.can_approve && <button className="primary" disabled={!reason.trim()} onClick={() => mutate('approve')}>{item.approval && item.approval.required_signatures > 1 ? (item.approval.signatures_given > 0 ? 'Record second signature' : 'Record first signature') : tr("Record authority authorization")}</button>}
           {item.actions.can_reject && <button disabled={!reason.trim()} onClick={() => mutate('reject')}>{tr("Record authority rejection")}</button>}
           {item.actions.can_issue && <button className="primary" disabled={!reason.trim()} onClick={() => mutate('issue')}>{tr("Issue letter (unsigned)")}</button>}
           {item.actions.can_revoke && <button disabled={!reason.trim()} onClick={() => mutate('revoke')}>{tr("Revoke letter")}</button>}

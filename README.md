@@ -268,6 +268,7 @@ The local demo runs with no `.env` at all.
 | `MFA_REQUIRED` | `false` | When `true`, officer, authority, clearance and auditor accounts must set up an authenticator app (TOTP) before using the portal. Off, staff may enrol voluntarily. |
 | `MFA_STEP_UP_SECONDS` | `600` | How long a code counts for release authorisation, letter issue, completion and officer correction. |
 | `MFA_ISSUER` | `Pramaan` | Name shown in the authenticator app. |
+| `RELEASE_REQUIRE_DIFFERENT_COMPLETER` | `false` | When `true`, the authority user who authorised a release cannot also record its completion (needs a second authority account). |
 | `API_DOCS_PUBLIC` | `DJANGO_DEBUG` | Whether `/api/docs/` is open without signing in. |
 
 ### Database

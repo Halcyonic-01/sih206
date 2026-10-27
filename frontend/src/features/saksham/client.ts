@@ -59,7 +59,10 @@ export interface Case { id: number; version: number; instrument_version: number;
   monitoring_active: boolean; next_action: string; readiness: Assessment | null;
   actions: Record<string, boolean>; clearances: Clearance[];
   penalties: {id: number; kind: string; base_paise: Paise; amount_paise: Paise; rate_bps: number; clause: string; status: string; reason: string}[];
-  penalty_review_complete: boolean; letter: null | {serial: string; kind: string; revoked: boolean; unsigned_demo: boolean} }
+  penalty_review_complete: boolean;
+  approval?: {required_signatures: number; signatures_given: number; threshold_paise: number | null; second_signature_required: boolean;
+    signature_voided: boolean; signed_by_me: boolean; basis_matches: boolean | null; policy_source: string; policy_label: string};
+  letter: null | {serial: string; kind: string; revoked: boolean; unsigned_demo: boolean} }
 export interface ClearanceEvidence {id: number; name: string; page_count: number; sha256: string;
   uploaded_by: string; uploaded_at: string; download_path: string}
 export interface Clearance {unit: string; status: string; reason: string; evidence_ref: string; can_decide: boolean;

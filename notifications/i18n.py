@@ -8,6 +8,7 @@ HINDI = {
     'instrument_changes_requested': ('FDR {reference} में सुधार माँगे गए', 'अधिकारी ने FDR {reference} में सुधार माँगे हैं। टिप्पणियाँ देखने के लिए पोर्टल खोलें।'),
     'verification_discrepancy': ('FDR {reference} का विवरणी से मिलान नहीं हुआ', 'विवरणी की पंक्ति FDR {reference} से मेल नहीं खाती। अधिकारी की समीक्षा आवश्यक है।'),
     'verification_confirmed': ('FDR {reference} का विवरणी से मिलान पुष्ट', 'बैंक विवरणी की पंक्ति FDR {reference} से मिली (डेमो में स्रोत अनुकरणित है)।'),
+    'release_second_signature': ('FDR {reference} पर दूसरे हस्ताक्षर की आवश्यकता', 'FDR {reference} की मुक्ति पर पहला प्राधिकारी हस्ताक्षर दर्ज हुआ है। मुक्ति अधिकृत होने से पहले किसी दूसरे प्राधिकारी उपयोगकर्ता को दूसरा हस्ताक्षर करना होगा।'),
     'release_requested': ('FDR {reference} की मुक्ति का अनुरोध', 'FDR {reference} की मुक्ति का अनुरोध जमा हुआ है। अनापत्ति कार्य खुले हैं।'),
     'clearance_assigned': ('FDR {reference} के लिए {unit} अनापत्ति आवश्यक', 'FDR {reference} के लिए {unit} अनापत्ति कार्य आपकी इकाई की प्रतीक्षा में है।'),
     'penalty_proposed': ('FDR {reference} पर दंड प्रस्तावित', 'FDR {reference} का दंड आकलन निर्णय की प्रतीक्षा में है।'),

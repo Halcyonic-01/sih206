@@ -112,3 +112,25 @@ Visual browser QA remains manual. Live HTTP checks do not establish visual corre
 - Existing domain rows, observations, lineage, audit history, account credentials/roles and original PDF hashes matched the pre-update backup. The Authority account was added separately without changing earlier credentials.
 
 Two new synthetic `RELEASE-...` instruments remain: one completed with evidence and one rejected. No existing instrument was released by the check. Milestone 6 CSV and packaging are documented in offline-demo.md.
+
+## Release governance (second signature, approval fingerprint)
+
+Above a threshold a release needs **two different authority users**, and an authorisation is tied to what was approved
+(`casework/governance.py`; fields `approval_policy`, `approvals` and `basis_fingerprint` on `ReleaseCase`).
+
+* **Approval levels.** A `RuleSet` with code `release-approval` holds `{"label": ..., "approval_levels": [{"min_amount_paise": N,
+  "signatures": 2}]}`. With none, the built-in **draft** applies: two signatures from ₹1 crore (`DRAFT_DEMO_NOT_APPROVED`).
+  The applicable policy is copied onto the case when it opens, so a later rule change does not alter an open case.
+* **Signatures.** The first signature is recorded on the case (audit `CASE_FIRST_SIGNATURE`) and the release stays pending;
+  the other authority users are notified (`release_second_signature`). The same user cannot sign twice. The second,
+  different user's signature authorises the release as before.
+* **Fingerprint.** A SHA-256 over the instrument's documents (hashes), clearance results, penalty decisions, rule and declarations
+  is stored with the final signature. If the basis changes while only one signature exists, that signature is voided
+  (`CASE_SIGNATURE_VOIDED_AND_RESTARTED`) and the next signer starts again. After authorisation, letter issue and completion
+  refuse with 409 when the fingerprint no longer matches (for example a document was added afterwards). Cases authorised
+  before this feature have no fingerprint and are not checked. The instrument version is deliberately not part of it, because the
+  workflow raises it itself.
+* **Separate completer.** With `RELEASE_REQUIRE_DIFFERENT_COMPLETER=true` the person who authorised cannot record completion.
+  Off by default because the demo has one authority account.
+* The case API returns an `approval` object (`required_signatures`, `signatures_given`, `signed_by_me`, `signature_voided`,
+  `basis_matches`) and the case page shows it.
