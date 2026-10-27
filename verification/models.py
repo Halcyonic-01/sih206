@@ -119,3 +119,11 @@ class BankSuccession(models.Model):
     effective_date = models.DateField(null=True, blank=True)
     source = models.CharField(max_length=300, blank=True)
     verified = models.BooleanField(default=False)
+
+
+class DocumentFingerprint(models.Model):
+    """A 1024-bit perceptual hash (dHash) of a document's first page, used only to spot a recycled scan for officers."""
+
+    document = models.OneToOneField('portal.Document', on_delete=models.PROTECT, related_name='fingerprint')
+    phash = models.CharField(max_length=256)
+    computed_at = models.DateTimeField(auto_now_add=True)

@@ -118,6 +118,8 @@ if LETTER_SIGNING_KEY:
 AUDITOR_DOWNLOAD_NOTIFY = env_bool('AUDITOR_DOWNLOAD_NOTIFY', False)
 # P3-1: a released or renewed record becomes 'archival due' this many years after it was settled.
 RETENTION_YEARS = env_int('RETENTION_YEARS', 10, minimum=1)
+# P3-2: compare the first page of uploads with other institutions' documents (needs Poppler's pdftoppm; officers only).
+NEAR_DUPLICATE_SCAN = env_bool('NEAR_DUPLICATE_SCAN', True)
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # No MEDIA_URL route: all document reads go through an ownership-checked view.

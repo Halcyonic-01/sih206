@@ -134,6 +134,14 @@ def checks(actor, item):
         if duplicate:
             findings.append({'code': 'CROSS_INSTITUTION_POSSIBLE_DUPLICATE', 'severity': 'warning',
                 'explanation': 'A visible submitted record has matching issuer/reference details. Review required.'})
+        from . import fingerprint
+        similar = fingerprint.near_duplicates(item, scoped_instruments(actor)) if fingerprint.available() else []
+        if similar:
+            findings.append({'code': 'NEAR_DUPLICATE_SCAN', 'severity': 'warning',
+                'explanation': 'The first page of an uploaded document looks like a document on another institution\'s record or on a '
+                               'released deposit (possibly a recycled scan). This is a visual hint only; compare the two documents.',
+                'values': {'matches': [{'instrument_id': other.pk, 'reference': other.reference, 'difference_bits': gap}
+                                       for other, gap in similar]}})
     return findings
 
 

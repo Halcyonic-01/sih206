@@ -112,3 +112,14 @@ confidence is *unknown*, never *different*. Numeric dates are read as DD/MM; whe
 (`AI_DATE_AMBIGUOUS`, or a mismatch that notes the month/day reading would match). If the document also shows the amount in words, the
 extraction returns `amount_in_words` and an advisory `AMOUNT_WORDS_MISMATCH` is raised when it differs from the figures (Indian
 numbering: lakh, crore, paise; unreadable words are ignored). Output stays advisory and never changes a record.
+
+## Near-duplicate scans (P3-2)
+
+For **officers only**, `NEAR_DUPLICATE_SCAN` (warning) appears when the first page of a document looks like a document on another
+institution's record, or on a released deposit, in the officer's scope (`verification/fingerprint.py`). Page 1 is rendered with Poppler's
+`pdftoppm` (the optional tool local OCR uses; without it nothing is computed and no finding appears) and reduced with Pillow to a 1024-bit
+difference hash, stored in `DocumentFingerprint` after the upload commits (`manage.py fingerprint_documents` fills in older files).
+The match threshold is tight (3 bits of 1024), so it finds recycled copies of the same file or image, re-saved, resized or lightly
+recompressed. A physical re-scan will usually *not* match, and a different document on the same bank's template should not. It is a hint
+to compare the two documents, it proves nothing about authenticity, and an upload is never refused because of it. The institution never
+sees the finding. Switch off with `NEAR_DUPLICATE_SCAN=false`.
