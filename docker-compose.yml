@@ -77,8 +77,10 @@ services:
   # Optional malware scanner:  docker compose --profile scan up --build   with CLAMAV_HOST=clamav in .env
   # (add SCAN_REQUIRED=true to refuse uploads whenever it is down). The first start downloads signatures, which takes minutes.
   clamav:
-    image: clamav/clamav:stable
+    image: clamav/clamav-debian:stable   # multi-architecture (the plain clamav/clamav image has no Apple-silicon build)
     profiles: ["scan"]
+    ports:
+      - "127.0.0.1:${CLAMAV_PUBLISH_PORT:-3310}:3310"   # only for a portal running outside Docker; the web container uses CLAMAV_HOST=clamav
     healthcheck:
       test: ["CMD", "clamdcheck.sh"]
       interval: 60s
