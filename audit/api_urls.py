@@ -1,8 +1,11 @@
 from django.urls import path
 
-from . import api
+from . import api, retention_api
 
 urlpatterns = [
+    path('retention/due/', retention_api.Due.as_view(), name='api-retention-due'),
+    path('instruments/<int:pk>/archive/', retention_api.Archive.as_view(), name='api-archive'),
+    path('instruments/<int:pk>/legal-hold/', retention_api.Hold.as_view(), name='api-legal-hold'),
     path('audit/events/', api.AuditEventList.as_view(), name='api-audit-events'),
     path('audit/events/facets/', api.AuditFacets.as_view(), name='api-audit-facets'),
     path('audit/events/export/', api.AuditEventExport.as_view(), name='api-audit-export'),

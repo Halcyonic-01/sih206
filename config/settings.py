@@ -116,6 +116,8 @@ if LETTER_SIGNING_KEY:
     _parse_letter_key(LETTER_SIGNING_KEY)
 # P2-10: also tell the dealing officers when an auditor downloads a document (the reason is always in the access log).
 AUDITOR_DOWNLOAD_NOTIFY = env_bool('AUDITOR_DOWNLOAD_NOTIFY', False)
+# P3-1: a released or renewed record becomes 'archival due' this many years after it was settled.
+RETENTION_YEARS = env_int('RETENTION_YEARS', 10, minimum=1)
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # No MEDIA_URL route: all document reads go through an ownership-checked view.

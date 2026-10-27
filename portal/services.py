@@ -74,6 +74,8 @@ def event(instrument, actor, action, before, reason='', after_extra=None):
 
 
 def _compare_and_update(instrument, expected_version, **changes):
+    from .retention import require_not_archived
+    require_not_archived(instrument)
     if instrument.version != expected_version:
         raise WorkflowError('This record changed. Reload it before trying again.')
     changed = Instrument.objects.filter(pk=instrument.pk, version=expected_version).update(
