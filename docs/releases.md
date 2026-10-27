@@ -134,3 +134,11 @@ Above a threshold a release needs **two different authority users**, and an auth
   Off by default because the demo has one authority account.
 * The case API returns an `approval` object (`required_signatures`, `signatures_given`, `signed_by_me`, `signature_voided`,
   `basis_matches`) and the case page shows it.
+
+## Refund quote
+
+The case (`refund` in the case API, a "Refund quote" panel on the case page) and the issued letter state the amount held,
+the penalties a human has **confirmed**, and the net amount to be returned. Proposed penalties are listed but not deducted;
+the net never goes below zero (and a warning is shown if confirmed penalties exceed the amount held). **Interest is not
+computed** until a rule for it is approved, and the quote says so. No payment is made by the portal; for RTGS deposits the
+recorded refund reference entered at completion appears on the quote. (`casework/refund.py`)

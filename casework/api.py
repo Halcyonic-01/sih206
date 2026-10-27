@@ -90,6 +90,8 @@ def case_json(actor, case):
             'base_paise': p.base_paise, 'rate_bps': p.rate_bps, 'clause': p.clause,
             'status': p.status, 'reason': p.reason} for p in case.penalties.order_by('pk')],
         'penalty_review_complete': case.penalty_review_complete,
+        'refund': dict(services.refund_quote(case), reference=case.completion_reference or None,
+                       account_note='RTGS deposits: the recorded refund reference is entered at completion.' if case.mode == 'RTGS' else None),
         'approval': {'required_signatures': needed, 'signatures_given': 0 if voided else len(approvals),
             'threshold_paise': (case.approval_policy or {}).get('threshold_paise'),
             'second_signature_required': needed > 1 and case.release.status == 'PENDING',

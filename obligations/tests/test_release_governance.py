@@ -144,5 +144,11 @@ class GovernanceFlowTests(PortalTestCase):
         self.assertFalse(mine['actions']['can_approve'])          # you cannot sign twice
         self.assertEqual(other['approval']['signatures_given'], 1)
 
+    def test_the_case_api_carries_the_refund_quote(self):
+        from casework.api import case_json
+        quote = case_json(self.authority, self.sign(self.authority, self.ready(self.case())))['refund']
+        self.assertEqual(quote['net_paise'], quote['held_paise'])
+        self.assertEqual(quote['interest'], 'NOT_COMPUTED')
+
 
 del CaseworkTests  # imported only for its fixtures; keep the loader from running its tests a second time here

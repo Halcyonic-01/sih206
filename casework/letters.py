@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 from xml.sax.saxutils import escape
 
 
-def render_letter(*, serial, kind, institution_name, issue_date, verification_url):
+def render_letter(*, serial, kind, institution_name, issue_date, verification_url, refund=None):
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.lib.units import mm
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
@@ -20,6 +20,15 @@ def render_letter(*, serial, kind, institution_name, issue_date, verification_ur
     for label, value in [('Letter kind', kind), ('Serial', serial), ('Institution', institution_name), ('Issue date', issue_date)]:
         content.append(Paragraph(escape(label + ': ' + str(value)), styles['Normal']))
         content.append(Spacer(1, 4 * mm))
+    if refund:
+        def rupees(paise):
+            return f'INR {paise // 100:,}.{paise % 100:02d}'
+        for label, value in [('Amount held', rupees(refund['held_paise'])),
+                             ('Penalties confirmed', rupees(refund['confirmed_penalties_paise'])),
+                             ('Net amount to be returned (quote)', rupees(refund['net_paise']))]:
+            content.append(Paragraph(escape(label + ': ' + value), styles['Normal']))
+            content.append(Spacer(1, 4 * mm))
+        content.append(Paragraph('Interest is not included. This portal makes no payment.', styles['Italic']))
     content += [Spacer(1, 8 * mm), Paragraph(
         'This records a synthetic portal authorization only. It is not independently bank-verified, '
         'digitally signed, evidence of settlement, or a real regulatory NOC or refund sanction.', styles['Normal']), Spacer(1, 8 * mm)]

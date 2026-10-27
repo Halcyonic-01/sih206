@@ -60,6 +60,8 @@ export interface Case { id: number; version: number; instrument_version: number;
   actions: Record<string, boolean>; clearances: Clearance[];
   penalties: {id: number; kind: string; base_paise: Paise; amount_paise: Paise; rate_bps: number; clause: string; status: string; reason: string}[];
   penalty_review_complete: boolean;
+  refund?: {held_paise: Paise; confirmed_penalties_paise: Paise; proposed_penalties_paise: Paise; net_paise: Paise;
+    penalties_exceed_held: boolean; interest: string; note: string; reference: string | null; account_note: string | null};
   approval?: {required_signatures: number; signatures_given: number; threshold_paise: number | null; second_signature_required: boolean;
     signature_voided: boolean; signed_by_me: boolean; basis_matches: boolean | null; policy_source: string; policy_label: string};
   letter: null | {serial: string; kind: string; revoked: boolean; unsigned_demo: boolean} }
