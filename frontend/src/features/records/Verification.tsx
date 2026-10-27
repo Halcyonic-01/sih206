@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import {useState} from 'react';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {Alert, Button, Empty, Input, Table, Upload} from 'antd';
@@ -15,28 +16,30 @@ type StatementRow = {number: number; utr: string; amount_paise: number; value_da
 type Preview = {simulated: boolean; rows: StatementRow[]; versions: Record<string, number>};
 
 export function VerificationTab({api, id, version, canRequestBank}: {api: Api; id: number; version: number; canRequestBank: boolean}) {
+  useLanguage();
   const query = useQuery({queryKey: ['records', id, 'verification'], queryFn: () => api.request<EvidenceData>(`/api/instruments/${id}/verification/`)});
   if (query.isPending) return <LoadingState/>;
-  if (query.error) return <Alert type="error" showIcon message="Verification details could not be loaded" description={String(query.error)}/>;
+  if (query.error) return <Alert type="error" showIcon message={tr("Verification details could not be loaded")} description={String(query.error)}/>;
   return <div className="stack">
-    <Panel title="Verification level" extra={<VerificationTag value={query.data.level}/>}>
-      <p>A deposit moves from <strong>Declared</strong> to <strong>Document reviewed</strong> when an officer checks the PDF, and to <strong>Confirmed</strong> when a bank statement line matches it.</p>
-      <p className="muted">{query.data.notice} Statements and bank replies in this environment are SIMULATED, so Confirmed means the fields match a synthetic line, not that a bank authenticated the deposit.</p>
+    <Panel title={tr("Verification level")} extra={<VerificationTag value={query.data.level}/>}>
+      <p>{tr("A deposit moves from  ")}<strong>{tr("Declared")}</strong> {tr("  to  ")}<strong>{tr("Document reviewed")}</strong> {tr("  when an officer checks the PDF, and to  ")}<strong>{tr("Confirmed")}</strong> {tr("  when a bank statement line matches it.")}</p>
+      <p className="muted">{query.data.notice} {tr("  Statements and bank replies in this environment are SIMULATED, so Confirmed means the fields match a synthetic line, not that a bank authenticated the deposit.")}</p>
     </Panel>
     {query.data.checks.map(check => <Alert key={check.code} type="warning" showIcon message={findingLabel(check.code)} description={check.explanation}/>)}
     <BankRequests api={api} id={id} version={version} canRequest={canRequestBank}/>
-    <Panel title="Evidence recorded" flush>
+    <Panel title={tr("Evidence recorded")} flush>
       <Table rowKey="id" size="middle" scroll={{x: 640}} pagination={false} dataSource={query.data.evidence}
-        locale={{emptyText: 'No verification evidence recorded yet.'}} columns={[
-        {title: 'Method', dataIndex: 'method', render: (v: string) => humanize(v)},
-        {title: 'Result', dataIndex: 'result', render: (v: string) => humanize(v)},
-        {title: 'Source', dataIndex: 'source'}, {title: 'Record version', dataIndex: 'instrument_version', width: 130},
-        {title: 'Recorded', dataIndex: 'created_at', render: (v: string) => formatDateTime(v)}]}/>
+        locale={{emptyText: tr("No verification evidence recorded yet.")}} columns={[
+        {title: tr("Method"), dataIndex: 'method', render: (v: string) => humanize(v)},
+        {title: tr("Result"), dataIndex: 'result', render: (v: string) => humanize(v)},
+        {title: tr("Source"), dataIndex: 'source'}, {title: tr("Record version"), dataIndex: 'instrument_version', width: 130},
+        {title: tr("Recorded"), dataIndex: 'created_at', render: (v: string) => formatDateTime(v)}]}/>
     </Panel>
   </div>;
 }
 
 function BankRequests({api, id, version, canRequest}: {api: Api; id: number; version: number; canRequest: boolean}) {
+  useLanguage();
   const cache = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -47,19 +50,20 @@ function BankRequests({api, id, version, canRequest}: {api: Api; id: number; ver
     try {await api.request(`/api/instruments/${id}/bank-requests/`, {method: 'POST', body: {version}}); await cache.invalidateQueries({queryKey: ['records']});}
     catch (e) {setError(String(e));} finally {setBusy(false);}
   }
-  return <Panel title="Bank confirmation requests" extra={canRequest && <Button loading={busy} onClick={() => void request()}>Request bank confirmation</Button>}>
-    <p className="muted">Requests go only to bank contacts reviewed by the operator, with a one-time link and code. A simulated reply never confirms authenticity.</p>
+  return <Panel title={tr("Bank confirmation requests")} extra={canRequest && <Button loading={busy} onClick={() => void request()}>{tr("Request bank confirmation")}</Button>}>
+    <p className="muted">{tr("Requests go only to bank contacts reviewed by the operator, with a one-time link and code. A simulated reply never confirms authenticity.")}</p>
     {(error || query.error) && <Alert type="error" showIcon message={error || String(query.error)} style={{marginBottom: 12}}/>}
     <Table rowKey="id" size="middle" loading={query.isPending} scroll={{x: 520}} pagination={false} dataSource={query.data || []}
-      locale={{emptyText: 'No bank confirmation requests yet.'}} columns={[
-      {title: 'Channel', dataIndex: 'simulated', render: (v: boolean) => v ? 'Simulated' : 'Bank mailbox'},
-      {title: 'Status', dataIndex: 'status', render: (v: string) => <StatusTag value={v}/>},
-      {title: 'Expires', dataIndex: 'expires_at', render: (v: string) => formatDateTime(v)},
-      {title: 'Delivery issue', dataIndex: 'last_error', render: (v: string) => v || '—'}]}/>
+      locale={{emptyText: tr("No bank confirmation requests yet.")}} columns={[
+      {title: tr("Channel"), dataIndex: 'simulated', render: (v: boolean) => v ? 'Simulated' : 'Bank mailbox'},
+      {title: tr("Status"), dataIndex: 'status', render: (v: string) => <StatusTag value={v}/>},
+      {title: tr("Expires"), dataIndex: 'expires_at', render: (v: string) => formatDateTime(v)},
+      {title: tr("Delivery issue"), dataIndex: 'last_error', render: (v: string) => v || '—'}]}/>
   </Panel>;
 }
 
 export function ReconciliationPage({api}: {api: Api}) {
+  useLanguage();
   const [file, setFile] = useState<File>();
   const [source, setSource] = useState('');
   const [preview, setPreview] = useState<Preview>();
@@ -82,28 +86,28 @@ export function ReconciliationPage({api}: {api: Api}) {
   }
   const matched = rows.filter(row => row.result === 'SIMULATED_MATCH').length;
   return <div className="stack stack--lg">
-    <PageHeader title="Statement reconciliation" subtitle="Match bank statement lines to RTGS deposits by payment reference, amount and value date."/>
-    <Alert type="warning" showIcon message="Simulated data only" description="A line that matches confirms the RTGS deposit (simulated statement). A mismatch marks it as a discrepancy and alerts the institution. CSV columns: utr, amount, value_date (up to 1 MB and 1,000 rows)."/>
-    <Panel title="1. Choose a statement">
+    <PageHeader title={tr("Statement reconciliation")} subtitle={tr("Match bank statement lines to RTGS deposits by payment reference, amount and value date.")}/>
+    <Alert type="warning" showIcon message={tr("Simulated data only")} description={tr("A line that matches confirms the RTGS deposit (simulated statement). A mismatch marks it as a discrepancy and alerts the institution. CSV columns: utr, amount, value_date (up to 1 MB and 1,000 rows).")}/>
+    <Panel title={tr("1. Choose a statement")}>
       <div className="stack">
         <div style={{maxWidth: 520}}>
-          <label className="field-label" htmlFor="stmt-source">Source label (for example the statement date)</label>
+          <label className="field-label" htmlFor="stmt-source">{tr("Source label (for example the statement date)")}</label>
           <Input id="stmt-source" value={source} maxLength={200} onChange={e => {setSource(e.target.value); setPreview(undefined);}}/>
         </div>
         <Upload maxCount={1} accept=".csv,text/csv" beforeUpload={f => {setFile(f); setPreview(undefined); setRows([]); return false;}}
-          onRemove={() => {setFile(undefined); setPreview(undefined); setRows([]);}}><Button>Select CSV file</Button></Upload>
-        <div className="cluster"><Button disabled={!file || !source.trim()} loading={busy} onClick={() => void run(false)}>Preview matches</Button>
-          <Button type="primary" disabled={!preview} loading={busy} onClick={() => void run(true)}>Record previewed batch</Button></div>
+          onRemove={() => {setFile(undefined); setPreview(undefined); setRows([]);}}><Button>{tr("Select CSV file")}</Button></Upload>
+        <div className="cluster"><Button disabled={!file || !source.trim()} loading={busy} onClick={() => void run(false)}>{tr("Preview matches")}</Button>
+          <Button type="primary" disabled={!preview} loading={busy} onClick={() => void run(true)}>{tr("Record previewed batch")}</Button></div>
       </div>
     </Panel>
     {error && <Alert type="error" showIcon role="alert" message={error}/>}{saved && <Alert type="success" showIcon message={saved}/>}
-    <Panel title={rows.length ? `2. Preview: ${matched} of ${rows.length} lines match` : '2. Preview'} flush>
-      <Table rowKey="number" size="middle" scroll={{x: 640}} dataSource={rows} locale={{emptyText: <Empty description="Choose a statement and preview its matches."/>}} columns={[
-        {title: 'Row', dataIndex: 'number', width: 70}, {title: 'UTR', dataIndex: 'utr'},
-        {title: 'Amount', dataIndex: 'amount_paise', align: 'right', render: (v: number) => formatPaise(v)},
-        {title: 'Date', dataIndex: 'value_date', render: (v: string) => formatDate(v)},
-        {title: 'Result', dataIndex: 'result', render: (v: string) => <StatusTag value={v}/>},
-        {title: 'Record', dataIndex: 'instrument_id', render: (v: number | null) => v ?? 'No unique match'}]}/>
+    <Panel title={rows.length ? tr("2. Preview: {0} of {1} lines match", {"0": (matched), "1": (rows.length)}) : tr("2. Preview")} flush>
+      <Table rowKey="number" size="middle" scroll={{x: 640}} dataSource={rows} locale={{emptyText: <Empty description={tr("Choose a statement and preview its matches.")}/>}} columns={[
+        {title: tr("Row"), dataIndex: 'number', width: 70}, {title: 'UTR', dataIndex: 'utr'},
+        {title: tr("Amount"), dataIndex: 'amount_paise', align: 'right', render: (v: number) => formatPaise(v)},
+        {title: tr("Date"), dataIndex: 'value_date', render: (v: string) => formatDate(v)},
+        {title: tr("Result"), dataIndex: 'result', render: (v: string) => <StatusTag value={v}/>},
+        {title: tr("Record"), dataIndex: 'instrument_id', render: (v: number | null) => v ?? 'No unique match'}]}/>
     </Panel>
   </div>;
 }

@@ -2,6 +2,15 @@
 from drf_spectacular.utils import OpenApiParameter
 from portal.api.schema_types import TEXT, INTEGER, BOOLEAN, DATE, DATETIME, FILE, JSON, array, nullable, obj, page
 
+EVIDENCE = obj({'id': INTEGER, 'name': TEXT, 'page_count': INTEGER, 'size_bytes': INTEGER,
+    'sha256': TEXT, 'uploaded_by': TEXT, 'uploaded_at': DATETIME, 'download_path': TEXT})
+CLEARANCE = obj({'unit': TEXT, 'status': TEXT, 'reason': TEXT, 'evidence_ref': TEXT,
+    'can_decide': BOOLEAN, 'evidence_state': TEXT, 'evidence': nullable(EVIDENCE),
+    'reviewer': nullable(TEXT), 'decided_at': nullable(DATETIME)})
+EVIDENCE_LIST = obj({'version': INTEGER, 'results': array(EVIDENCE)})
+EVIDENCE_UPLOAD = obj({'version': INTEGER, 'document': FILE})
+EVIDENCE_CREATED = obj({'version': INTEGER, 'evidence': EVIDENCE})
+
 CASE = obj({'id': INTEGER, 'institution_id': INTEGER, 'obligation_id': INTEGER, 'instrument_id': INTEGER,
     'version': INTEGER, 'instrument_version': INTEGER, 'status': TEXT, 'path': TEXT, 'mode': TEXT,
     'declarations': JSON, 'template_ref': TEXT, 'application_reason': TEXT, 'decision_reason': TEXT,
@@ -10,7 +19,7 @@ CASE = obj({'id': INTEGER, 'institution_id': INTEGER, 'obligation_id': INTEGER, 
     'history': array(obj({'action': TEXT, 'reason': TEXT, 'at': DATETIME})), 'history_has_more': BOOLEAN,
     'monitoring_active': BOOLEAN, 'readiness': nullable(JSON), 'simulation_label': TEXT, 'policy_label': TEXT,
     'notification_status': TEXT, 'ai_summary_enabled': BOOLEAN, 'next_action': TEXT, 'responsible_party': TEXT,
-    'clearances': array(obj({'unit': TEXT, 'status': TEXT, 'reason': TEXT, 'evidence_ref': TEXT, 'can_decide': BOOLEAN})),
+    'clearances': array(CLEARANCE),
     'penalties': array(obj({'id': INTEGER, 'kind': TEXT, 'amount_paise': INTEGER, 'base_paise': INTEGER,
         'rate_bps': INTEGER, 'clause': TEXT, 'status': TEXT, 'reason': TEXT})),
     'penalty_review_complete': BOOLEAN,
@@ -31,7 +40,6 @@ ACTION_PARAMS = [OpenApiParameter('action', str, OpenApiParameter.PATH,
 ACTION = obj({'version': INTEGER, 'instrument_version': INTEGER, 'reason': TEXT, 'notes': TEXT,
     'refund_reference': TEXT, 'document': FILE, 'kind': TEXT, 'base_paise': INTEGER, 'confirm_id': INTEGER},
     required=['version'])
-CLEARANCE_INPUT = obj({'version': INTEGER, 'status': TEXT, 'reason': TEXT, 'evidence_ref': TEXT})
-QUEUE = page(obj({'case_id': INTEGER, 'version': INTEGER, 'unit': TEXT, 'status': TEXT,
-                  'due_date': nullable(DATE), 'can_decide': BOOLEAN}))
+CLEARANCE_INPUT = obj({'version': INTEGER, 'status': TEXT, 'reason': TEXT, 'evidence_ref': TEXT, 'evidence_id': INTEGER})
+QUEUE = page(obj({'case_id': INTEGER, 'version': INTEGER, 'due_date': nullable(DATE), **CLEARANCE['properties']}))
 PUBLIC = obj({'serial': TEXT, 'issue_date': DATE, 'institution_name': TEXT, 'kind': TEXT, 'status': TEXT})

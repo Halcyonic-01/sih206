@@ -43,10 +43,17 @@ test('PS 7: release request, three clearances, officer review, authorisation, le
   for (const unit of ['clearance_pgrc', 'clearance_vigilance', 'clearance_grants']) {
     const clearance = await page(unit);
     await clearance.goto('/clearance-tasks');
-    await clearance.getByLabel('Reason', {exact: true}).fill('Reviewed the synthetic case and found no objection.');
-    await clearance.getByLabel('Reviewed evidence reference').fill(`${unit.toUpperCase()}/2026/${caseId}`);
-    await clearance.locator('li.record-card').filter({hasText: `Case ${caseId}`}).getByRole('button', {name: 'cleared'}).click();
-    await expect(clearance.locator('li.record-card').filter({hasText: `Case ${caseId}`}).getByText(/cleared/i).first()).toBeVisible();
+    const form = clearance.getByRole('group', {name: `Decision for case ${caseId}`, exact: true});
+    await form.getByLabel('Supporting clearance PDF').setInputFiles(path.join(root, 'fixtures/release-evidence.pdf'));
+    await form.getByRole('button', {name: 'Upload supporting PDF', exact: true}).click();
+    await expect(form.getByLabel('Reviewed supporting PDF').locator('option')).toHaveCount(2);
+    await form.getByLabel('Reviewed supporting PDF').selectOption({index: 1});
+    await form.getByRole('button', {name: 'View supporting PDF', exact: true}).click();
+    await expect.poll(() => form.locator('canvas').evaluate((el: HTMLCanvasElement) => el.width)).toBeGreaterThan(0);
+    await form.getByLabel('Reason', {exact: true}).fill('Reviewed the synthetic PDF and found no objection.');
+    await form.getByLabel('Reviewed evidence reference').fill(`${unit.toUpperCase()}/2026/${caseId}`);
+    await form.getByRole('button', {name: 'cleared', exact: true}).click();
+    await expect(form).not.toBeVisible();
   }
 
   const officer = await page('officer');

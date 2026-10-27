@@ -82,7 +82,7 @@ A user belongs to exactly one role group. A user with no group or more than one 
 | **Institution** | Own institution only | Create, edit, submit and correct deposits; upload documents; request renewal and release; read own obligations, reports and KPIs; see own notifications. |
 | **Officer** | All institutions | Review submissions, add and resolve observations, accept or request changes, correct records with a stated reason, run reconciliation, import institutions, review penalties and proof-receipt dates, read every report. |
 | **Authority** | All institutions (read), decisions | Authorize or reject release, issue the letter, record completion. Receives escalations. |
-| **Clearance unit** | Cases assigned to its unit | Record a clearance decision (cleared, hold, objection) with a reason and file number for PGRC, Vigilance or Grants. |
+| **Clearance unit** | Cases assigned to its unit | Review a protected supporting PDF and record a clearance decision (cleared, hold, objection), reason and file number for PGRC, Vigilance or Grants. The reviewer and decision time remain linked to the evidence. |
 | **Auditor** | Read-only | Browse the audit trail and access log, export them, and verify the audit chain. |
 
 Draft records are private to the institution. Every list, detail, download and export is filtered by the user's scope on
@@ -464,7 +464,10 @@ The interactive reference is served at **`/api/docs/`** (Swagger UI) and **`/api
 | `GET /api/releases/requirements` | Checklist and declarations for a path. |
 | `GET /api/releases/{id}` | Case detail with `actions`. |
 | `POST /api/releases/{id}/{action}` | `approve`, `reject`, `penalties`, `issue` (letter), `revoke` (letter), `complete`. |
-| `POST /api/releases/{id}/clearances/{unit}` | Record a clearance decision. |
+| `POST /api/releases/{id}/clearances/{unit}` | Record a clearance decision with `version`, `status`, `reason`, `evidence_ref` and required `evidence_id`. |
+| `GET /api/releases/{id}/clearances/{unit}/evidence` | List the unit's protected supporting PDFs and current case version. |
+| `POST /api/releases/{id}/clearances/{unit}/evidence` | Upload one PDF with the current `version` as multipart data; upload does not record a decision. |
+| `GET /api/releases/{id}/clearances/{unit}/evidence/{evidence_id}` | View the protected, access-logged supporting PDF. |
 | `GET /api/releases/{id}/letter` | Download the issued letter. |
 | `POST /api/releases/{id}/ai-summary` | Advisory case summary. |
 | `GET /api/clearance-tasks` | A unit's work queue. |

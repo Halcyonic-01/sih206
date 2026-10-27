@@ -58,3 +58,16 @@ class IntegratedSchemaTests(SimpleTestCase):
         self.assertNotIn('requestBody', paths['/api/documents/{id}/ocr/']['post'])
         statement = paths['/api/verification/statements/']['post']['requestBody']['content']['multipart/form-data']['schema']
         self.assertIn('versions', statement['properties'])
+
+    def test_clearance_contract_includes_required_protected_evidence(self):
+        paths = self.schema['paths']
+        root = '/api/releases/{id}/clearances/{unit}'
+        decision = paths[root]['post']['requestBody']['content']['application/json']['schema']
+        self.assertIn('evidence_id', decision['required'])
+        upload = paths[root + '/evidence']['post']['requestBody']['content']['multipart/form-data']['schema']
+        self.assertIn('document', upload['required'])
+        self.assertEqual(upload['properties']['document']['format'], 'binary')
+        self.assertIn('201', paths[root + '/evidence']['post']['responses'])
+        download = paths[root + '/evidence/{evidence_id}']['get']
+        self.assertIn('application/pdf', download['responses']['200']['content'])
+        self.assertTrue(download['security'])

@@ -1,0 +1,9 @@
+{
+  "synthetic_only": true,
+  "backup": "data/semifinal-backups/7dbd75d1f1e7",
+  "integrity_check": "ok",
+  "foreign_key_violations": 0,
+  "clearance_pdfs_hash_verified": 9,
+  "completed_cases": 3,
+  "secrets_copied": false
+}

@@ -7,7 +7,7 @@ export default defineConfig({
   outputDir: process.env.PLAYWRIGHT_OUTPUT_DIR || (ci ? 'test-results' : '../planning/browser-results'),
   reporter: ci ? [['list'], ['html', {open: 'never', outputFolder: 'playwright-report'}]] : 'list',
   use: {
-    baseURL: process.env.PORTAL_URL || 'http://127.0.0.1:8010',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || process.env.PORTAL_URL || 'http://127.0.0.1:8010',
     viewport: {width: 1440, height: 1000},
     trace: ci ? 'retain-on-failure' : 'off',
     screenshot: ci ? 'only-on-failure' : 'off',

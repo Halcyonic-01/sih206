@@ -57,9 +57,13 @@ export interface Case { id: number; version: number; instrument_version: number;
   documents?:{id:number;name:string;kind:string;page_count:number|null;download_path:string}[];
   history?:{action:string;reason:string;at:string}[];history_has_more?:boolean;
   monitoring_active: boolean; next_action: string; readiness: Assessment | null;
-  actions: Record<string, boolean>; clearances: {unit: string; status: string; reason: string; evidence_ref: string; can_decide: boolean}[];
+  actions: Record<string, boolean>; clearances: Clearance[];
   penalties: {id: number; kind: string; base_paise: Paise; amount_paise: Paise; rate_bps: number; clause: string; status: string; reason: string}[];
   penalty_review_complete: boolean; letter: null | {serial: string; kind: string; revoked: boolean; unsigned_demo: boolean} }
+export interface ClearanceEvidence {id: number; name: string; page_count: number; sha256: string;
+  uploaded_by: string; uploaded_at: string; download_path: string}
+export interface Clearance {unit: string; status: string; reason: string; evidence_ref: string; can_decide: boolean;
+  evidence?: ClearanceEvidence | null; evidence_state?: string; reviewer?: string | null; decided_at?: string | null}
 export interface PublicRecord {serial: string; issue_date: string; institution_name: string; kind: string; status: 'ISSUED'|'REVOKED'}
 export function publicRecord(value: unknown): PublicRecord {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Unavailable');

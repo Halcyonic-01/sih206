@@ -1,6 +1,7 @@
 import {test, expect, type Page} from '@playwright/test';
 import path from 'node:path';
 import {openRecord, root, signIn} from './support';
+// AI stays off; test the local OCR result label or its disabled fallback for this profile.
 
 async function login(page: Page, username: string) {
   await signIn(page, username);
@@ -30,8 +31,9 @@ test('submission, PDF review, discrepancy, correction, acceptance and renewal', 
   await owner.getByRole('button', {name: 'Extract with AI', exact: true}).click();
   await expect(owner.getByText('AI is off. Continue manual document review.', {exact: true})).toBeVisible();
   await owner.getByRole('button', {name: 'Read with local OCR', exact: true}).click();
-  // The label is shown whether or not the optional local OCR engine is installed; manual entry stays available.
+  // Both the advisory label and explicit disabled fallback must remain visible.
   await expect(owner.getByText('OCR suggestions: verify against the document', {exact: true})).toBeVisible();
+  await expect(owner.getByText('Local OCR is disabled. Continue manual entry.', {exact: true})).toBeVisible();
   await owner.getByRole('button', {name: 'Submit for review', exact: true}).click();
   await owner.getByRole('button', {name: 'Record action', exact: true}).click();
   await expect(owner.locator('.page-header').getByText('Submitted', {exact: true})).toBeVisible();
@@ -97,7 +99,9 @@ test('dashboard, responsive list, and synthetic reconciliation preview', async (
   const reconciliation = page.locator('#main');
   await expect(reconciliation.getByText('Match', {exact: true})).toBeVisible();
   await expect(reconciliation.getByText('Discrepancy', {exact: true})).toBeVisible();
-  await page.getByRole('button', {name: /Record previewed batch/}).click();
+  const commit = page.getByRole('button', {name: /Record previewed batch$/});
+  await expect(commit).not.toHaveClass(/ant-btn-loading/);
+  await commit.click();
   await expect(page.getByText(/Statement batch \d+ recorded|already imported/)).toBeVisible();
   await page.setViewportSize({width: 390, height: 844});
   await page.getByRole('button', {name: 'Open navigation'}).click();

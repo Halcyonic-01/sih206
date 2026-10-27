@@ -92,10 +92,13 @@ describe('institution feature registered in shared auth and routing', () => {
   });
 
   it('shared 401 ends the session and routes to sign-in', async () => {
-    source({ '/api/institutions?q=&page=1': () => json({ code: 'not_authenticated', detail: 'Sign in' }, 401) });
-    // Flush the asynchronous session-cache change and Navigate before asserting.
-    // Keep the same redirect expectation and timeout; no auth behavior is mocked away.
-    await act(async () => { mount(); });
+    let reply!: (response: Response) => void;
+    source({ '/api/institutions?q=&page=1': () => new Promise<Response>(resolve => { reply = resolve; }) });
+    mount();
+    // Let the lazy route finish mounting before delivering the HTTP response.
+    // Resolve the real shared-client 401 inside act; do not mock auth or navigation.
+    await screen.findByRole('heading', { name: 'Institutions' });
+    await act(async () => { reply(json({ code: 'not_authenticated', detail: 'Sign in' }, 401)); });
     expect(await screen.findByRole('heading', { name: 'Sign in required' })).toBeInTheDocument();
   });
 

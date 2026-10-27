@@ -90,6 +90,8 @@ def validate_output(output, pages):
         if not isinstance(field, dict) or set(field) != {'value', 'page'}:
             raise ValueError('INVALID_OUTPUT')
         value, page = field['value'], field['page']
+        if value is not None and page is None:
+            raise ValueError('INVALID_OUTPUT')
         if value is not None and (not isinstance(value, str) or len(value) > (200 if name == 'bank' else 100)):
             raise ValueError('INVALID_OUTPUT')
         if page is not None and (type(page) is not int or page < 1 or pages is not None and page > pages):
@@ -124,7 +126,7 @@ def extract(actor, document, *, consent=False, synthetic=False):
         if not ai_configured():
             run.status, run.error_code = 'UNAVAILABLE', 'NOT_CONFIGURED'
             return result | {'status': 'unavailable', 'detail': 'AI is not configured. Continue manual review.'}
-        if AiRun.objects.filter(actor=actor, status__in=['SUCCESS', 'STARTED', 'FAILED'],
+        if AiRun.objects.filter(actor=actor, operation='DOCUMENT_EXTRACTION', status__in=['SUCCESS', 'STARTED', 'FAILED'],
                                  created_at__gte=timezone.now()-timedelta(hours=1)).count() > 10:
             raise ValueError('RATE_LIMIT')
         if document.size_bytes > 10 * 1024 * 1024 or document.page_count is None or document.page_count > 30:
@@ -155,7 +157,8 @@ def extract(actor, document, *, consent=False, synthetic=False):
     except Exception as exc:
         run.status = 'FAILED'
         run.error_code = ('TIMEOUT' if isinstance(exc, subprocess.TimeoutExpired) else
-                          exc.code if isinstance(exc, ProviderUnavailable) else 'EXTRACTION_FAILED')
+                          exc.code if isinstance(exc, ProviderUnavailable) else
+                          'RATE_LIMIT' if isinstance(exc, ValueError) and str(exc) == 'RATE_LIMIT' else 'EXTRACTION_FAILED')
         return result | {'status': 'unavailable', 'detail': 'Extraction unavailable. Continue manual review.'}
     finally:
         run.duration_ms = int((monotonic()-start) * 1000)
