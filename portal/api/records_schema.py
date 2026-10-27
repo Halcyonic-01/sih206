@@ -28,8 +28,8 @@ DETAIL = obj({**BRIEF['properties'], 'obligation_id': nullable(INTEGER), 'ifsc':
         'can_upload_release_documents', 'can_request_release')}),
     'release_case_id': nullable(INTEGER), 'documents': array(DOCUMENT),
     'observations': array(OBSERVATION), 'history': array(HISTORY), 'findings': array(JSON), 'field_provenance': JSON,
-    'lineage': obj({key: nullable(obj({'id': INTEGER, 'reference': TEXT}))
-                    for key in ('predecessor', 'successor')}), 'maturity': JSON,
+    'lineage': obj({**{key: nullable(obj({'id': INTEGER, 'reference': TEXT})) for key in ('predecessor', 'successor')},
+                    'link': nullable(obj({'reason': TEXT, 'note': TEXT}))}), 'maturity': JSON,
     'notification_queued': BOOLEAN,
 }, required=[*BRIEF['properties'], 'actions', 'documents', 'observations', 'history', 'findings', 'lineage', 'maturity'])
 REGISTER = page(BRIEF)

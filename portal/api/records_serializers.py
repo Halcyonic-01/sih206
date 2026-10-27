@@ -21,6 +21,8 @@ class RecordWrite(serializers.Serializer):
     lien_marked = serializers.BooleanField(allow_null=True, required=False)
     obligation_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     document = serializers.FileField(required=False)
+    renewal_reason = serializers.ChoiceField(choices=['ROUTINE_RENEWAL', 'BANK_MERGER_REPLACEMENT', 'BANK_REISSUE', 'OTHER'], required=False)
+    renewal_note = serializers.CharField(max_length=300, allow_blank=True, required=False)
 
     def validate(self, values):
         forbidden = {'institution', 'institution_id', 'created_by', 'verification_level', 'status',

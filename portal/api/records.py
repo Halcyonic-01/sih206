@@ -88,6 +88,16 @@ def brief(item, wait=None):
         'superseded': item.is_superseded}
 
 
+def link_reason(item):
+    """Why the successor replaces the predecessor (recorded when the renewal draft was opened), seen from either end; or None."""
+    successor = item if item.predecessor_id else Instrument.objects.filter(predecessor=item).first()
+    if successor is None:
+        return None
+    event = successor.audit_events.filter(action='DRAFT_CREATED').order_by('pk').first()
+    link = (event.after or {}).get('renewal_link') if event else None
+    return {'reason': link['reason'], 'note': link.get('note', '')} if link else {'reason': 'NOT_RECORDED', 'note': ''}
+
+
 def detail(user, item):
     result = brief(item)
     result.update({key: getattr(item, key) for key in [
@@ -103,7 +113,8 @@ def detail(user, item):
         findings=[f.as_dict() for f in run_checks(item)],
         field_provenance=field_provenance(item),
         lineage={'predecessor': visible.filter(pk=item.predecessor_id).values('id', 'reference').first(),
-                 'successor': visible.filter(predecessor=item).values('id', 'reference').first()},
+                 'successor': visible.filter(predecessor=item).values('id', 'reference').first(),
+                 'link': link_reason(item)},
         maturity=classify_maturity(item.maturity_date, business_today()).__dict__)
     return result
 

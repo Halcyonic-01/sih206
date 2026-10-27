@@ -113,8 +113,11 @@ def checks(actor, item):
     # A prefix list is not a bank/branch directory. Missing data stays unknown.
     findings = []
     from django.conf import settings
+    from . import bankmaster
     prefixes = set(getattr(settings, 'VERIFICATION_ISSUER_PREFIXES', ()))
-    if not item.ifsc or item.ifsc[:4] not in prefixes:
+    if bankmaster.directory_loaded():
+        findings.extend(bankmaster.issuer_findings(item))   # a loaded IFSC directory replaces the prefix list
+    elif not item.ifsc or item.ifsc[:4] not in prefixes:
         findings.append({'code': 'ISSUER_UNKNOWN', 'severity': 'warning',
                          'explanation': 'Issuer is not in the configured reviewed prefix list; identity needs review.'})
     else:
