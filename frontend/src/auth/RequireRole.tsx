@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import { Spin } from 'antd'
 import type { ReactNode } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
@@ -10,31 +11,32 @@ import { useAuth } from './AuthProvider'
  * The server still enforces every rule; this just keeps people off screens that would only say 403.
  */
 export function RequireRole({ roles, children }: { roles?: Role[]; children: ReactNode }) {
-  const { status, user } = useAuth()
+  useLanguage();
+  const { status, user, signedOut } = useAuth()
   const location = useLocation()
 
-  if (status === 'loading') return <Spin fullscreen tip="Loading…" />
+  if (status === 'loading') return <Spin fullscreen tip={tr("Loading…")} />
   if (status === 'error') {
-    return <ErrorState title="Cannot reach the server" detail="Check the connection and reload the page." />
+    return <ErrorState title={tr("Cannot reach the server")} detail={tr("Check the connection and reload the page.")} />
   }
   if (status === 'anonymous' || !user) {
     // The route change is a low-priority React transition; on a busy device it can take a moment. Say what is
     // happening (and offer the link) instead of showing a blank screen while it lands.
-    const from = { from: location.pathname + location.search }
+    const from = signedOut ? null : { from: location.pathname + location.search }
     return <>
       <Navigate to="/login" replace state={from} />
       <p role="status" className="session-ended">
-        Your session has ended. Opening the sign-in page… <Link to="/login" replace state={from}>Sign in</Link>
+        {tr("Your session has ended. Opening the sign-in page… ")}<Link to="/login" replace state={from}>{tr("Sign in")}</Link>
       </p>
     </>
   }
   if (!user.role) {
-    return <ErrorState status={403} title="No portal role assigned"
-                       detail="Your account is signed in but has no portal role. Ask the portal administrator." />
+    return <ErrorState status={403} title={tr("No portal role assigned")}
+                       detail={tr("Your account is signed in but has no portal role. Ask the portal administrator.")} />
   }
   if (roles && !roles.includes(user.role)) {
-    return <ErrorState status={403} title="Not available for your role"
-                       detail="This screen is for a different role. Use the menu to open one of yours." />
+    return <ErrorState status={403} title={tr("Not available for your role")}
+                       detail={tr("This screen is for a different role. Use the menu to open one of yours.")} />
   }
   return <>{children}</>
 }

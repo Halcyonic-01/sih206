@@ -7,6 +7,7 @@ notes for the proposed storage choice requiring team review before integration.
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 
 
 class ReleaseCase(models.Model):
@@ -43,6 +44,9 @@ class ClearanceTask(models.Model):
     decided_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.PROTECT)
     reason = models.TextField(max_length=2000, blank=True)
     evidence_ref = models.CharField(max_length=200, blank=True)
+    evidence = models.ForeignKey('obligations.ClearanceEvidence', null=True, blank=True,
+        on_delete=models.PROTECT, related_name='decisions')
+    decided_at = models.DateTimeField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
 
     class Meta:
@@ -50,6 +54,30 @@ class ClearanceTask(models.Model):
             models.CheckConstraint(condition=Q(status='OPEN', decided_by__isnull=True) |
                 (Q(status__in=['CLEARED', 'OBJECTION', 'HOLD'], decided_by__isnull=False) & ~Q(reason='') & ~Q(evidence_ref='')),
                 name='case_clearance_decision_evidenced')]
+
+
+class ClearanceEvidence(models.Model):
+    """Small protected PDFs stored atomically with metadata; never publicly served."""
+    task = models.ForeignKey(ClearanceTask, on_delete=models.PROTECT, related_name='evidence_items')
+    original_name = models.CharField(max_length=255)
+    pdf = models.BinaryField()
+    size_bytes = models.PositiveIntegerField()
+    page_count = models.PositiveIntegerField()
+    sha256 = models.CharField(max_length=64)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(page_count__gte=1, size_bytes__gt=0),
+                                               name='clearance_evidence_positive')]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValidationError('Clearance evidence is append-only.')
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError('Clearance evidence is append-only.')
 
 
 class PenaltyAssessment(models.Model):

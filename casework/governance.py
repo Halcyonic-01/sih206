@@ -55,7 +55,8 @@ def fingerprint(case):
         'instrument': {'id': instrument.pk, 'reference': instrument.reference, 'amount_paise': instrument.amount_paise,
                        'maturity_date': instrument.maturity_date.isoformat(), 'mode': instrument.mode},
         'documents': sorted([d.pk, d.kind, d.sha256] for d in instrument.documents.exclude(kind=Document.Kind.RELEASE_EVIDENCE)),
-        'clearances': sorted([t.unit, t.status, t.decided_by_id, t.evidence_ref] for t in case.clearances.all()),
+        'clearances': sorted([t.unit, t.status, t.decided_by_id, t.evidence_ref, t.evidence.sha256 if t.evidence_id else None]
+                             for t in case.clearances.select_related('evidence')),
         'penalties': sorted([p.pk, p.kind, p.amount_paise, p.status] for p in case.penalties.all()),
         'penalty_review_complete': case.penalty_review_complete,
         'rule_sha256': case.rule_sha256, 'path': case.path, 'declarations': case.declarations,

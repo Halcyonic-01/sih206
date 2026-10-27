@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import * as React from 'react';
 import { Alert, Table, Timeline } from 'antd';
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
@@ -6,7 +7,8 @@ import { Panel, SummaryList } from '@/components/Panel';
 import { StatusTag } from '@/components/StatusTag';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { humanize, RELEASE_PATH_LABELS } from '@/lib/labels';
-import {api, Case, Page, PublicRecord, publicRecord, Transport, money, paise, Failure} from './client';
+import {api, Case, Clearance, ClearanceEvidence, Page, PublicRecord, publicRecord, Transport, money, paise, Failure} from './client';
+import {ClearancePdf} from './ClearanceEvidence';
 import {ErrorBox, Loading, Notice, Readiness, useRemote} from './shared';
 
 export interface ReleaseInputs {
@@ -18,12 +20,15 @@ export interface ReleaseInputs {
   documentsReady: boolean; documents: React.ReactNode;
 }
 
-const PATHS = Object.entries(RELEASE_PATH_LABELS);
+
 
 export function ReleaseWizard({client, identityKey, inputs, onCreated}: {client: Transport; identityKey: string; inputs: ReleaseInputs; onCreated: (id: number) => void}) {
+  useLanguage();
   return <WizardBody key={`${identityKey}:${inputs.instrumentId}:${inputs.instrumentVersion}:${inputs.questionnaire?.version ?? ''}`} client={client} inputs={inputs} onCreated={onCreated} />;
 }
 function WizardBody({client, inputs, onCreated}: {client: Transport; inputs: ReleaseInputs; onCreated: (id: number) => void}) {
+  useLanguage();
+  const PATHS = Object.entries(RELEASE_PATH_LABELS);
   const [step, setStep] = React.useState(0);
   const [path, setPath] = React.useState('TERM_COMPLETE');
   const [answers, setAnswers] = React.useState<Record<string, boolean | null>>({});
@@ -47,34 +52,34 @@ function WizardBody({client, inputs, onCreated}: {client: Transport; inputs: Rel
   }
   const pathLabel = RELEASE_PATH_LABELS[path] ?? humanize(path);
   return <section>
-    <PageHeader title="Request release" subtitle="Four steps: choose the path, answer the declarations, check the documents, then submit." />
+    <PageHeader title={tr("Request release")} subtitle={tr("Four steps: choose the path, answer the declarations, check the documents, then submit.")} />
     <Notice />
-    <ol aria-label="Release request steps">{['Path', 'Declarations', 'Documents', 'Review'].map((s, i) => <li key={s} aria-current={i === step ? 'step' : undefined}>{s}</li>)}</ol>
+    <ol aria-label={tr("Release request steps")}>{['Path', 'Declarations', 'Documents', 'Review'].map((s, i) => <li key={s} aria-current={i === step ? 'step' : undefined}>{s}</li>)}</ol>
     <Panel>
       <h2 ref={title} tabIndex={-1} style={{marginTop: 0}}>{['Select path', 'Record declarations', 'Review documents', 'Review and submit'][step]}</h2>
       {!!error && <ErrorBox error={error} />}
-      <fieldset disabled={busy} style={{border: 0, padding: 0}}><legend className="sr-only">Release request</legend>
+      <fieldset disabled={busy} style={{border: 0, padding: 0}}><legend className="sr-only">{tr("Release request")}</legend>
         {step === 0 && <>
-          <label>Path <select value={path} onChange={e => {setPath(e.target.value); setAnswers({}); inputs.onPathChange?.(e.target.value);}}>
+          <label>{tr("Path  ")}<select value={path} onChange={e => {setPath(e.target.value); setAnswers({}); inputs.onPathChange?.(e.target.value);}}>
             {PATHS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-          <label>Reason <textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label></>}
-        {step === 1 && (!questionnaire ? <p role="alert">Declaration template unavailable. Obtain the approved Affidavit-6 questionnaire; no questions have been invented.</p> : <>
-          <p className="muted">Affidavit-6 questionnaire, version {questionnaire.version}. Answer every question.</p>
-          {questionnaire.questions.map(q => <label key={q.id}>{q.label}<select value={answers[q.id] == null ? '' : String(answers[q.id])}
+          <label>{tr("Reason  ")}<textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label></>}
+        {step === 1 && (!questionnaire ? <p role="alert">{tr("Declaration template unavailable. Obtain the approved Affidavit-6 questionnaire; no questions have been invented.")}</p> : <>
+          <p className="muted">{tr("Affidavit-6 questionnaire, version  ")}{questionnaire.version}{tr(". Answer every question.")}</p>
+          {questionnaire.questions.map(q => <label key={q.id}>{tr(q.label)}<select value={answers[q.id] == null ? '' : String(answers[q.id])}
             onChange={e => setAnswers({...answers, [q.id]: e.target.value === '' ? null : e.target.value === 'true'})}>
-            <option value="">Not answered</option><option value="true">Yes</option><option value="false">No</option></select></label>)}</>)}
+            <option value="">{tr("Not answered")}</option><option value="true">{tr("Yes")}</option><option value="false">{tr("No")}</option></select></label>)}</>)}
         {step === 2 && <>
-          <p>Path: {pathLabel}. The documents below must be uploaded and readable before you can continue.</p>
-          {inputs.documents ?? <p role="alert">Document upload is unavailable.</p>}
-          {!documentsReady && <p role="alert">Required documents are incomplete, out of date for this path, or unavailable.</p>}</>}
+          <p>{tr("Path:  ")}{pathLabel}{tr(". The documents below must be uploaded and readable before you can continue.")}</p>
+          {inputs.documents ?? <p role="alert">{tr("Document upload is unavailable.")}</p>}
+          {!documentsReady && <p role="alert">{tr("Required documents are incomplete, out of date for this path, or unavailable.")}</p>}</>}
         {step === 3 && <>
-          <SummaryList items={[{label: 'Path', value: pathLabel}, {label: 'Reason', value: reason}]} />
-          <p className="muted">Submitting asks for human review. Clearances, penalties, approval, the letter and completion are separate steps.</p>
-          {!inputs.canRequest && <p role="alert">You cannot submit this request: the record is not eligible or the source is unavailable.</p>}
-          <button className="primary" disabled={!inputs.canRequest || !answered || !documentsReady} onClick={submit}>Submit release request</button></>}
+          <SummaryList items={[{label: tr("Path"), value: pathLabel}, {label: tr("Reason"), value: reason}]} />
+          <p className="muted">{tr("Submitting asks for human review. Clearances, penalties, approval, the letter and completion are separate steps.")}</p>
+          {!inputs.canRequest && <p role="alert">{tr("You cannot submit this request: the record is not eligible or the source is unavailable.")}</p>}
+          <button className="primary" disabled={!inputs.canRequest || !answered || !documentsReady} onClick={submit}>{tr("Submit release request")}</button></>}
         <div style={{marginTop: 16}}>
-          <button disabled={step === 0} onClick={() => setStep(step - 1)}>Back</button>
-          {step < 3 && <button className="primary" disabled={!nextAllowed} onClick={() => setStep(step + 1)}>Next</button>}
+          <button disabled={step === 0} onClick={() => setStep(step - 1)}>{tr("Back")}</button>
+          {step < 3 && <button className="primary" disabled={!nextAllowed} onClick={() => setStep(step + 1)}>{tr("Next")}</button>}
         </div>
       </fieldset>
     </Panel>
@@ -82,9 +87,11 @@ function WizardBody({client, inputs, onCreated}: {client: Transport; inputs: Rel
 }
 
 export function ReleaseCase({client, identityKey, caseId}: {client: Transport; identityKey: string; caseId: number}) {
+  useLanguage();
   return <CaseBody key={`${identityKey}:${caseId}`} client={client} identityKey={identityKey} caseId={caseId} />;
 }
 function CaseBody({client, identityKey, caseId}: {client: Transport; identityKey: string; caseId: number}) {
+  useLanguage();
   const remote = useRemote<Case>(client, `releases/${caseId}`, identityKey);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<unknown>();
@@ -112,47 +119,53 @@ function CaseBody({client, identityKey, caseId}: {client: Transport; identityKey
   }
   const pathLabel = RELEASE_PATH_LABELS[item.path] ?? humanize(item.path);
   return <section>
-    <PageHeader title={`Release case ${item.id}`} breadcrumb={[{label: 'Release cases', to: '/releases'}, {label: `Case ${item.id}`}]}
+    <PageHeader title={tr("Release case {0}", {"0": (item.id)})} breadcrumb={[{label: tr("Release cases"), to: '/releases'}, {label: tr("Case {0}", {"0": (item.id)})}]}
       subtitle={<span className="cluster"><StatusTag value={item.status} /><span className="muted">{pathLabel} · {item.mode}</span></span>} />
     <Notice />
     <div className="stack stack--lg">
-      {item.status === 'APPROVED' && <Alert type="success" showIcon message="Release authorized; completion pending." description="Monitoring continues until completion is recorded with new evidence." />}
-      <Panel title="Case summary">
+      {item.status === 'APPROVED' && <Alert type="success" showIcon message={tr("Release authorized; completion pending.")} description={tr("Monitoring continues until completion is recorded with new evidence.")} />}
+      <Panel title={tr("Case summary")}>
         <SummaryList items={[
-          {label: 'Monitoring', value: item.monitoring_active ? 'Active' : 'Ended by recorded completion'},
-          {label: 'Next step', value: item.next_action}, {label: 'Responsible', value: item.responsible_party ?? 'Unavailable'},
-          {label: 'Application reason', value: item.application_reason ?? 'Unavailable'},
-          {label: 'Decision reason', value: item.decision_reason}, {label: 'Completion notes', value: item.completion_notes}]} />
+          {label: tr("Monitoring"), value: item.monitoring_active ? 'Active' : 'Ended by recorded completion'},
+          {label: tr("Next step"), value: item.next_action}, {label: tr("Responsible"), value: item.responsible_party ?? 'Unavailable'},
+          {label: tr("Application reason"), value: item.application_reason ?? 'Unavailable'},
+          {label: tr("Decision reason"), value: item.decision_reason}, {label: tr("Completion notes"), value: item.completion_notes}]} />
       </Panel>
       <div className="two-col">
-        <Panel title="Readiness for human review"><Readiness value={item.readiness} /></Panel>
-        <Panel title="Documents">
-          {item.documents ? (item.documents.length === 0 ? <p className="muted">No documents.</p> : <ul>{item.documents.map(d => <li key={d.id}>
-            {d.name} <span className="muted">· {humanize(d.kind)} · {d.page_count == null ? 'pages unknown' : `${d.page_count} ${d.page_count === 1 ? 'page' : 'pages'}`}</span>{' '}
-            {/^\/(?!\/)/.test(d.download_path) && <button disabled={busy} onClick={() => client.download(d.download_path).catch(setError)}>Download {d.name}</button>}</li>)}</ul>) : <p>Document list unavailable.</p>}
+        <Panel title={tr("Readiness for human review")}><Readiness value={item.readiness} /></Panel>
+        <Panel title={tr("Documents")}>
+          {item.documents ? (item.documents.length === 0 ? <p className="muted">{tr("No documents.")}</p> : <ul>{item.documents.map(d => <li key={d.id}>
+            {d.name} <span className="muted">· {humanize(d.kind)} · {d.page_count == null ? tr("pages unknown") : `${d.page_count} ${d.page_count === 1 ? tr("page") : tr("pages")}`}</span>{' '}
+            {/^\/(?!\/)/.test(d.download_path) && <button disabled={busy} onClick={() => client.download(d.download_path).catch(setError)}>{tr("Download  ")}{d.name}</button>}</li>)}</ul>) : <p>{tr("Document list unavailable.")}</p>}
         </Panel>
       </div>
       {!!error && <ErrorBox error={error} />}
-      <Panel title="AI summary">
+      <Panel title={tr("AI summary")}>
         {item.actions.can_ai_summary ? <>
-          <p className="muted">Advisory only. It cannot approve, reject or change this case.</p>
-          {item.ai_summary_enabled === false ? <p>AI summary is off. Continue manual release review.</p> : <button disabled={busy} onClick={() => void getSummary()}>Generate AI summary</button>}
-        </> : <p className="muted">Available to the assigned clearance units and the independent authority.</p>}
-        {summary && <div role="status"><p><strong>{summary.label}</strong></p>
-          {summary.status === 'success' ? <><p>{summary.summary}</p>{summary.cached && <p className="muted">Saved result for this case version.</p>}
+          <p className="muted">{tr("Advisory only. It cannot approve, reject or change this case.")}</p>
+          {item.ai_summary_enabled === false ? <p>{tr("AI summary is off. Continue manual release review.")}</p> : <button disabled={busy} onClick={() => void getSummary()}>{tr("Generate AI summary")}</button>}
+        </> : <p className="muted">{tr("Available to the assigned clearance units and the independent authority.")}</p>}
+        {summary && <div role="status"><p><strong>{tr(summary.label)}</strong></p>
+          {summary.status === 'success' ? <><p>{summary.summary}</p>{summary.cached && <p className="muted">{tr("Saved result for this case version.")}</p>}
             <ul>{summary.risk_flags?.map((flag, i) => <li key={i}><strong>{humanize(flag.severity)}</strong> · {flag.field}: {flag.message}</li>)}</ul></> : <p>{summary.detail}</p>}</div>}
       </Panel>
-      <Panel title="Clearances" flush>
-        <Table rowKey="unit" size="middle" scroll={{x: 520}} pagination={false} dataSource={item.clearances} locale={{emptyText: 'No clearances required.'}} columns={[
-          {title: 'Unit', dataIndex: 'unit'}, {title: 'Status', dataIndex: 'status', render: (v: string) => <StatusTag value={v} />},
-          {title: 'Reason', dataIndex: 'reason', render: (v: string) => v || '—'}]} />
+      <Panel title={tr("Clearances")} flush>
+        <Table rowKey="unit" size="middle" scroll={{x: 520}} pagination={false} dataSource={item.clearances} locale={{emptyText: tr("No clearances required.")}} columns={[
+          {title: tr("Unit"), dataIndex: 'unit'}, {title: tr("Status"), dataIndex: 'status', render: (v: string) => <StatusTag value={v} />},
+          {title: tr("Reason"), dataIndex: 'reason', render: (v: string) => v || '—'},
+          {title: tr("Review and evidence"), render: (_, t: Clearance) => <>
+            <p>{t.reviewer || 'No reviewer'} · {t.decided_at ? formatDateTime(t.decided_at) : tr("Decision time not recorded")}</p>
+            <p>{t.evidence_ref || 'No reference'}</p>
+            {t.evidence ? <ClearancePdf key={t.evidence.id} evidence={t.evidence} /> :
+              <p>{t.evidence_state === 'LINKED_PDF' ? tr("Protected PDF — access restricted to reviewing roles.") : tr("Reference only — no linked PDF.")}</p>}
+          </>}]} />
       </Panel>
-      <Panel title="Penalties">
-        {item.penalties.length === 0 ? <p className="muted">No penalties proposed.</p> : <ul>{item.penalties.map(p => <li key={p.id}>{humanize(p.kind)}: {money(p.amount_paise)} <StatusTag value={p.status} /> <span className="muted">· clause {p.clause}</span>
-          {item.actions.can_review_penalties && p.status === 'PROPOSED' && <button disabled={busy || !reason.trim()} onClick={() => mutate('penalties', {confirm_id: p.id})}>Confirm reviewed proposal</button>}</li>)}</ul>}
-        <p className="muted">Officer review complete: {item.penalty_review_complete ? 'Yes' : 'No'}. Confirming a penalty does not prove payment or authorise a deduction.</p>
+      <Panel title={tr("Penalties")}>
+        {item.penalties.length === 0 ? <p className="muted">{tr("No penalties proposed.")}</p> : <ul>{item.penalties.map(p => <li key={p.id}>{humanize(p.kind)}: {money(p.amount_paise)} <StatusTag value={p.status} /> <span className="muted">{tr("· clause  ")}{p.clause}</span>
+          {item.actions.can_review_penalties && p.status === 'PROPOSED' && <button disabled={busy || !reason.trim()} onClick={() => mutate('penalties', {confirm_id: p.id})}>{tr("Confirm reviewed proposal")}</button>}</li>)}</ul>}
+        <p className="muted">{tr("Officer review complete:  ")}{item.penalty_review_complete ? tr("Yes") : tr("No")}{tr(". Confirming a penalty does not prove payment or authorise a deduction.")}</p>
       </Panel>
-      <Panel title="Decision and actions">
+      <Panel title={tr("Decision and actions")}>
         {item.approval && item.approval.required_signatures > 1 && item.status === 'PENDING' && (
           <Alert type={item.approval.signature_voided ? 'warning' : 'info'} showIcon style={{marginBottom: 12}}
             message={`Two authority signatures are required${item.approval.threshold_paise ? ` (deposit of ${money(item.approval.threshold_paise)} or more)` : ''}. Signatures: ${item.approval.signatures_given} of ${item.approval.required_signatures}.`}
@@ -166,102 +179,136 @@ function CaseBody({client, identityKey, caseId}: {client: Transport; identityKey
           <Alert type="error" showIcon style={{marginBottom: 12}} message="This case changed after it was authorised"
             description="Documents, clearances or penalties differ from what was approved, so a letter cannot be issued and completion cannot be recorded. Reject it and start a new request." />
         )}
-        <fieldset disabled={busy} style={{border: 0, padding: 0}}><legend className="sr-only">Human action and reason</legend>
-          <label>Reason / completion notes <textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
+        <fieldset disabled={busy} style={{border: 0, padding: 0}}><legend className="sr-only">{tr("Human action and reason")}</legend>
+          <label>{tr("Reason / completion notes  ")}<textarea required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
           {item.actions.can_review_penalties && <>
-            <label>Penalty kind <select value={penalty} onChange={e => setPenalty(e.target.value)}>{['premature_encashment', 'closure_lapsed', 'closure_six_years'].map(k => <option key={k} value={k}>{humanize(k)}</option>)}</select></label>
-            <label>Reviewed penalty base (INR) <input inputMode="decimal" value={base} onChange={e => setBase(e.target.value)} /></label>
-            <button disabled={!reason.trim() || !base} onClick={() => {try {void mutate('penalties', {kind: penalty, base_paise: paise(base)});} catch (e) {setError(e);}}}>Propose penalty for review</button>
-            <button className="primary" disabled={!reason.trim()} onClick={() => mutate('penalties')}>Record officer checklist and penalty review complete</button></>}
-          {item.actions.can_approve && <button className="primary" disabled={!reason.trim()} onClick={() => mutate('approve')}>{item.approval && item.approval.required_signatures > 1 ? (item.approval.signatures_given > 0 ? 'Record second signature' : 'Record first signature') : 'Record authority authorization'}</button>}
-          {item.actions.can_reject && <button disabled={!reason.trim()} onClick={() => mutate('reject')}>Record authority rejection</button>}
-          {item.actions.can_issue && <button className="primary" disabled={!reason.trim()} onClick={() => mutate('issue')}>Issue letter (unsigned)</button>}
-          {item.actions.can_revoke && <button disabled={!reason.trim()} onClick={() => mutate('revoke')}>Revoke letter</button>}
+            <label>{tr("Penalty kind  ")}<select value={penalty} onChange={e => setPenalty(e.target.value)}>{['premature_encashment', 'closure_lapsed', 'closure_six_years'].map(k => <option key={k} value={k}>{humanize(k)}</option>)}</select></label>
+            <label>{tr("Reviewed penalty base (INR)  ")}<input inputMode="decimal" value={base} onChange={e => setBase(e.target.value)} /></label>
+            <button disabled={!reason.trim() || !base} onClick={() => {try {void mutate('penalties', {kind: penalty, base_paise: paise(base)});} catch (e) {setError(e);}}}>{tr("Propose penalty for review")}</button>
+            <button className="primary" disabled={!reason.trim()} onClick={() => mutate('penalties')}>{tr("Record officer checklist and penalty review complete")}</button></>}
+          {item.actions.can_approve && <button className="primary" disabled={!reason.trim()} onClick={() => mutate('approve')}>{item.approval && item.approval.required_signatures > 1 ? (item.approval.signatures_given > 0 ? 'Record second signature' : 'Record first signature') : tr("Record authority authorization")}</button>}
+          {item.actions.can_reject && <button disabled={!reason.trim()} onClick={() => mutate('reject')}>{tr("Record authority rejection")}</button>}
+          {item.actions.can_issue && <button className="primary" disabled={!reason.trim()} onClick={() => mutate('issue')}>{tr("Issue letter (unsigned)")}</button>}
+          {item.actions.can_revoke && <button disabled={!reason.trim()} onClick={() => mutate('revoke')}>{tr("Revoke letter")}</button>}
         </fieldset>
       </Panel>
       <div className="two-col">
-        <Panel title="Letter">
+        <Panel title={tr("Letter")}>
           {item.letter ? <><p><strong>{humanize(item.letter.kind)}</strong> {item.letter.serial} <StatusTag value={item.letter.revoked ? 'REVOKED' : 'ISSUED'} /></p>
-            <p className="muted">Not digitally signed. The QR code leads to the public verification page.</p>
-            <button onClick={() => client.download(api(`releases/${caseId}/letter`)).catch(setError)}>Download protected letter</button></> : <p className="muted">Not issued.</p>}
+            <p className="muted">{tr("Not digitally signed. The QR code leads to the public verification page.")}</p>
+            <button onClick={() => client.download(api(`releases/${caseId}/letter`)).catch(setError)}>{tr("Download protected letter")}</button></> : <p className="muted">{tr("Not issued.")}</p>}
         </Panel>
-        <Panel title="Completion">
+        <Panel title={tr("Completion")}>
           {item.actions.can_complete ? <fieldset disabled={busy} style={{border: 0, padding: 0}}>
-            <label>New completion PDF <input type="file" accept="application/pdf,.pdf" onChange={e => setFile(e.target.files?.[0])} /></label>
-            {item.mode === 'RTGS' && <label>Recorded bank/PFMS refund reference <input maxLength={200} value={refund} onChange={e => setRefund(e.target.value)} /></label>}
+            <label>{tr("New completion PDF  ")}<input type="file" accept="application/pdf,.pdf" onChange={e => setFile(e.target.files?.[0])} /></label>
+            {item.mode === 'RTGS' && <label>{tr("Recorded bank/PFMS refund reference  ")}<input maxLength={200} value={refund} onChange={e => setRefund(e.target.value)} /></label>}
             <button className="primary" disabled={!file || !reason.trim() || (item.mode === 'RTGS' && !refund.trim())} onClick={() => {
               if (!file) return; const data = new FormData();
               data.set('version', String(item.version)); data.set('instrument_version', String(item.instrument_version)); data.set('notes', reason); data.set('refund_reference', refund); data.set('document', file);
-              void mutate('complete', {}, data);}}>Record evidence-backed completion</button></fieldset>
-            : <p className="muted">Completion is not available in the current state.</p>}
+              void mutate('complete', {}, data);}}>{tr("Record evidence-backed completion")}</button></fieldset>
+            : <p className="muted">{tr("Completion is not available in the current state.")}</p>}
         </Panel>
       </div>
-      <Panel title="Case history">
+      <Panel title={tr("Case history")}>
         <Timeline items={item.history?.map((h, i) => ({key: i, children: <><strong>{humanize(h.action)}</strong>{h.reason && <div>{h.reason}</div>}<small className="muted">{formatDateTime(h.at)} IST</small></>}))} />
-        {item.history_has_more && <p className="muted">The latest 100 events are shown; earlier history exists.</p>}
+        {item.history_has_more && <p className="muted">{tr("The latest 100 events are shown; earlier history exists.")}</p>}
       </Panel>
-      <div><button disabled={busy} onClick={remote.reload}>Reload case</button></div>
+      <div><button disabled={busy} onClick={remote.reload}>{tr("Reload case")}</button></div>
     </div>
   </section>;
 }
 
-interface Task {case_id: number; version: number; unit: string; status: string; can_decide: boolean; due_date: string | null}
+interface Task extends Clearance {case_id: number; version: number; due_date: string | null}
 export function ClearanceQueue({client, identityKey, onSelect}: {client: Transport; identityKey: string; onSelect: (id: number) => void}) {
+  useLanguage();
   return <QueueBody key={identityKey} client={client} identityKey={identityKey} onSelect={onSelect} />;
 }
 function QueueBody({client, identityKey, onSelect}: {client: Transport; identityKey: string; onSelect: (id: number) => void}) {
+  useLanguage();
   const [page, setPage] = React.useState(1);
   const remote = useRemote<Page<Task>>(client, `clearance-tasks?page=${page}`, identityKey);
-  const [reason, setReason] = React.useState('');
-  const [evidence, setEvidence] = React.useState('');
-  const [error, setError] = React.useState<unknown>();
-  const [busy, setBusy] = React.useState(false);
-  async function decide(task: Task, status: string) {
-    setBusy(true); setError(undefined);
-    try {await client.post(api(`releases/${task.case_id}/clearances/${task.unit}`), {version: task.version, status, reason, evidence_ref: evidence}); setReason(''); setEvidence('');}
-    catch (e) {setError(e);} finally {remote.reload(); setBusy(false);}
-  }
   return <section>
-    <PageHeader title="Clearance work" subtitle="Release cases waiting for your unit’s decision." />
+    <PageHeader title={tr("Clearance work")} subtitle={tr("Release cases waiting for your unit’s decision.")} />
     <Notice />
-    {!!remote.error && <ErrorBox error={remote.error} />} {!!error && <ErrorBox error={error} />}
+    {!!remote.error && <ErrorBox error={remote.error} />}
     {!remote.error && !remote.data && <Loading />}
-    <Panel title="Your decision">
-      <fieldset disabled={busy} style={{border: 0, padding: 0}}><legend className="sr-only">Clearance reason and evidence</legend>
-        <label>Reason <textarea maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
-        <label>Reviewed evidence reference <input maxLength={200} value={evidence} onChange={e => setEvidence(e.target.value)} /></label>
-        <p className="muted">Enter the reason and your unit’s file reference first, then choose a decision on a case below.</p></fieldset>
-    </Panel>
-    <h2>Cases</h2>
-    {remote.data?.results.length === 0 && <p>No assigned clearance work. This does not mean all cases are cleared.</p>}
+    <p>{tr("Upload and review a supporting PDF for the specific case before recording your unit’s decision.")}</p>
+    <h2>{tr("Cases")}</h2>
+    {remote.data?.results.length === 0 && <p>{tr("No assigned clearance work. This does not mean all cases are cleared.")}</p>}
     <ul className="record-list">{remote.data?.results.map(t => <li key={`${t.case_id}:${t.unit}`} className="record-card">
-      <div className="record-card__top"><button type="button" className="record-card__ref" onClick={() => onSelect(t.case_id)}>Case {t.case_id}</button><StatusTag value={t.status} /></div>
-      <dl className="record-card__meta"><div><dt>Unit</dt><dd>{t.unit}</dd></div><div><dt>Due</dt><dd>{t.due_date ? formatDate(t.due_date) : 'Unavailable'}</dd></div></dl>
-      {t.can_decide && <div style={{marginTop: 12}}>{['CLEARED', 'OBJECTION', 'HOLD'].map(s => <button key={s} disabled={busy || !reason.trim() || !evidence.trim()} onClick={() => decide(t, s)}>{s.toLowerCase()}</button>)}</div>}
+      <div className="record-card__top"><button type="button" className="record-card__ref" onClick={() => onSelect(t.case_id)}>{tr("Case  ")}{t.case_id}</button><StatusTag value={t.status} /></div>
+      <dl className="record-card__meta"><div><dt>{tr("Unit")}</dt><dd>{t.unit}</dd></div><div><dt>{tr("Due")}</dt><dd>{t.due_date ? formatDate(t.due_date) : tr("Unavailable")}</dd></div></dl>
+      {t.can_decide ? <ClearanceDecision key={`${t.case_id}:${t.version}`} task={t} client={client} reload={remote.reload} /> :
+        t.evidence ? <ClearancePdf evidence={t.evidence} /> : <p>{tr("Reference only — no linked PDF.")}</p>}
     </li>)}</ul>
-    <nav aria-label="Task pages"><button disabled={page === 1 || busy} onClick={() => setPage(page - 1)}>Previous tasks</button>
-      <button disabled={page * 25 >= (remote.data?.count ?? 0) || busy} onClick={() => setPage(page + 1)}>Next tasks</button></nav>
+    <nav aria-label={tr("Task pages")}><button disabled={page === 1} onClick={() => setPage(page - 1)}>{tr("Previous tasks")}</button>
+      <button disabled={page * 25 >= (remote.data?.count ?? 0)} onClick={() => setPage(page + 1)}>{tr("Next tasks")}</button></nav>
   </section>;
 }
 
+function ClearanceDecision({task, client, reload}: {task: Task; client: Transport; reload: () => void}) {
+  useLanguage();
+  const base = `releases/${task.case_id}/clearances/${task.unit}`;
+  const remote = useRemote<{version: number; results: ClearanceEvidence[]}>(client, `${base}/evidence`, `${task.case_id}:${task.version}`);
+  const [file, setFile] = React.useState<File | null>(null);
+  const [selected, setSelected] = React.useState<number | null>(null);
+  const [reason, setReason] = React.useState('');
+  const [reference, setReference] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<unknown>();
+  const evidence = remote.data?.results.find(e => e.id === selected);
+  async function upload() {
+    if (!file || busy) return;
+    setBusy(true); setError(undefined);
+    const form = new FormData(); form.set('version', String(remote.data?.version ?? task.version)); form.set('document', file);
+    try {await client.post(api(`${base}/evidence`), form); reload();}
+    catch (e) {setError(e); setBusy(false);}
+  }
+  async function decide(status: string) {
+    if (!evidence || busy) return;
+    setBusy(true); setError(undefined);
+    try {await client.post(api(base), {version: remote.data?.version ?? task.version, status, reason,
+      evidence_ref: reference, evidence_id: evidence.id}); reload();}
+    catch (e) {setError(e); setBusy(false);}
+  }
+  return <fieldset disabled={busy} aria-label={tr("Decision for case {0}", {"0": (task.case_id)})}>
+    <legend>{tr("Your decision — case  ")}{task.case_id}</legend>
+    {!!error && <ErrorBox error={error} />}{!!remote.error && <ErrorBox error={remote.error} />}
+    {!remote.data && !remote.error && <Loading />}
+    <label>{tr("Supporting clearance PDF  ")}<input type="file" accept="application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
+    <button disabled={!file || busy || !!remote.error} onClick={() => void upload()}>{tr("Upload supporting PDF")}</button>
+    <label>{tr("Reviewed supporting PDF  ")}<select value={selected ?? ''} onChange={e => setSelected(Number(e.target.value) || null)}>
+      <option value="">{tr("Select a PDF to review")}</option>{remote.data?.results.map(e => <option key={e.id} value={e.id}>{e.name} (#{e.id})</option>)}
+    </select></label>
+    {evidence && <ClearancePdf key={evidence.id} evidence={evidence} />}
+    <label>{tr("Reason  ")}<textarea maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
+    <label>{tr("Reviewed evidence reference  ")}<input maxLength={200} value={reference} onChange={e => setReference(e.target.value)} /></label>
+    {task.status !== 'OPEN' && <p>{tr("Re-attestation preserves the existing  ")}{task.status} {tr("  decision; the prior review remains in history.")}</p>}
+    {(task.status === 'OPEN' ? ['CLEARED', 'OBJECTION', 'HOLD'] : [task.status]).map(s => <button key={s}
+      disabled={busy || !evidence || !reason.trim() || !reference.trim() || !!remote.error}
+      onClick={() => void decide(s)}>{tr(s.toLowerCase())}</button>)}
+  </fieldset>;
+}
+
 export function PublicVerification({client, token}: {client: Transport; token: string}) {
+  useLanguage();
   const remote = useRemote<unknown>(client, `public/verify/${encodeURIComponent(token)}`, token);
   if (remote.error) {
     const status = (remote.error as Failure)?.status;
-    return <section><h1>Verify letter</h1>
-      <p role="alert">{status === 404 || status === 400 ? 'Verification record unavailable.' : 'Verification service temporarily unavailable.'}</p>
-      <button onClick={remote.reload}>Retry</button></section>;
+    return <section><h1>{tr("Verify letter")}</h1>
+      <p role="alert">{status === 404 || status === 400 ? tr("Verification record unavailable.") : tr("Verification service temporarily unavailable.")}</p>
+      <button onClick={remote.reload}>{tr("Retry")}</button></section>;
   }
   if (!remote.data) return <Loading />;
   let record: PublicRecord;
-  try {record = publicRecord(remote.data);} catch {return <p role="alert">Verification response unavailable.</p>;}
+  try {record = publicRecord(remote.data);} catch {return <p role="alert">{tr("Verification response unavailable.")}</p>;}
   const revoked = record.status === 'REVOKED';
   return <section className="verify-result">
     <div className={`verify-icon ${revoked ? 'verify-icon--bad' : 'verify-icon--ok'}`} aria-hidden>{revoked ? <CloseCircleFilled /> : <CheckCircleFilled />}</div>
-    <h1>{revoked ? 'Revoked — do not rely on this letter' : 'Letter found'}</h1>
+    <h1>{revoked ? tr("Revoked — do not rely on this letter") : tr("Letter found")}</h1>
     <Notice />
-    <SummaryList items={[{label: 'Serial', value: record.serial}, {label: 'Issue date', value: formatDate(record.issue_date)},
-      {label: 'Institution', value: record.institution_name}, {label: 'Kind', value: record.kind === 'NOC' ? 'No Objection Certificate' : 'Sanction order'}]} />
-    <p className="muted">This confirms that the letter was issued by the portal. It is not a bank confirmation or a digital signature.</p>
+    <SummaryList items={[{label: tr("Serial"), value: record.serial}, {label: tr("Issue date"), value: formatDate(record.issue_date)},
+      {label: tr("Institution"), value: record.institution_name}, {label: tr("Kind"), value: record.kind === 'NOC' ? 'No Objection Certificate' : 'Sanction order'}]} />
+    <p className="muted">{tr("This confirms that the letter was issued by the portal. It is not a bank confirmation or a digital signature.")}</p>
   </section>;
 }

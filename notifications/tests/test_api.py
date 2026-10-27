@@ -38,7 +38,7 @@ class InboxApiTests(TestCase):
         self.assertEqual([row['subject'] for row in body['results']],
                          ['New submission to review: R2', 'New submission to review: R1'])
         self.assertEqual(set(body['results'][0]), {'id', 'template_id', 'subject', 'body', 'link', 'severity',
-                                                   'created_at', 'read_at', 'is_read'})
+                                                   'created_at', 'read_at', 'is_read', 'translations'})
         self.assertFalse(body['results'][0]['is_read'])
 
     def test_unread_filter_and_count(self):

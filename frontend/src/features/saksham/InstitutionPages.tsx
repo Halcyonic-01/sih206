@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import { useCallback, useSyncExternalStore, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -8,6 +9,7 @@ import { ErrorBox, Loading, useRemote } from './shared';
 import { platformTransport } from './platformTransport';
 
 export function InstitutionSession({ children }: { children: (identityKey: string) => ReactNode }) {
+  useLanguage();
   const auth = useAuth();
   const cache = useQueryClient();
   const subscribe = useCallback((notify: () => void) => cache.getQueryCache().subscribe(event => {
@@ -35,27 +37,31 @@ export function routeIdentity(raw: string | undefined): number | null {
 }
 
 export function InstitutionsPage() {
+  useLanguage();
   const navigate = useNavigate();
   return <InstitutionSession>{identityKey => <InstitutionList client={platformTransport} identityKey={identityKey}
     onSelect={id => navigate(`/institutions/${id}`)} />}</InstitutionSession>;
 }
 
 export function InstitutionPage() {
+  useLanguage();
   const id = routeIdentity(useParams().id);
   return <InstitutionSession>{identityKey => id === null ? <ErrorBox error={{ status: 404 }} /> :
     <InstitutionDetail client={platformTransport} identityKey={identityKey} institutionId={id}
-      actions={<Link className="btn" to={`/institutions/${id}/calculator`}>Requirement calculator</Link>} />}</InstitutionSession>;
+      actions={<Link className="btn" to={`/institutions/${id}/calculator`}>{tr("Requirement calculator")}</Link>} />}</InstitutionSession>;
 }
 
 function ScopedCalculator({ id, identityKey }: { id: number; identityKey: string }) {
+  useLanguage();
   const parent = useRemote<Institution>(platformTransport, `institutions/${id}`, identityKey);
   if (parent.error) return <ErrorBox error={parent.error} />;
   if (!parent.data) return <Loading />;
   return <Calculator client={platformTransport} institutionId={id} identityKey={identityKey}
-    breadcrumb={[{ label: 'Institutions', to: '/institutions' }, { label: parent.data.name, to: `/institutions/${id}` }, { label: 'Requirement calculator' }]} />;
+    breadcrumb={[{ label: tr("Institutions"), to: '/institutions' }, { label: parent.data.name, to: `/institutions/${id}` }, { label: tr("Requirement calculator") }]} />;
 }
 
 export function InstitutionCalculatorPage() {
+  useLanguage();
   const id = routeIdentity(useParams().id);
   return <InstitutionSession>{identityKey => id === null ? <ErrorBox error={{ status: 404 }} /> :
     <ScopedCalculator key={`${identityKey}:${id}`} id={id} identityKey={identityKey} />}</InstitutionSession>;

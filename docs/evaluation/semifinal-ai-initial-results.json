@@ -1,0 +1,669 @@
+{
+  "synthetic_only": true,
+  "independent_label_review": false,
+  "engine": "ai",
+  "model": "gemini-3.5-flash-lite",
+  "subset": "all",
+  "cached": false,
+  "manifest_sha256": "6786e6945b377155f087602ff34cafe000efa11fa2634bbdb241af92671cb4c1",
+  "limitations": [
+    "Small author-labelled synthetic set; no general accuracy claim.",
+    "Existing provider/OCR rate limits apply; failures remain in denominators.",
+    "Text baseline cannot read scanned images; OCR does not generate product mismatch findings."
+  ],
+  "summary": {
+    "documents": 12,
+    "counts": {
+      "fields": 72,
+      "tp": 0,
+      "fp": 0,
+      "fn": 3,
+      "known": 63,
+      "predicted": 30,
+      "exact": 39,
+      "correct_predictions": 30,
+      "correct_pages": 30,
+      "missing_values": 33,
+      "invented_values": 0,
+      "wrong_values": 0
+    },
+    "statuses": {
+      "success": 5,
+      "unavailable": 7
+    },
+    "field_exact_accuracy": 0.5416666666666666,
+    "field_precision": 1.0,
+    "field_recall": 0.47619047619047616,
+    "page_accuracy_among_predictions": 1.0,
+    "mismatch_precision": null,
+    "mismatch_recall": 0.0,
+    "timing_ms": {
+      "min": 15,
+      "max": 2891,
+      "median": 47.0
+    }
+  },
+  "results": [
+    {
+      "id": "T01",
+      "status": "success",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "known": 6,
+        "predicted": 6,
+        "exact": 6,
+        "correct_predictions": 6,
+        "correct_pages": 6,
+        "missing_values": 0,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [],
+      "duration_ms": 2750,
+      "run_id": 1
+    },
+    {
+      "id": "T02",
+      "status": "success",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "known": 6,
+        "predicted": 6,
+        "exact": 6,
+        "correct_predictions": 6,
+        "correct_pages": 6,
+        "missing_values": 0,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [],
+      "duration_ms": 2891,
+      "run_id": 2
+    },
+    {
+      "id": "T03",
+      "status": "success",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "known": 6,
+        "predicted": 6,
+        "exact": 6,
+        "correct_predictions": 6,
+        "correct_pages": 6,
+        "missing_values": 0,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [],
+      "duration_ms": 2281,
+      "run_id": 3
+    },
+    {
+      "id": "T04",
+      "status": "success",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "known": 6,
+        "predicted": 6,
+        "exact": 6,
+        "correct_predictions": 6,
+        "correct_pages": 6,
+        "missing_values": 0,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [],
+      "duration_ms": 2781,
+      "run_id": 4
+    },
+    {
+      "id": "S01",
+      "status": "success",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "known": 6,
+        "predicted": 6,
+        "exact": 6,
+        "correct_predictions": 6,
+        "correct_pages": 6,
+        "missing_values": 0,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [],
+      "duration_ms": 2641,
+      "run_id": 5
+    },
+    {
+      "id": "S02",
+      "status": "unavailable",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "known": 6,
+        "predicted": 0,
+        "exact": 0,
+        "correct_predictions": 0,
+        "correct_pages": 0,
+        "missing_values": 6,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [
+        {
+          "field": "reference",
+          "expected": {
+            "value": "SYNTH-EVAL-S02",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "bank",
+          "expected": {
+            "value": "Fictional Evidence Bank",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "amount",
+          "expected": {
+            "value": "500000.25",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "issue_date",
+          "expected": {
+            "value": "2026-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "maturity_date",
+          "expected": {
+            "value": "2036-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "ifsc",
+          "expected": {
+            "value": "DEMO0123456",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        }
+      ],
+      "duration_ms": 31,
+      "run_id": 17
+    },
+    {
+      "id": "S03",
+      "status": "unavailable",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "known": 6,
+        "predicted": 0,
+        "exact": 0,
+        "correct_predictions": 0,
+        "correct_pages": 0,
+        "missing_values": 6,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [
+        {
+          "field": "reference",
+          "expected": {
+            "value": "SYNTH-EVAL-S03",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "bank",
+          "expected": {
+            "value": "Fictional Evidence Bank",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "amount",
+          "expected": {
+            "value": "500000.25",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "issue_date",
+          "expected": {
+            "value": "2026-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "maturity_date",
+          "expected": {
+            "value": "2036-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "ifsc",
+          "expected": {
+            "value": "DEMO0123456",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        }
+      ],
+      "duration_ms": 47,
+      "run_id": 19
+    },
+    {
+      "id": "M01",
+      "status": "unavailable",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "known": 6,
+        "predicted": 0,
+        "exact": 0,
+        "correct_predictions": 0,
+        "correct_pages": 0,
+        "missing_values": 6,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [
+        {
+          "field": "reference",
+          "expected": {
+            "value": "SYNTH-EVAL-M01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "bank",
+          "expected": {
+            "value": "Fictional Evidence Bank",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "amount",
+          "expected": {
+            "value": "500000.25",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "issue_date",
+          "expected": {
+            "value": "2026-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "maturity_date",
+          "expected": {
+            "value": "2036-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "ifsc",
+          "expected": {
+            "value": "DEMO0123456",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        }
+      ],
+      "duration_ms": 31,
+      "run_id": 20
+    },
+    {
+      "id": "M02",
+      "status": "unavailable",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 2,
+        "known": 6,
+        "predicted": 0,
+        "exact": 0,
+        "correct_predictions": 0,
+        "correct_pages": 0,
+        "missing_values": 6,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [
+        {
+          "field": "reference",
+          "expected": {
+            "value": "SYNTH-EVAL-M02",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "bank",
+          "expected": {
+            "value": "Fictional Evidence Bank",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "amount",
+          "expected": {
+            "value": "500000.25",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "issue_date",
+          "expected": {
+            "value": "2026-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "maturity_date",
+          "expected": {
+            "value": "2036-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "ifsc",
+          "expected": {
+            "value": "DEMO0123456",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        }
+      ],
+      "duration_ms": 47,
+      "run_id": 21
+    },
+    {
+      "id": "U01",
+      "status": "unavailable",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "known": 4,
+        "predicted": 0,
+        "exact": 2,
+        "correct_predictions": 0,
+        "correct_pages": 0,
+        "missing_values": 4,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [
+        {
+          "field": "reference",
+          "expected": {
+            "value": "SYNTH-EVAL-U01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "amount",
+          "expected": {
+            "value": "500000.25",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "issue_date",
+          "expected": {
+            "value": "2026-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "maturity_date",
+          "expected": {
+            "value": "2036-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        }
+      ],
+      "duration_ms": 32,
+      "run_id": 22
+    },
+    {
+      "id": "U02",
+      "status": "unavailable",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "known": 5,
+        "predicted": 0,
+        "exact": 1,
+        "correct_predictions": 0,
+        "correct_pages": 0,
+        "missing_values": 5,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [
+        {
+          "field": "reference",
+          "expected": {
+            "value": "SYNTH-EVAL-U02",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "bank",
+          "expected": {
+            "value": "Fictional Evidence Bank",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "issue_date",
+          "expected": {
+            "value": "2026-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "maturity_date",
+          "expected": {
+            "value": "2036-01-01",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        },
+        {
+          "field": "ifsc",
+          "expected": {
+            "value": "DEMO0123456",
+            "page": 1
+          },
+          "actual": {
+            "value": null,
+            "page": null
+          }
+        }
+      ],
+      "duration_ms": 15,
+      "run_id": 23
+    },
+    {
+      "id": "U03",
+      "status": "unavailable",
+      "counts": {
+        "fields": 6,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "known": 0,
+        "predicted": 0,
+        "exact": 6,
+        "correct_predictions": 0,
+        "correct_pages": 0,
+        "missing_values": 0,
+        "invented_values": 0,
+        "wrong_values": 0
+      },
+      "errors": [],
+      "duration_ms": 31,
+      "run_id": 24
+    }
+  ]
+}

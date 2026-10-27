@@ -1,5 +1,12 @@
 /* Observed AICTE internship-portal cues, adapted for an accessible administration app.
    Sources and measured values: docs/aicte-design-reference.md. No official assets. */
+.language-toggle { display: inline-flex; flex-wrap: nowrap; gap: 2px; padding: 3px; border: 1px solid var(--c-border); border-radius: 8px; background: white; }
+.language-toggle button { border: 0; border-radius: 5px; padding: 6px 8px; font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; background: transparent; color: var(--c-navy); }
+.language-toggle button[aria-pressed="true"] { background: var(--c-navy); color: white; }
+.language-toggle button:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+.localized-modal-title { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-right: 28px; }
+html[lang="hi"] { font-family: "Nirmala UI", "Mangal", system-ui, sans-serif; }
+@media (min-width: 768px) and (max-width: 1199px) { .portal-masthead { flex-wrap: wrap; } }
 .portal-frame { min-height: 100vh; background: var(--c-page); }
 .portal-masthead { display: flex; justify-content: space-between; align-items: center; gap: 24px;
   padding: 22px 32px; min-height: 100px; background: white; }

@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Alert, Button, Form, Input } from 'antd'
 import { useState } from 'react'
@@ -10,8 +11,8 @@ import { appRoutes } from '@/routes/registry'
 
 interface LoginValues { username: string; password: string }
 
-/** Return to the page that asked for sign-in only if the account now signing in may open it. After a sign-out the
- * previous user's page is remembered too, and a different role would otherwise land on an access-denied screen. */
+/** Resume an interrupted session only if the account signing in may open the requested page.
+ * Explicit sign-out clears that destination in RequireRole, so the next login starts at home. */
 export function allowedDestination(destination: string, role: string | null | undefined): string {
   const pathname = destination.split(/[?#]/)[0] ?? '/'
   const route = appRoutes.find((entry) => matchPath({ path: entry.path, end: true }, pathname))
@@ -20,6 +21,7 @@ export function allowedDestination(destination: string, role: string | null | un
 }
 
 export default function LoginPage() {
+  useLanguage();
   const { user, status, login, verifyMfa } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -66,24 +68,22 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
-      <a className="skip-link" href="#sign-in">Skip to sign in</a>
+      <a className="skip-link" href="#sign-in">{tr("Skip to sign in")}</a>
       <header className="portal-masthead"><PortalIdentity /></header>
-      <div className="service-bar"><span className="service-bar__name">Security Deposit Management</span>
-        <span className="service-bar__context">Institution &amp; officer access</span></div>
+      <div className="service-bar"><span className="service-bar__name">{tr("Security Deposit Management")}</span>
+        <span className="service-bar__context">{tr("Institution & officer access")}</span></div>
       <main className="auth-layout">
-        <section className="auth-introduction" aria-label="About the portal">
-          <span className="eyebrow">ONE PORTAL. A CLEARER PROCESS.</span>
-          <h2>Every deposit.{' '}<br />Every decision.{' '}<br /><em>Accounted for.</em></h2>
-          <p className="auth-lead">A shared workspace for institutions and reviewing teams to manage
-            security deposits, supporting evidence and the next action.</p>
-          <p className="prototype-note">Independent student prototype. No official AICTE endorsement is implied.</p>
+        <section className="auth-introduction" aria-label={tr("About the portal")}>
+          <span className="eyebrow">{tr("ONE PORTAL. A CLEARER PROCESS.")}</span>
+          <h2>{tr("Every deposit.")}{' '}<br />{tr("Every decision.")}{' '}<br /><em>{tr("Accounted for.")}</em></h2>
+          <p className="auth-lead">{tr("A shared workspace for institutions and reviewing teams to manage security deposits, supporting evidence and the next action.")}</p>
+          <p className="prototype-note">{tr("Independent student prototype. No official AICTE endorsement is implied.")}</p>
         </section>
         <section className="auth-main" aria-labelledby="sign-in">
           <div className="auth-card">
-            <span className="eyebrow">ACCESS YOUR WORKSPACE</span>
-            <h1 id="sign-in" tabIndex={-1}>{needsCode ? 'Enter your code' : 'Sign in'}</h1>
-            <p className="muted">{needsCode ? 'Open your authenticator app and enter the 6-digit code for this portal.'
-              : 'Use the account issued to your institution or office.'}</p>
+            <span className="eyebrow">{tr("ACCESS YOUR WORKSPACE")}</span>
+            <h1 id="sign-in" tabIndex={-1}>{needsCode ? tr("Enter your code") : tr("Sign in")}</h1>
+            <p className="muted">{needsCode ? tr("Open your authenticator app and enter the 6-digit code for this portal.") : tr("Use the account issued to your institution or office.")}</p>
             {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} role="alert" />}
             {needsCode ? (
               <Form form={codeForm} layout="vertical" size="large" onFinish={submitCode} requiredMark={false} disabled={busy}>
@@ -95,20 +95,19 @@ export default function LoginPage() {
               </Form>
             ) : (
             <Form form={form} layout="vertical" size="large" onFinish={submit} requiredMark={false} disabled={busy}>
-              <Form.Item name="username" label="Username" rules={[{ required: true, message: 'Enter your username.' }]}>
+              <Form.Item name="username" label={tr("Username")} rules={[{ required: true, message: tr("Enter your username.") }]}>
                 <Input prefix={<UserOutlined aria-hidden />} autoComplete="username" autoFocus />
               </Form.Item>
-              <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Enter your password.' }]}>
+              <Form.Item name="password" label={tr("Password")} rules={[{ required: true, message: tr("Enter your password.") }]}>
                 <Input.Password prefix={<LockOutlined aria-hidden />} autoComplete="current-password" />
               </Form.Item>
-              <Button type="primary" htmlType="submit" block loading={busy}>Sign in</Button>
+              <Button type="primary" htmlType="submit" block loading={busy}>{tr("Sign in")}</Button>
             </Form>
             )}
-            <p className="auth-help"><LockOutlined aria-hidden /> Access is limited to your assigned role and institution.</p>
-            <div className="auth-security-note">After five failed attempts the account is locked for a few minutes.
-              Contact your project administrator if you need account access.</div>
+            <p className="auth-help"><LockOutlined aria-hidden /> {tr("  Access is limited to your assigned role and institution.")}</p>
+            <div className="auth-security-note">{tr("After five failed attempts the account is locked for a few minutes. Contact your project administrator if you need account access.")}</div>
           </div>
-          <p className="auth-foot">Acceptance of a deposit record is for tracking and is not verification by the bank.</p>
+          <p className="auth-foot">{tr("Acceptance of a deposit record is for tracking and is not verification by the bank.")}</p>
         </section>
       </main>
       <PortalFooter />
