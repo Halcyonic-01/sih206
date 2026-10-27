@@ -27,7 +27,7 @@ class RunScriptTests(SimpleTestCase):
                 mock.patch.object(run_portal, 'background_command', return_value=1) as command:
             run_portal.scheduler_tick({}, {'next_send': 0, 'next_rules': 0})
         self.assertEqual([call.args[0] for call in command.call_args_list],
-                         ['send_weekly_digests', 'send_notifications', 'deliver_bank_requests', 'run_due_rules'])
+                         ['send_weekly_digests', 'send_notifications', 'deliver_bank_requests', 'cleanup_idempotency', 'run_due_rules'])
 
     def test_weekly_digest_checked_even_after_daily_rules_have_run(self):
         with TemporaryDirectory() as folder, mock.patch.object(run_portal, 'ROOT', Path(folder)), \
@@ -39,7 +39,8 @@ class RunScriptTests(SimpleTestCase):
             run_portal.scheduler_tick({}, state)
             self.assertEqual(command.call_args_list, [
                 mock.call('send_weekly_digests', {}, '--queue'),
-                mock.call('send_notifications', {}), mock.call('deliver_bank_requests', {})])
+                mock.call('send_notifications', {}), mock.call('deliver_bank_requests', {}),
+                mock.call('cleanup_idempotency', {})])
 
     def test_background_command_passes_digest_queue_argument_without_shell(self):
         result = mock.Mock(returncode=0, stdout='disabled', stderr='')

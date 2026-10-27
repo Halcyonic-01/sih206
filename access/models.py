@@ -59,6 +59,22 @@ class MfaDevice(models.Model):
         return f'MFA for {self.user} ({"confirmed" if self.confirmed_at else "pending"})'
 
 
+class IdempotentRequest(models.Model):
+    """A write that carried an Idempotency-Key, and (once it succeeded) the response to replay. Kept 24 hours."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    key = models.CharField(max_length=100)
+    fingerprint = models.CharField(max_length=64)
+    path = models.CharField(max_length=300, blank=True)
+    status_code = models.PositiveSmallIntegerField(null=True, blank=True)
+    body = models.BinaryField(default=b'', blank=True)
+    content_type = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'key'], name='idempotency_key_per_user')]
+
+
 class AppendOnlyError(Exception):
     pass
 

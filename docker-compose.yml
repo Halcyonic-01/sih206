@@ -51,6 +51,7 @@ services:
           python manage.py send_weekly_digests --queue || true
           python manage.py send_notifications || true
           python manage.py deliver_bank_requests || true
+          python manage.py cleanup_idempotency || true
           stamp="data/.rules-ran-$$(date -u +%F)"
           if [ ! -f "$$stamp" ]; then
             python manage.py run_due_rules && touch "$$stamp" || true

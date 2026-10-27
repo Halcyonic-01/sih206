@@ -413,6 +413,7 @@ def scheduler_tick(env, state):
         background_command('send_weekly_digests', env, '--queue')
         background_command('send_notifications', env)
         background_command('deliver_bank_requests', env)
+        background_command('cleanup_idempotency', env)
     stamp = ROOT / 'data' / f'.rules-ran-{datetime.now(timezone.utc):%Y-%m-%d}'
     if not stamp.exists() and now >= state['next_rules']:
         state['next_rules'] = now + SEND_EVERY_SECONDS  # a failed run is retried later, not in a tight loop

@@ -50,6 +50,33 @@ export interface RequestOptions {
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 const unauthorizedListeners = new Set<() => void>()
+/** One Idempotency-Key per user intent. Sending the same write again within INTENT_SECONDS (a double click, a retry after a
+ * network error or a 5xx) reuses the key, so the server answers with the first result instead of creating a duplicate.
+ * The key is forgotten once the server has given a final answer (success or a 4xx), so the next attempt is a new one. */
+const INTENT_SECONDS = 120
+const intents = new Map<string, { key: string; at: number }>()
+
+function intentFingerprint(method: string, path: string, options: RequestOptions) {
+  let body = ''
+  if (options.form) {
+    body = Array.from(options.form.entries()).map(([name, value]) =>
+      `${name}=${typeof value === 'string' ? value : `${value.name}:${value.size}:${value.lastModified}`}`).join('&')
+  } else if (options.json !== undefined) {
+    body = JSON.stringify(options.json)
+  }
+  return `${method} ${buildUrl(path, options.query)} ${body}`
+}
+
+function intentKey(fingerprint: string) {
+  const now = Date.now()
+  for (const [key, value] of intents) if (now - value.at > INTENT_SECONDS * 1000) intents.delete(key)
+  const known = intents.get(fingerprint)
+  if (known) return known.key
+  const created = { key: globalThis.crypto?.randomUUID?.() ?? `${now.toString(36)}-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`, at: now }
+  intents.set(fingerprint, created)
+  return created.key
+}
+
 let stepUpHandler: (() => Promise<void>) | null = null
 
 /** The step-up dialog registers here. When an action answers 403 `mfa_step_up_required`, the handler asks for an
@@ -126,6 +153,7 @@ async function send(path: string, options: RequestOptions, retriedAfterStepUp = 
     await ensureCsrfCookie()
     const token = readCookie('csrftoken')
     if (token) headers['X-CSRFToken'] = token
+    if (!path.includes('/auth/')) headers['Idempotency-Key'] = intentKey(intentFingerprint(method, path, options))
   }
   let body: BodyInit | undefined
   if (options.form) {
@@ -142,6 +170,9 @@ async function send(path: string, options: RequestOptions, retriedAfterStepUp = 
   } catch (error) {
     if ((error as Error).name === 'AbortError') throw error
     throw new ApiError(0, 'network_error', 'Cannot reach the server. Check your connection and try again.')
+  }
+  if (!SAFE_METHODS.has(method) && (response.ok || (response.status >= 400 && response.status < 500))) {
+    intents.delete(intentFingerprint(method, path, options))  // a final answer: the next attempt is a new intent
   }
   if (!response.ok) {
     const error = await toApiError(response)
