@@ -17,6 +17,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from portal.permissions import role, scoped_instruments
+from .comparison import build_findings
 from .models import AiRun
 from .services import FIELD_NAMES, validate_output
 
@@ -115,7 +116,7 @@ def extract_local(actor, document):
         pages = json.loads(completed.stdout)
         output = validate_output(parse_fields(pages), document.page_count)
         run.status, run.output = 'SUCCESS', output
-        return result | output | {'status': 'success', 'pages': pages,
+        return result | output | {'status': 'success', 'pages': pages, 'findings': build_findings(document.instrument, output),
             'detail': 'Processed locally. Low-confidence, missing and conflicting fields require manual entry.'}
     except Exception as exc:
         run.status = 'FAILED'

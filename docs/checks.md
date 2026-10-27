@@ -102,3 +102,13 @@ python manage.py load_bank_successions checked.csv --verified                  #
 Government/RBI notification before loading it with `--verified`. A renewal records why the deposit replaces the earlier one
 (`renewal_reason`: routine, bank merger replacement, re-issued by the bank, other with a note); the reason is stored on the successor's
 creation audit event and shown on the Renewal history tab from both ends.
+
+## Normalised AI and OCR comparisons (P2-8)
+
+`ai/normalize.py` is applied before AI extraction and local OCR values are compared with the record, so formatting alone never raises
+`AI_MISMATCH`: amounts with Indian grouping or currency marks (`₹ 5,00,000.25`, `INR 500000.25/-`), bank-name abbreviations and suffixes
+(`SBI`, `State Bank of India Ltd.`), several date layouts, and reference/IFSC case and spacing. A value that cannot be read with
+confidence is *unknown*, never *different*. Numeric dates are read as DD/MM; when both numbers are 12 or less the result says so
+(`AI_DATE_AMBIGUOUS`, or a mismatch that notes the month/day reading would match). If the document also shows the amount in words, the
+extraction returns `amount_in_words` and an advisory `AMOUNT_WORDS_MISMATCH` is raised when it differs from the figures (Indian
+numbering: lakh, crore, paise; unreadable words are ignored). Output stays advisory and never changes a record.

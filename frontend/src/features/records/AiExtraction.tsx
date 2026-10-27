@@ -8,7 +8,12 @@ type Result = {
   status: string; label: string; detail?: string
   fields: Record<string, { value: string | null; page: number | null }>
   pages?: { page: number; text: string; confidence: number }[]
-  findings: { code: string; field: string; declared: string; suggested: string }[]
+  findings: { code: string; field: string; declared: string; suggested: string; detail?: string }[]
+}
+
+const FINDING_TITLES: Record<string, (field: string) => string> = {
+  AMOUNT_WORDS_MISMATCH: () => 'The amount in words differs from the figures',
+  AI_DATE_AMBIGUOUS: (field) => `${humanize(field)} on the document is ambiguous`,
 }
 
 export function AiExtraction({ api, documentId, canUse, onUse }: {
@@ -56,8 +61,9 @@ export function AiExtraction({ api, documentId, canUse, onUse }: {
             { title: tr("Suggested value"), dataIndex: 'value', render: (v: string | null) => v ?? tr('Not found') },
             { title: tr("Page"), dataIndex: 'page', width: 80, render: (v: number | null) => v ?? '—' }]} />
           {result.findings.map((f) => (
-            <Alert key={f.field} type="warning" showIcon message={tr("Differs from the record: {0}", {"0": (humanize(f.field))})}
-                   description={tr("Record says {0}; the document suggests {1}. Needs human review.", {"0": (f.declared), "1": (f.suggested)})} />
+            <Alert key={`${f.code}:${f.field}`} type="warning" showIcon
+                   message={FINDING_TITLES[f.code]?.(f.field) ?? tr("Differs from the record: {0}", {"0": (humanize(f.field))})}
+                   description={f.detail ?? tr("Record says {0}; the document suggests {1}. Needs human review.", {"0": (f.declared), "1": (f.suggested)})} />
           ))}
           <div>
             <Button type="primary" disabled={!canUse} onClick={() => onUse(Object.fromEntries(Object.entries(result.fields)
