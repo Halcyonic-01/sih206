@@ -104,6 +104,6 @@ def record_integrity_failure(error, actor):
                    reason='Stored file does not match the SHA-256 recorded at upload; the download was refused.',
                    after_extra={'document_id': document.pk, 'document_name': document.original_name,
                                 'expected_sha256': document.sha256, 'actual_sha256': error.actual_sha256})
-    notify(officers(), 'document_integrity_failed',
+    notify(officers(item.institution), 'document_integrity_failed',
            {'reference': item.reference, 'document': document.original_name, 'url': f'/records/{item.pk}'},
            key=f'document:{document.pk}:integrity:{error.actual_sha256[:16]}')

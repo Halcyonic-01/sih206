@@ -136,7 +136,7 @@ def maturity_rules(as_of, config, result, dry_run, institution=None):
                 threshold = min(crossed)
                 groups = [who.institution_contacts(instrument.institution)]
                 if threshold in officer_days:
-                    groups.append(who.officers())
+                    groups.append(who.officers(instrument.institution))
                 _dispatch(result, dry_run, 'maturity-reminder', f'{ref} T-{threshold} ({days} days left)',
                           _recipients(*groups), 'maturity_reminder', {**context, 'days': days},
                           f'instrument:{instrument.pk}:maturity:T-{threshold}:{instrument.maturity_date}')
@@ -144,13 +144,13 @@ def maturity_rules(as_of, config, result, dry_run, institution=None):
         overdue_days = -days
         if overdue_days >= config['renewal_overdue_after_days']:
             _dispatch(result, dry_run, 'renewal-overdue', f'{ref} {overdue_days} day(s) past maturity',
-                      _recipients(who.institution_contacts(instrument.institution), who.officers(),
-                                  who.authorities()),
+                      _recipients(who.institution_contacts(instrument.institution), who.officers(instrument.institution),
+                                  who.regional_heads(instrument.institution), who.authorities()),
                       'renewal_overdue', {**context, 'days': overdue_days},
                       f'instrument:{instrument.pk}:renewal-overdue:{instrument.maturity_date}')
         if overdue_days >= config['penalty_review_after_days']:
             _dispatch(result, dry_run, 'penalty-review', f'{ref} {overdue_days} day(s) past maturity',
-                      _recipients(who.officers()), 'penalty_review_due', {**context, 'days': overdue_days},
+                      _recipients(who.officers(instrument.institution)), 'penalty_review_due', {**context, 'days': overdue_days},
                       f'instrument:{instrument.pk}:penalty-review:{instrument.maturity_date}')
 
 
@@ -209,7 +209,7 @@ def sla_rules(as_of, config, result, dry_run, institution=None, clearance_provid
     for instrument in records.filter(status=Instrument.Status.CHANGES_REQUESTED):
         since = _latest_event_date(instrument, 'CHANGES_REQUESTED')
         waited = (as_of - since).days
-        for limit, group in ((first, who.institution_contacts(instrument.institution)), (second, who.officers())):
+        for limit, group in ((first, who.institution_contacts(instrument.institution)), (second, who.regional_heads(instrument.institution))):
             if waited >= limit:
                 _dispatch(result, dry_run, 'sla-correction', f'{instrument.reference} open {waited} days (>= {limit})',
                           _recipients(group), 'sla_correction_pending',

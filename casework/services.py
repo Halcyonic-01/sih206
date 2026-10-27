@@ -60,13 +60,13 @@ def record(case, actor, action, reason):
     reference = case.release.instrument.reference
     context = {'reference': reference, 'url': f'/releases/{case.pk}'}
     if action == 'RELEASE_CASE_REQUESTED':
-        notify(recipients.officers(), 'release_requested', context,
+        notify(recipients.officers(case.institution), 'release_requested', context,
                f's5:{case.pk}:release-requested:{case.version}')
     elif action.startswith('CLEARANCE_'):
         notify(recipients.institution_users(case.institution), 'release_requested', context,
                f's5:{case.pk}:{action.lower()}:{case.version}')
     elif action == 'PENALTY_REVIEW':
-        notify(recipients.officers(), 'penalty_proposed', context,
+        notify(recipients.officers(case.institution), 'penalty_proposed', context,
                f's5:{case.pk}:penalty-review:{case.version}')
     elif action in {'CASE_APPROVE', 'CASE_REJECT'}:
         notify(recipients.institution_users(case.institution), 'release_decided', context,

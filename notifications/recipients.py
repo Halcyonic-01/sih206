@@ -9,8 +9,31 @@ def _in_group(name):
     return list(get_user_model().objects.filter(groups__name=name, is_active=True).order_by('pk'))
 
 
-def officers():
-    return _in_group(OFFICER_GROUP)
+def _region_of(institution):
+    profile = getattr(institution, 'deposit_profile', None) if institution is not None else None
+    return (profile.region if profile is not None else '') or ''
+
+
+def officers(institution=None):
+    """Officers. With an institution: national officers (no region assignment) and those assigned to its region."""
+    users = _in_group(OFFICER_GROUP)
+    if institution is None:
+        return users
+    region = _region_of(institution).strip().casefold()
+    result = []
+    for user in users:
+        regions = [r.strip().casefold() for r in user.region_assignments.values_list('region', flat=True)]
+        if not regions or region in regions:
+            result.append(user)
+    return result
+
+
+def regional_heads(institution):
+    """Heads of the institution's region; the institution's officers when none is named, so an escalation is never lost."""
+    region = _region_of(institution).strip().casefold()
+    heads = [user for user in _in_group(OFFICER_GROUP)
+             if any(a.is_head and a.region.strip().casefold() == region for a in user.region_assignments.all())]
+    return heads or officers(institution)
 
 
 def authorities():
