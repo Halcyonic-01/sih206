@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { api, ApiError, buildUrl, onUnauthorized, readCookie } from './client'
+import { api, ApiError, buildUrl, onUnauthorized, readCookie, setStepUpHandler } from './client'
 
 function reply(status: number, body?: unknown, headers: Record<string, string> = {}) {
   return new Response(body === undefined ? null : JSON.stringify(body), {
@@ -103,5 +103,31 @@ describe('api client', () => {
     document.cookie = 'a=1; path=/'
     expect(readCookie('a')).toBe('1')
     expect(readCookie('missing')).toBeNull()
+  })
+
+  it('asks for a fresh authenticator code on mfa_step_up_required, then repeats the request once', async () => {
+    fetchMock
+      .mockResolvedValueOnce(reply(403, { detail: 'Enter a code.', code: 'mfa_step_up_required' }))
+      .mockResolvedValueOnce(reply(200, { done: true }))
+    const handler = vi.fn(async () => undefined)
+    const remove = setStepUpHandler(handler)
+    await expect(api('/releases/1/approve', { method: 'POST', json: { version: 3 } })).resolves.toEqual({ done: true })
+    expect(handler).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[1]![1]!.body).toBe(JSON.stringify({ version: 3 }))
+    remove()
+  })
+
+  it('throws the original error when the step-up is cancelled, and never loops', async () => {
+    fetchMock.mockImplementation(async () => reply(403, { detail: 'Enter a code.', code: 'mfa_step_up_required' }))
+    const remove = setStepUpHandler(async () => { throw new Error('cancelled') })
+    await expect(api('/releases/1/issue', { method: 'POST', json: {} })).rejects.toMatchObject({ code: 'mfa_step_up_required' })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    remove()
+    fetchMock.mockClear()
+    const again = setStepUpHandler(async () => undefined)
+    await expect(api('/releases/1/issue', { method: 'POST', json: {} })).rejects.toBeInstanceOf(ApiError)
+    expect(fetchMock).toHaveBeenCalledTimes(2) // one retry after a confirmed code, not more
+    again()
   })
 })

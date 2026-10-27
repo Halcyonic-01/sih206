@@ -7,6 +7,16 @@ class ApiSessionAuthentication(SessionAuthentication):
     def authenticate_header(self, request):
         return 'Session'
 
+    def authenticate(self, request):
+        result = super().authenticate(request)
+        if result is not None:
+            from access import mfa
+            user = result[0]
+            # MFA_REQUIRED: staff who have not enrolled can only reach /api/auth/* (to enrol) until they do.
+            if mfa.required(user) and not request.path.startswith('/api/auth/') and mfa.device_for(user) is None:
+                raise mfa.MfaEnrolmentRequired('Set up two-factor sign-in before using the portal.')
+        return result
+
 
 try:
     from drf_spectacular.extensions import OpenApiAuthenticationExtension

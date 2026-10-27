@@ -9,7 +9,7 @@ from importlib import import_module
 from django.urls import path, re_path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
-from . import auth_views
+from . import auth_views, mfa_views
 from .permissions import DocsPermission
 
 EXTENSION_MODULES = (
@@ -28,6 +28,11 @@ urlpatterns = [
     path('auth/login/', auth_views.LoginView.as_view(), name='api-login'),
     path('auth/logout/', auth_views.LogoutView.as_view(), name='api-logout'),
     path('auth/me/', auth_views.MeView.as_view(), name='api-me'),
+    path('auth/mfa/verify/', mfa_views.VerifyLoginView.as_view(), name='api-mfa-verify'),
+    path('auth/mfa/step-up/', mfa_views.StepUpView.as_view(), name='api-mfa-step-up'),
+    path('auth/mfa/setup/', mfa_views.SetupView.as_view(), name='api-mfa-setup'),
+    path('auth/mfa/confirm/', mfa_views.ConfirmView.as_view(), name='api-mfa-confirm'),
+    path('auth/mfa/disable/', mfa_views.DisableView.as_view(), name='api-mfa-disable'),
     path('health/', auth_views.HealthView.as_view(), name='api-health'),
     path('schema/', SpectacularAPIView.as_view(permission_classes=[DocsPermission]), name='api-schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='api-schema', permission_classes=[DocsPermission]),

@@ -1,8 +1,8 @@
 import { t as tr, useLanguage } from '@/i18n';
-import { DownOutlined, LogoutOutlined, MenuOutlined } from '@ant-design/icons'
+import { DownOutlined, LockOutlined, LogoutOutlined, MenuOutlined } from '@ant-design/icons'
 import { App as AntApp, Button, Drawer, Dropdown, Grid, Layout, Menu } from 'antd'
 import { Suspense, useEffect, useMemo, useState } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
 import { ROLE_LABELS } from '@/auth/types'
 import { Brand } from '@/components/Logo'
@@ -42,6 +42,11 @@ export function AppShell() {
     navigate('/login', { replace: true })
   }
 
+  // MFA_REQUIRED: until a staff member has set up their authenticator app, the only page they can use is the set-up page.
+  if (user?.mfa?.required && !user.mfa.enrolled && location.pathname !== '/account/security') {
+    return <Navigate to="/account/security" replace />
+  }
+
   const categories = GROUPS.map((group) => ({
     key: group,
     label: <span>{tr(group)} <DownOutlined aria-hidden className="category-chevron" /></span>,
@@ -64,6 +69,8 @@ export function AppShell() {
           {BellSlot && <BellSlot />}
           <Dropdown trigger={['click']} placement="bottomRight" menu={{ items: [
             { key: 'who', disabled: true, label: user?.institution?.name ?? 'Pramaan workspace' },
+            ...(user?.mfa?.in_scope ? [{ key: 'security', icon: <LockOutlined />, label: 'Two-factor sign-in',
+              onClick: () => navigate('/account/security') }] : []),
             { type: 'divider' },
             { key: 'logout', icon: <LogoutOutlined />, label: tr("Sign out"), onClick: () => void signOut() },
           ] }}>

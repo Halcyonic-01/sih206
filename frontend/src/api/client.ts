@@ -50,6 +50,14 @@ export interface RequestOptions {
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 const unauthorizedListeners = new Set<() => void>()
+let stepUpHandler: (() => Promise<void>) | null = null
+
+/** The step-up dialog registers here. When an action answers 403 `mfa_step_up_required`, the handler asks for an
+ * authenticator code; once it resolves the request is sent once more. If it rejects (cancelled) the original error is thrown. */
+export function setStepUpHandler(handler: (() => Promise<void>) | null) {
+  stepUpHandler = handler
+  return () => { if (stepUpHandler === handler) stepUpHandler = null }
+}
 
 /** AuthProvider subscribes here so any 401 returns the user to the login page. */
 export function onUnauthorized(listener: () => void) {
@@ -111,7 +119,7 @@ async function toApiError(response: Response): Promise<ApiError> {
   )
 }
 
-async function send(path: string, options: RequestOptions): Promise<Response> {
+async function send(path: string, options: RequestOptions, retriedAfterStepUp = false): Promise<Response> {
   const method = options.method ?? (options.json !== undefined || options.form ? 'POST' : 'GET')
   const headers: Record<string, string> = { Accept: 'application/json' }
   if (!SAFE_METHODS.has(method)) {
@@ -138,6 +146,11 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
   if (!response.ok) {
     const error = await toApiError(response)
     if (error.isUnauthorized && !path.includes('/auth/')) unauthorizedListeners.forEach((fn) => fn())
+    if (error.code === 'mfa_step_up_required' && stepUpHandler && !retriedAfterStepUp) {
+      let confirmed = true
+      try { await stepUpHandler() } catch { confirmed = false }
+      if (confirmed) return send(path, options, true)
+    }
     throw error
   }
   return response

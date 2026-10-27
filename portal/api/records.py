@@ -14,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from access import mfa
 from access.logging import log_access
 from access.models import AccessLog
 from portal import record_operations, record_reporting, services
@@ -204,6 +205,7 @@ class RecordAction(RecordEndpoint):
 @extend_schema_view(post=extend_schema(request=docs.CORRECTION, responses=responses(docs.DETAIL)))
 class CorrectRecord(RecordEndpoint):
     def post(self, request, pk):
+        mfa.require_recent_mfa(request)  # an officer correction rewrites a submitted record
         item = item_for(request.user, pk)
         serializer = RecordWrite(data=request.data, context={'item': item, 'institution_id': item.institution_id})
         serializer.is_valid(raise_exception=True)

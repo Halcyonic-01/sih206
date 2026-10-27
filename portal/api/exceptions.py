@@ -42,7 +42,8 @@ def exception_handler(exc, context):
     if isinstance(exc, WorkflowError):
         return envelope(status.HTTP_409_CONFLICT, exc or 'This record changed. Reload it before trying again.')
     if isinstance(exc, PermissionDenied):
-        return envelope(status.HTTP_403_FORBIDDEN, exc or 'You do not have permission to perform this action.')
+        return envelope(status.HTTP_403_FORBIDDEN, exc or 'You do not have permission to perform this action.',
+                        code=getattr(exc, 'code', None))
     if isinstance(exc, (Http404, ObjectDoesNotExist)):
         return envelope(status.HTTP_404_NOT_FOUND, 'Not found.')
     if isinstance(exc, DjangoValidationError):

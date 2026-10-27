@@ -7,6 +7,7 @@ import { useLanguage } from '@/i18n';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ApiError } from '@/api/client'
 import { AuthProvider } from '@/auth/AuthProvider'
+import { StepUpProvider } from '@/auth/StepUpProvider'
 import { RequireRole } from '@/auth/RequireRole'
 import { AppShell } from '@/layout/AppShell'
 import { appRoutes, publicRoutes } from '@/routes/registry'
@@ -56,7 +57,7 @@ export default function App() {
       <AntApp>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <RouterProvider router={router} />
+            <StepUpProvider><RouterProvider router={router} /></StepUpProvider>
           </AuthProvider>
         </QueryClientProvider>
       </AntApp>

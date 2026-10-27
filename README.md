@@ -265,6 +265,9 @@ The local demo runs with no `.env` at all.
 | `AXES_COOLOFF_MINUTES` | `15` | Lockout length. |
 | `AXES_PROXY_COUNT` | `0` | Number of trusted reverse proxies in front of Django. |
 | `API_LOGIN_THROTTLE` | `30/min` | Rate limit on the sign-in endpoint. |
+| `MFA_REQUIRED` | `false` | When `true`, officer, authority, clearance and auditor accounts must set up an authenticator app (TOTP) before using the portal. Off, staff may enrol voluntarily. |
+| `MFA_STEP_UP_SECONDS` | `600` | How long a code counts for release authorisation, letter issue, completion and officer correction. |
+| `MFA_ISSUER` | `Pramaan` | Name shown in the authenticator app. |
 | `API_DOCS_PUBLIC` | `DJANGO_DEBUG` | Whether `/api/docs/` is open without signing in. |
 
 ### Database
@@ -414,7 +417,10 @@ The interactive reference is served at **`/api/docs/`** (Swagger UI) and **`/api
 | `GET /api/auth/csrf/` | Sets the CSRF cookie. |
 | `POST /api/auth/login/` | Sign in with `username` and `password`; lockout and throttling apply. |
 | `POST /api/auth/logout/` | Sign out. |
-| `GET /api/auth/me/` | The current user, role, institution and unit. |
+| `GET /api/auth/me/` | The current user, role, institution and unit, and the `mfa` state (`in_scope`, `enrolled`, `required`, `verified_recently`). |
+| `POST /api/auth/mfa/verify/` | Second sign-in step for an account with an authenticator app: `{code}` after `login` answered `{"mfa_required": true}`. |
+| `POST /api/auth/mfa/setup/`, `confirm/`, `disable/` | Staff only: start enrolment (returns the setup key), confirm it with a first code, turn it off with a code (not allowed when `MFA_REQUIRED`). |
+| `POST /api/auth/mfa/step-up/` | `{code}`: counts as a recent check for the step-up actions. Those answer 403 `mfa_step_up_required` until then, and the React app asks for the code automatically. |
 | `GET /api/health/` | Liveness and database check. |
 
 **Records and documents**
@@ -511,6 +517,12 @@ append-only tables. Migrations are committed and `makemigrations --check` runs i
   and an out-of-scope address returns 404.
 * **Sessions and CSRF.** Session cookies are HttpOnly, SameSite=Lax and expire after two hours. Writes need a CSRF
   token. No token is kept in `localStorage`. With `DJANGO_SECURE_COOKIES=true` cookies are Secure.
+* **Two-factor sign-in (staff).** Officer, authority, clearance and auditor accounts can enrol an authenticator app (TOTP,
+  RFC 6238, no extra dependency); with `MFA_REQUIRED=true` it is compulsory. A code is then asked for at sign-in and again,
+  within the last 10 minutes, for release authorisation, letter issue, completion and officer correction. Codes are single
+  use; five wrong codes lock the device for 15 minutes; the legacy template login refuses these accounts so it cannot bypass
+  it. The setup key is stored in the database (protect it like the audit key); a lost phone is reset with
+  `manage.py mfa_reset <username> --reason "<ticket>"`. No QR code or backup codes yet.
 * **Lockout and throttling.** Five failed sign-ins lock an account for 15 minutes. The sign-in endpoint is rate limited.
 * **Uploads.** Extension, type, size, header and trailer are checked, then the PDF is parsed. Encrypted files, files
   with JavaScript and files with embedded content are rejected. Storage names are generated and the SHA-256 is kept. With ClamAV configured the file is also scanned for known malware (`Document.scan_status`: not scanned, clean, quarantined).

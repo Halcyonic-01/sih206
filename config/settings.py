@@ -100,6 +100,11 @@ CLAMAV_TIMEOUT = float(os.environ.get('CLAMAV_TIMEOUT', '15') or 15)
 SCAN_REQUIRED = env_bool('SCAN_REQUIRED', False)
 if SCAN_REQUIRED and not CLAMAV_HOST:
     raise ImproperlyConfigured('SCAN_REQUIRED=true needs CLAMAV_HOST (and CLAMAV_PORT) to point at a clamd service.')
+# Two-factor sign-in for staff (access/mfa.py). MFA_REQUIRED=true makes enrolment compulsory for officer, authority,
+# clearance and auditor accounts; step-up applies to release authorisation, letter issue, completion and officer correction.
+MFA_REQUIRED = env_bool('MFA_REQUIRED', False)
+MFA_STEP_UP_SECONDS = env_int('MFA_STEP_UP_SECONDS', 600, minimum=60)
+MFA_ISSUER = os.environ.get('MFA_ISSUER', 'Pramaan').strip() or 'Pramaan'
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # No MEDIA_URL route: all document reads go through an ownership-checked view.
