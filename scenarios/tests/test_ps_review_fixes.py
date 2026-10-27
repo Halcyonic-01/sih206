@@ -111,8 +111,14 @@ class ReleaseCaseEndToEnd(StaffTestCase):
                  'reason': 'No grievance', 'evidence_ref': '!'}, 503)  # evidence reference must be a file number
         for user, unit in ((self.pgrc, 'PGRC'), (self.vigilance, 'VIGILANCE'), (self.grants, 'GRANTS')):
             version = self.case(pk, user)['version']
-            self.act(user, f'/api/releases/{pk}/clearances/{unit}', {'version': version, 'status': 'CLEARED',
-                     'reason': f'{unit} has no objection', 'evidence_ref': f'{unit}/2026/17'})
+            upload = self.as_user(user).post(f'/api/releases/{pk}/clearances/{unit}/evidence',
+                {'version': version, 'document': SimpleUploadedFile('synthetic-clearance.pdf',
+                    (settings.BASE_DIR / 'fixtures/release-evidence.pdf').read_bytes(), content_type='application/pdf')})
+            self.assertEqual(upload.status_code, 201, upload.content)
+            saved = upload.json()
+            self.act(user, f'/api/releases/{pk}/clearances/{unit}', {'version': saved['version'], 'status': 'CLEARED',
+                     'reason': f'{unit} has no objection', 'evidence_ref': f'{unit}/2026/17',
+                     'evidence_id': saved['evidence']['id']})
         self.assertFalse(self.case(pk, self.authority)['actions']['can_approve'])  # officer review still pending
         self.assertEqual(open_clearance_tasks(timezone.localdate()), [])
         version = self.case(pk, self.officer)['version']
@@ -202,8 +208,11 @@ class ConfirmationAndCoverage(StaffTestCase):
         self.client.force_login(self.officer)
         document = record.documents.get()
         response = self.client.get(f'/api/documents/{document.pk}/download/')
-        self.addCleanup(response.close)
-        self.assertEqual(response.status_code, 200)
+        try:
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(b''.join(response.streaming_content).startswith(b'%PDF'))
+        finally:
+            response.close()
         self.assertEqual(self.client.get('/api/instruments/export.csv').status_code, 200)
         self.assertTrue(AccessLog.objects.filter(action=AccessLog.DOCUMENT_DOWNLOAD, object_id=document.pk).exists())
         self.assertTrue(AccessLog.objects.filter(action=AccessLog.EXPORT, object_type='instrument_register').exists())

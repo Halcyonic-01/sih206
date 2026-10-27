@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import { BellOutlined } from '@ant-design/icons'
 import { Badge, Button, Divider, Flex, List, Popover, Typography } from 'antd'
 import { useState } from 'react'
@@ -8,6 +9,7 @@ import { NotificationItem } from './NotificationItem'
 
 /** Header bell: unread badge (polled every 30 s) and the latest notifications in a popover. */
 export default function Bell() {
+  useLanguage();
   const [open, setOpen] = useState(false)
   const unread = useUnreadCount()
   const latest = useNotifications({ pageSize: 6 }, open)
@@ -19,7 +21,7 @@ export default function Bell() {
     <div style={{ width: 360, maxWidth: 'calc(100vw - 48px)' }}>
       {latest.isPending ? <LoadingState rows={2} />
         : latest.isError ? <QueryError error={latest.error} onRetry={() => void latest.refetch()} />
-        : latest.data.results.length === 0 ? <EmptyState title="No notifications yet" />
+        : latest.data.results.length === 0 ? <EmptyState title={tr("No notifications yet")} />
         : (
           <List size="small" dataSource={latest.data.results}
                 renderItem={(item) => (
@@ -31,18 +33,18 @@ export default function Bell() {
       <Divider style={{ margin: '8px 0' }} />
       <Flex justify="space-between">
         <Button size="small" type="link" disabled={count === 0 || markAll.isPending}
-                onClick={() => markAll.mutate()}>Mark all read</Button>
-        <Link to="/notifications" onClick={() => setOpen(false)}>View all</Link>
+                onClick={() => markAll.mutate()}>{tr("Mark all read")}</Button>
+        <Link to="/notifications" onClick={() => setOpen(false)}>{tr("View all")}</Link>
       </Flex>
     </div>
   )
 
   return (
     <Popover content={content} trigger="click" open={open} onOpenChange={setOpen} placement="bottomRight"
-             title={<Typography.Text strong>Notifications</Typography.Text>}>
+             title={<Typography.Text strong>{tr("Notifications")}</Typography.Text>}>
       <Badge count={count} size="small" overflowCount={99}>
         <Button type="text" shape="circle" size="large" icon={<BellOutlined />}
-                aria-label={count ? `Notifications, ${count} unread` : 'Notifications'} />
+                aria-label={count ? tr('Notifications, {count} unread', {count}) : tr("Notifications")} />
       </Badge>
     </Popover>
   )

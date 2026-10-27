@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import type { ReactNode } from 'react'
 
 /** A titled white card for plain HTML content. Use antd Card where a component already brings its own layout. */
@@ -9,6 +10,7 @@ export function Panel({ title, extra, children, flush = false, id, className = '
   id?: string
   className?: string
 }) {
+  useLanguage();
   const heading = id ? `${id}-title` : undefined
   return (
     <section className={`panel${flush ? ' panel--flush' : ''} ${className}`.trim()} aria-labelledby={title ? heading : undefined}>
@@ -31,6 +33,7 @@ export function StatCard({ label, value, hint, tone = 'neutral', onClick }: {
   tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger'
   onClick?: () => void
 }) {
+  useLanguage();
   const body = (
     <>
       <span className="stat__label">{label}</span>
@@ -45,11 +48,12 @@ export function StatCard({ label, value, hint, tone = 'neutral', onClick }: {
 
 /** Label/value pairs (GOV.UK "summary list"): one column on phones, label beside value from tablet up. */
 export function SummaryList({ items }: { items: { label: string; value: ReactNode }[] }) {
+  useLanguage();
   return (
     <dl className="summary-list">
       {items.map((item) => (
         <div className="summary-list__row" key={item.label}>
-          <dt>{item.label}</dt>
+          <dt>{tr(item.label)}</dt>
           <dd>{item.value === null || item.value === undefined || item.value === '' ? '—' : item.value}</dd>
         </div>
       ))}
@@ -59,6 +63,7 @@ export function SummaryList({ items }: { items: { label: string; value: ReactNod
 
 /** Filters laid out as a responsive grid with the actions at the end. */
 export function FilterBar({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
+  useLanguage();
   return (
     <div className="filter-bar">
       <div className="filter-bar__fields">{children}</div>

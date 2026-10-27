@@ -71,6 +71,10 @@ jobs:
     timeout-minutes: 30
     env:
       PORTAL_URL: http://127.0.0.1:8013
+      SEMIFINAL_DISPOSABLE: '1'
+      SEMIFINAL_DATA_DIR: data
+      AI_ENABLED: 'false'
+      OCR_ENABLED: 'false'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -94,6 +98,7 @@ jobs:
         run: |
           .venv/bin/python manage.py seed_yash_examples
           .venv/bin/python manage.py seed_ocr_example
+          .venv/bin/python manage.py seed_semifinal_release --confirm-disposable
       - name: Install Playwright Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium

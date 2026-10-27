@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import { DownOutlined, LockOutlined, LogoutOutlined, MenuOutlined } from '@ant-design/icons'
 import { App as AntApp, Button, Drawer, Dropdown, Grid, Layout, Menu } from 'antd'
 import { Suspense, useEffect, useMemo, useState } from 'react'
@@ -18,6 +19,7 @@ function initials(name: string) {
 }
 
 export function AppShell() {
+  useLanguage();
   const { user, logout } = useAuth()
   const { message } = AntApp.useApp()
   const location = useLocation()
@@ -35,7 +37,7 @@ export function AppShell() {
     try {
       await logout()
     } catch {
-      message.warning('Signed out on this device. The server could not be reached.')
+      message.warning(tr('Signed out on this device. The server could not be reached.'))
     }
     navigate('/login', { replace: true })
   }
@@ -47,17 +49,17 @@ export function AppShell() {
 
   const categories = GROUPS.map((group) => ({
     key: group,
-    label: <span>{group} <DownOutlined aria-hidden className="category-chevron" /></span>,
+    label: <span>{tr(group)} <DownOutlined aria-hidden className="category-chevron" /></span>,
     children: items.filter((item) => item.group === group).map((item) => ({
-      key: item.path, icon: item.icon, label: <Link to={item.path}>{item.label}</Link>,
+      key: item.path, icon: item.icon, label: <Link to={item.path}>{tr(item.label)}</Link>,
     })),
   })).filter((group) => group.children.length > 0)
-  const menuItems = [{ key: '/', label: <Link to="/">Home</Link> }, ...categories]
+  const menuItems = [{ key: '/', label: <Link to="/">{tr("Home")}</Link> }, ...categories]
   const selection = location.pathname === '/' ? ['/'] : selectedPath(items, location.pathname)
 
   return (
     <div className="portal-frame">
-      <a className="skip-link" href="#main">Skip to main content</a>
+      <a className="skip-link" href="#main">{tr("Skip to main content")}</a>
       <header className="portal-masthead">
         <PortalIdentity />
         <div className="masthead-actions">
@@ -70,9 +72,9 @@ export function AppShell() {
             ...(user?.mfa?.in_scope ? [{ key: 'security', icon: <LockOutlined />, label: 'Two-factor sign-in',
               onClick: () => navigate('/account/security') }] : []),
             { type: 'divider' },
-            { key: 'logout', icon: <LogoutOutlined />, label: 'Sign out', onClick: () => void signOut() },
+            { key: 'logout', icon: <LogoutOutlined />, label: tr("Sign out"), onClick: () => void signOut() },
           ] }}>
-            <Button type="text" className="account-button" aria-label="Account menu">
+            <Button type="text" className="account-button" aria-label={tr("Account menu")}>
               <span className="avatar" aria-hidden>{initials(user?.display_name ?? '')}</span>
               <span className="account-text"><span>{user?.display_name}</span>
                 {user?.role && <small>{ROLE_LABELS[user.role]}</small>}</span>
@@ -81,16 +83,16 @@ export function AppShell() {
           </Dropdown>
         </div>
       </header>
-      <nav className="category-navigation" aria-label="Main">
+      <nav className="category-navigation" aria-label={tr("Main")}>
         {desktop ? <Menu theme="dark" mode="horizontal" className="category-menu"
           selectedKeys={selection} items={menuItems} triggerSubMenuAction="click" /> :
-          <Button className="menu-toggle" type="text" aria-label="Open navigation" icon={<MenuOutlined />}
-            onClick={() => setDrawerOpen(true)}>Select section <DownOutlined aria-hidden /></Button>}
+          <Button className="menu-toggle" type="text" aria-label={tr("Open navigation")} icon={<MenuOutlined />}
+            onClick={() => setDrawerOpen(true)}>{tr("Select section  ")}<DownOutlined aria-hidden /></Button>}
       </nav>
       {!desktop && (
         <Drawer placement="left" width={288} open={drawerOpen} onClose={() => setDrawerOpen(false)} closable
                 title={<Brand compact size={30} />} styles={{ body: { padding: 0, background: '#fff' }, header: { background: '#fff' } }}>
-          <nav className="mobile-category-nav" aria-label="Sections">
+          <nav className="mobile-category-nav" aria-label={tr("Sections")}>
             <Menu theme="light" mode="inline" selectedKeys={selection} items={menuItems}
               defaultOpenKeys={items.filter(item => selection.includes(item.path)).map(item => item.group)} />
           </nav>

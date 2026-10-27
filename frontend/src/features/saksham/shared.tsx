@@ -1,3 +1,4 @@
+import { t as tr, useLanguage } from '@/i18n';
 import * as React from 'react';
 import { Skeleton } from 'antd';
 import { api, errorMessage, Transport } from './client';
@@ -21,22 +22,26 @@ export function useRemote<T>(client: Transport, path: string, identityKey: strin
 }
 
 /** Marks screens that show simulated data or draft rules. Short, always visible. */
-export function Notice() { return <p role="note" className="notice">Simulated data · Draft rules, not approved policy</p>; }
+export function Notice() {
+  useLanguage(); return <p role="note" className="notice">{tr("Simulated data · Draft rules, not approved policy")}</p>; }
 
 export function ErrorBox({error}: {error: unknown}) {
+  useLanguage();
   const ref = React.useRef<HTMLParagraphElement>(null);
   // Layout effect: focus moves in the same commit that shows the alert, so it is never visible unfocused.
   React.useLayoutEffect(() => {ref.current?.focus();}, [error]);
-  return <p ref={ref} role="alert" tabIndex={-1}>{errorMessage(error)}</p>;
+  return <p ref={ref} role="alert" tabIndex={-1}>{tr(errorMessage(error))}</p>;
 }
 
-export function Loading() { return <div role="status" aria-live="polite" aria-label="Loading"><Skeleton active paragraph={{rows: 4}} /></div>; }
+export function Loading() {
+  useLanguage(); return <div role="status" aria-live="polite" aria-label={tr("Loading")}><Skeleton active paragraph={{rows: 4}} /></div>; }
 
 export function Readiness({value}: {value: {outcome: string; reason_codes?: string[]}|null}) {
+  useLanguage();
   const ready = value?.outcome === 'READY_FOR_AUTHORITY_REVIEW';
-  return <section aria-label="Readiness assessment">
-    <p>{ready ? 'Ready for human review; no approval recorded.' :
-      value ? value.outcome.replaceAll('_',' ').toLowerCase() : 'Unavailable for this saved state.'}</p>
+  return <section aria-label={tr("Readiness assessment")}>
+    <p>{ready ? tr("Ready for human review; no approval recorded.") :
+      value ? tr(value.outcome.replaceAll('_',' ').toLowerCase()) : tr("Unavailable for this saved state.")}</p>
     {!!value?.reason_codes?.length && <ul>{value.reason_codes.map(code => <li key={code}>{code.replaceAll('_',' ').toLowerCase()}</li>)}</ul>}
   </section>;
 }

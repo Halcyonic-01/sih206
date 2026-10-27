@@ -21,9 +21,17 @@ snapshots, rule-dependent assessments and OCR page evidence remain extensible.
 `RecordActionSchema` selects the documented request body for the existing shared
 action view: renewal uses deposit fields, document upload uses a binary file and
 category, and review/observation actions use their existing versioned action inputs.
-The runtime URL, permissions and business logic are unchanged.
+These annotations do not replace runtime permissions or business logic.
+
+The integrated clearance contract also describes the protected evidence list,
+multipart PDF upload (201), and PDF download endpoints under
+`/api/releases/{id}/clearances/{unit}/evidence`. Decisions require `evidence_id`
+alongside their existing reason, reference and version. Case and queue responses
+describe evidence metadata, reviewer and decision timestamp without exposing PDF
+bytes. List, upload and download operations have explicit unique operation IDs;
+the schema regression verifies required evidence and authenticated PDF downloads.
 
 The Windows PDF regression is covered by
 `scenarios.tests.test_ps_review_fixes.ConfirmationAndCoverage`. Its download response
-is registered for cleanup so the temporary document handle is closed before the
-class removes its test directory.
+is consumed and closed in a `finally` block so the temporary document handle is
+closed before the class removes its test directory.

@@ -72,8 +72,10 @@ class CaseworkTests(PortalTestCase):
 
     def ready(self, case):
         for unit in ['PGRC','VIGILANCE','GRANTS']:
+            case, evidence = services.upload_clearance_evidence(self.clearance[unit], case.pk, unit,
+                case.version, self.pdf('synthetic-clearance.pdf'))
             case = services.decide_clearance(self.clearance[unit], case.pk, unit, case.version, 'CLEARED',
-                'Reviewed synthetic clearance', 'SYNTH-EVIDENCE-' + unit)
+                'Reviewed synthetic clearance', 'SYNTH-EVIDENCE-' + unit, evidence.pk)
         return services.review_penalties(self.officer, case.pk, case.version, 'Reviewed no penalty applicable')
 
     def approve(self, case):
@@ -295,8 +297,13 @@ class CaseworkTests(PortalTestCase):
         pk = current['id']
         for unit in ['PGRC','VIGILANCE','GRANTS']:
             self.client.force_login(self.clearance[unit])
+            uploaded = self.client.post(f'/api/releases/{pk}/clearances/{unit}/evidence',
+                {'version': current['version'], 'document': self.pdf('clearance.pdf')})
+            self.assertEqual(uploaded.status_code, 201, uploaded.content)
+            evidence = uploaded.json()
             current = post(f'releases/{pk}/clearances/{unit}', {'version':current['version'],
-                'status':'CLEARED', 'reason':'Reviewed synthetic evidence', 'evidence_ref':'SYNTH-'+unit})
+                'status':'CLEARED', 'reason':'Reviewed synthetic evidence', 'evidence_ref':'SYNTH-'+unit,
+                'version':evidence['version'], 'evidence_id':evidence['evidence']['id']})
         self.client.force_login(self.officer)
         current = post(f'releases/{pk}/penalties', {'version':current['version'], 'reason':'Review complete; no penalties'})
         self.client.force_login(self.authority)
