@@ -1,9 +1,11 @@
 from django.urls import path
 
-from . import views
+from . import alerts, views
 from .digest_views import DigestPreferenceView, DigestPreviewView
 
 urlpatterns = [
+    path('alerts/', alerts.AlertsView.as_view(), name='api-alerts'),
+    path('alerts/<int:pk>/acknowledge/', alerts.AcknowledgeView.as_view(), name='api-alert-acknowledge'),
     path('notifications/digest-preference/', DigestPreferenceView.as_view(), name='api-digest-preference'),
     path('notifications/digest-preview/', DigestPreviewView.as_view(), name='api-digest-preview'),
     path('notifications/', views.InboxView.as_view(), name='api-notifications'),

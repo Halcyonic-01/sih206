@@ -89,3 +89,40 @@ class DigestPreference(models.Model):
 
     class Meta:
         constraints = [models.CheckConstraint(condition=models.Q(version__gte=1), name='digest_preference_version')]
+
+
+class AlertAction(models.Model):
+    """One open action per scheduled-rule notification key (P2-3).
+
+    Created when a rule first fires, resolved automatically when the rule stops firing (a renewal arrives, proof is
+    recorded...), acknowledged by a person with a note, and escalated one level when it stays unacknowledged too long.
+    """
+
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', 'Open'
+        ACKNOWLEDGED = 'ACKNOWLEDGED', 'Acknowledged'
+        RESOLVED = 'RESOLVED', 'Resolved'
+
+    key = models.CharField(max_length=200, unique=True)
+    rule = models.CharField(max_length=40, db_index=True)
+    instrument = models.ForeignKey('portal.Instrument', null=True, blank=True, on_delete=models.PROTECT, related_name='alert_actions')
+    institution = models.ForeignKey('portal.Institution', null=True, blank=True, on_delete=models.PROTECT, related_name='alert_actions')
+    reference = models.CharField(max_length=200, blank=True)
+    summary = models.CharField(max_length=300, blank=True)
+    url = models.CharField(max_length=300, blank=True)
+    status = models.CharField(max_length=14, choices=Status, default=Status.OPEN, db_index=True)
+    opened_at = models.DateTimeField(auto_now_add=True)
+    opened_on = models.DateField()
+    acknowledged_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name='+')
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    note = models.TextField(blank=True, max_length=1000)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_reason = models.CharField(max_length=200, blank=True)
+    escalation_level = models.PositiveSmallIntegerField(default=0)
+    escalated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-escalation_level', 'opened_on', 'pk']
+
+    def __str__(self):
+        return f'{self.rule} {self.reference} ({self.status})'

@@ -7,6 +7,7 @@ import { LoadingState } from '@/components/states'
 import { formatPaise } from '@/lib/format'
 import { CATEGORY_HINTS, CATEGORY_LABELS, interventionLabel } from '@/lib/labels'
 import dayjs from 'dayjs'
+import { OpenActions } from './OpenActions'
 import type { Api, DashboardData } from './types'
 
 const CARD_ORDER = ['active', 'expiring', 'matured', 'renewed', 'released', 'pending'] as const
@@ -41,6 +42,8 @@ export function DashboardPage({ api, onOpen, onCategory }: { api: Api; onOpen: (
           { title: tr("Issue"), dataIndex: 'kind', render: (kind: string) => interventionLabel(kind) },
           { title: tr("Next step"), dataIndex: 'next_action' }]} />
       </Panel>
+
+      {data.alerts !== undefined && <OpenActions api={api} alerts={data.alerts} onOpen={onOpen} />}
 
       <div className="two-col">
         <Panel title={tr("Obligation coverage")} flush>
