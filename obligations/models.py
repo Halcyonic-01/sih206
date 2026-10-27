@@ -237,4 +237,4 @@ class ProofReceiptReview(models.Model):
 
 
 # Owned storage only: shared settings and portal migration numbering stay intact.
-from .case_models import ClearanceTask, IssuedLetter, PenaltyAssessment, ReleaseCase  # noqa: E402,F401
+from .case_models import ClearanceEvidence, ClearanceTask, IssuedLetter, PenaltyAssessment, ReleaseCase  # noqa: E402,F401

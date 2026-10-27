@@ -1,9 +1,9 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Case, Transport } from './client';
 import { InstitutionList } from './institutions';
-import { PublicVerification, ReleaseCase, ReleaseWizard } from './releases';
+import { ClearanceQueue, PublicVerification, ReleaseCase, ReleaseWizard } from './releases';
 import { Kpis } from './reports';
 
 // Explicit test-only source ports; these tests do not claim HTTP/auth integration.
@@ -29,6 +29,44 @@ const approvedCase: Case = {
 };
 
 describe('Saksham components in the shared frontend runner', () => {
+  it('requires case-specific reviewed PDF and submits its identity without auto-clearing', async () => {
+    const write = vi.fn(async (_path: string, _body: unknown | FormData) => ({}));
+    const evidence = {id: 9, name: 'unit-review.pdf', page_count: 1, sha256: 'abc', uploaded_by: 'PGRC',
+      uploaded_at: '2026-10-27T10:00:00Z', download_path: '/api/releases/1/clearances/PGRC/evidence/9'};
+    const client = transport(async path => path.includes('/evidence') ? {version: 7, results: [evidence]} :
+      {results: [1, 2].map(id => ({case_id: id, version: 7, unit: 'PGRC', status: 'OPEN', can_decide: true}))}, write);
+    render(<ClearanceQueue client={client} identityKey="pgrc" onSelect={() => {}} />);
+    const group = within(await screen.findByRole('group', {name: 'Decision for case 1'}));
+    const other = within(screen.getByRole('group', {name: 'Decision for case 2'}));
+    expect(group.getByRole('button', {name: 'cleared'})).toBeDisabled();
+    const user = userEvent.setup();
+    await group.findByRole('option', {name: 'unit-review.pdf (#9)'});
+    await user.selectOptions(group.getByLabelText('Reviewed supporting PDF'), '9');
+    await user.type(group.getByLabelText('Reason', {exact: true}), 'Reviewed synthetic PDF');
+    await user.type(group.getByLabelText('Reviewed evidence reference'), 'PGRC/TEST');
+    expect(write).not.toHaveBeenCalled();
+    expect(other.getByRole('button', {name: 'cleared'})).toBeDisabled();
+    await user.click(group.getByRole('button', {name: 'cleared'}));
+    expect(write).toHaveBeenCalledWith('/api/releases/1/clearances/PGRC', {
+      version: 7, status: 'CLEARED', reason: 'Reviewed synthetic PDF', evidence_ref: 'PGRC/TEST', evidence_id: 9});
+  });
+
+  it('uploads a supporting PDF as multipart without sending a clearance decision', async () => {
+    const write = vi.fn(async (_path: string, _body: unknown | FormData) => ({}));
+    const client = transport(async path => path.includes('/evidence') ? {version: 4, results: []} :
+      {results: [{case_id: 1, version: 4, unit: 'PGRC', status: 'OPEN', can_decide: true}]}, write);
+    render(<ClearanceQueue client={client} identityKey="pgrc" onSelect={() => {}} />);
+    const file = new File(['synthetic'], 'review.pdf', {type: 'application/pdf'});
+    const user = userEvent.setup();
+    await user.upload(await screen.findByLabelText('Supporting clearance PDF'), file);
+    await user.click(screen.getByRole('button', {name: 'Upload supporting PDF'}));
+    const body = write.mock.calls[0]?.[1] as FormData;
+    expect(write.mock.calls[0]?.[0]).toBe('/api/releases/1/clearances/PGRC/evidence');
+    expect(body.get('version')).toBe('4');
+    expect(body.get('document')).toBe(file);
+    expect(body.has('status')).toBe(false);
+  });
+
   it('keeps approval monitored with completion pending', async () => {
     const client = transport(async () => approvedCase);
     render(<ReleaseCase client={client} identityKey="authority" caseId={1} />);

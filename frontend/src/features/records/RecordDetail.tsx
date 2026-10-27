@@ -1,3 +1,5 @@
+import { t as tr, useLanguage } from '@/i18n';
+import { LanguageToggle } from '@/i18n/LanguageToggle';
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -26,6 +28,7 @@ const MODAL_TITLES: Record<string, string> = {
 }
 
 export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number; onBack: () => void; onOpen: (id: number) => void }) {
+  useLanguage();
   const cache = useQueryClient()
   const query = useQuery({ queryKey: ['records', id], queryFn: () => api.request<RecordItem>(`/api/instruments/${id}/`) })
   const [action, setAction] = useState('')
@@ -36,11 +39,11 @@ export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number
   const [tab, setTab] = useState('details')
   const [file, setFile] = useState<File>()
   const [suggestions, setSuggestions] = useState<Record<string, string>>()
-  if (query.isPending) return <><PageHeader title="Deposit record" /><LoadingState rows={6} /></>
+  if (query.isPending) return <><PageHeader title={tr("Deposit record")} /><LoadingState rows={6} /></>
   if (query.error) {
-    return <><Button className="back-link" type="link" onClick={onBack}>← All deposit records</Button><PageHeader title="Deposit record" />
-      <Alert type="error" showIcon message="This record could not be loaded" description={String(query.error)}
-             action={<Button onClick={() => void query.refetch()}>Try again</Button>} /></>
+    return <><Button className="back-link" type="link" onClick={onBack}>{tr("← All deposit records")}</Button><PageHeader title={tr("Deposit record")} />
+      <Alert type="error" showIcon message={tr("This record could not be loaded")} description={String(query.error)}
+             action={<Button onClick={() => void query.refetch()}>{tr("Try again")}</Button>} /></>
   }
   const item = query.data
   const docs = item.documents || []
@@ -70,118 +73,118 @@ export function RecordDetail({ api, id, onBack, onOpen }: { api: Api; id: number
 
   const actions = (
     <>
-      {can('edit') && <Button onClick={() => openAction('edit')}>Edit draft</Button>}
-      {can('submit') && <Button type="primary" onClick={() => openAction('submit')}>Submit for review</Button>}
-      {can('review') && <Button type="primary" onClick={() => openAction('accept')}>Accept for tracking</Button>}
-      {can('review') && <Button onClick={() => openAction('changes')}>Request corrections</Button>}
-      {can('observe') && <Button onClick={() => openAction('observations')}>Add observation</Button>}
-      {can('correct') && <Button onClick={() => openAction('correct')}>Officer correction</Button>}
-      {can('renew') && <Button onClick={() => openAction('renew')}>Create renewal</Button>}
-      {can('upload') && <Button onClick={() => openAction('documents')}>Upload document</Button>}
-      {can('upload_release_documents') && <Button onClick={() => openAction('release documents')}>Upload release document</Button>}
-      {can('request_release') && <Link to={`/releases/request?instrument=${item.id}&obligation=${item.obligation_id}&version=${item.version}`}><Button type="primary">Request release</Button></Link>}
-      {item.release_case_id && <Link to={`/releases/${item.release_case_id}`}><Button>Open release case</Button></Link>}
+      {can('edit') && <Button onClick={() => openAction('edit')}>{tr("Edit draft")}</Button>}
+      {can('submit') && <Button type="primary" onClick={() => openAction('submit')}>{tr("Submit for review")}</Button>}
+      {can('review') && <Button type="primary" onClick={() => openAction('accept')}>{tr("Accept for tracking")}</Button>}
+      {can('review') && <Button onClick={() => openAction('changes')}>{tr("Request corrections")}</Button>}
+      {can('observe') && <Button onClick={() => openAction('observations')}>{tr("Add observation")}</Button>}
+      {can('correct') && <Button onClick={() => openAction('correct')}>{tr("Officer correction")}</Button>}
+      {can('renew') && <Button onClick={() => openAction('renew')}>{tr("Create renewal")}</Button>}
+      {can('upload') && <Button onClick={() => openAction('documents')}>{tr("Upload document")}</Button>}
+      {can('upload_release_documents') && <Button onClick={() => openAction('release documents')}>{tr("Upload release document")}</Button>}
+      {can('request_release') && <Link to={`/releases/request?instrument=${item.id}&obligation=${item.obligation_id}&version=${item.version}`}><Button type="primary">{tr("Request release")}</Button></Link>}
+      {item.release_case_id && <Link to={`/releases/${item.release_case_id}`}><Button>{tr("Open release case")}</Button></Link>}
     </>
   )
 
   return (
     <div className="stack">
-      <Button className="back-link" type="link" onClick={onBack}>← All deposit records</Button>
+      <Button className="back-link" type="link" onClick={onBack}>{tr("← All deposit records")}</Button>
       <PageHeader title={item.reference}
                   subtitle={<span className="cluster"><StatusTag value={item.status} /><VerificationTag value={item.verification_level} />
-                    <span className="muted">{item.institution.name} · Version {item.version}</span></span>}
+                    <span className="muted">{item.institution.name} {tr("  · Version  ")}{item.version}</span></span>}
                   extra={actions} />
       {can('upload_release_documents') && !item.obligation_id && (
-        <Alert type="warning" showIcon message="Release cannot be requested yet"
-               description="This deposit is not linked to an obligation. Enter the Obligation ID when creating or correcting the record." />
+        <Alert type="warning" showIcon message={tr("Release cannot be requested yet")}
+               description={tr("This deposit is not linked to an obligation. Enter the Obligation ID when creating or correcting the record.")} />
       )}
-      <Alert type="info" showIcon message="Acceptance is for tracking. Document review does not establish bank authenticity." />
+      <Alert type="info" showIcon message={tr("Acceptance is for tracking. Document review does not establish bank authenticity.")} />
       <Tabs activeKey={tab} onChange={setTab} items={[
-        { key: 'details', label: 'Details', children: (
+        { key: 'details', label: tr("Details"), children: (
           <div className="two-col">
-            <Panel title="Deposit">
+            <Panel title={tr("Deposit")}>
               <SummaryList items={[
-                { label: 'Institution', value: item.institution.name }, { label: 'Deposit type', value: item.mode },
-                { label: 'Amount', value: tagged(formatInr(item.amount), 'amount') }, { label: 'Issue date', value: tagged(formatDate(item.issue_date), 'issue_date') },
-                { label: 'Maturity date', value: tagged(formatDate(item.maturity_date), 'maturity_date') }, { label: 'Issuing bank', value: tagged(item.bank, 'bank') },
-                { label: 'Reference', value: tagged(item.reference, 'reference') }]} />
+                { label: tr('Institution'), value: item.institution.name }, { label: tr('Deposit type'), value: item.mode },
+                { label: tr('Amount'), value: tagged(formatInr(item.amount), 'amount') }, { label: tr('Issue date'), value: tagged(formatDate(item.issue_date), 'issue_date') },
+                { label: tr('Maturity date'), value: tagged(formatDate(item.maturity_date), 'maturity_date') }, { label: tr('Issuing bank'), value: tagged(item.bank, 'bank') },
+                { label: tr('Reference'), value: tagged(item.reference, 'reference') }]} />
             </Panel>
-            <Panel title="Bank and holders">
+            <Panel title={tr("Bank and holders")}>
               <SummaryList items={[
-                { label: 'IFSC', value: tagged(item.ifsc, 'ifsc') }, { label: 'Branch', value: item.branch }, { label: 'Holder names', value: tagged(item.holder_names, 'holder_names') },
-                { label: 'UTR', value: tagged(item.utr, 'utr') }, { label: 'Lien', value: tagged(item.lien_marked == null ? 'Not stated' : item.lien_marked ? 'Marked' : 'Not marked', 'lien_marked') },
-                { label: 'Obligation', value: item.obligation_id ? `#${item.obligation_id}` : 'Not linked' }]} />
+                { label: 'IFSC', value: tagged(item.ifsc, 'ifsc') }, { label: tr('Branch'), value: item.branch }, { label: tr('Holder names'), value: tagged(item.holder_names, 'holder_names') },
+                { label: 'UTR', value: tagged(item.utr, 'utr') }, { label: tr('Lien'), value: tagged(item.lien_marked == null ? tr('Not stated') : item.lien_marked ? tr('Marked') : tr('Not marked'), 'lien_marked') },
+                { label: tr('Obligation'), value: item.obligation_id ? `#${item.obligation_id}` : tr('Not linked') }]} />
             </Panel>
             {item.field_provenance && (
               <p className="muted" style={{ gridColumn: '1 / -1', margin: 0 }}>
-                <strong>Declared</strong>: entered by the institution. <strong>Document reviewed</strong>: an officer accepted the record for tracking.
-                {' '}<strong>Confirmed</strong>: the value agrees with a bank statement line or bank response (simulated in this prototype, not bank authenticity).
-                {' '}<strong>Mismatch</strong>: such a source shows a different value.
+                <strong>{tr('Declared')}</strong>: {tr('Entered by the institution.')} <strong>{tr('Document reviewed')}</strong>: {tr('An officer accepted the record for tracking.')}
+                {' '}<strong>{tr('Confirmed')}</strong>: {tr('The value agrees with a bank statement line or bank response (simulated in this prototype, not bank authenticity).')}
+                {' '}<strong>{tr('Mismatch')}</strong>: {tr('Such a source shows a different value.')}
               </p>
             )}
           </div>) },
-        { key: 'documents', label: `Documents (${docs.length})`, children: docs.length ? (
+        { key: 'documents', label: tr("Documents ({0})", {"0": (docs.length)}), children: docs.length ? (
           <div className="stack">
-            <Select aria-label="Supporting document" style={{ width: '100%', maxWidth: 480 }} value={selected}
+            <Select aria-label={tr("Supporting document")} style={{ width: '100%', maxWidth: 480 }} value={selected}
                     options={docs.map((d) => ({ value: d.id, label: `${d.name} · ${humanize(d.kind)}` }))}
                     onChange={(value) => { setDoc(value); setPage(1) }} />
             {selected && <Panel><PdfViewer api={api} id={selected} page={page} onPage={setPage} /></Panel>}
             {selected && (
-              <Collapse items={[{ key: 'extract', label: 'Read details from this document', children: (
+              <Collapse items={[{ key: 'extract', label: tr("Read details from this document"), children: (
                 <AiExtraction key={selected} api={api} documentId={selected} canUse={can('edit')}
                               onUse={(values) => { setSuggestions(values); setAction('edit') }} />) }]} />
             )}
-          </div>) : <Empty description="No documents uploaded yet." /> },
-        { key: 'checks', label: 'Checks and observations', children: (
+          </div>) : <Empty description={tr("No documents uploaded yet.")} /> },
+        { key: 'checks', label: tr("Checks and observations"), children: (
           <div className="stack">
             {item.findings?.length ? item.findings.map((f) => (
               <Alert key={f.code} showIcon type={f.severity === 'blocking' ? 'error' : 'warning'} message={findingLabel(f.code)} description={f.explanation} />
-            )) : <Alert type="success" showIcon message="No automatic checks need attention." />}
-            <Panel title="Officer observations" flush>
+            )) : <Alert type="success" showIcon message={tr("No automatic checks need attention.")} />}
+            <Panel title={tr("Officer observations")} flush>
               <Table rowKey="id" size="middle" scroll={{ x: 640 }} pagination={false} dataSource={item.observations}
-                     locale={{ emptyText: 'No observations recorded.' }} columns={[
-                { title: 'Observation', dataIndex: 'comment' },
-                { title: 'Severity', dataIndex: 'severity', width: 110, render: (v: string) => <Tag bordered={false} className={`tag tag--${v === 'BLOCKING' ? 'danger' : 'warning'}`}>{humanize(v)}</Tag> },
-                { title: 'Evidence', width: 130, render: (_, o: NonNullable<RecordItem['observations']>[number]) => (
-                  <Button type="link" onClick={() => { setDoc(o.document_id); setPage(o.page_number || 1); setTab('documents') }}>Page {o.page_number ?? '—'}</Button>) },
-                { title: 'Resolution', render: (_, o: NonNullable<RecordItem['observations']>[number]) =>
-                  o.resolved_at ? o.resolution : can('observe') ? <Button type="link" onClick={() => openAction(`observations/${o.id}/resolve`)}>Resolve</Button> : 'Awaiting officer' }]} />
+                     locale={{ emptyText: tr("No observations recorded.") }} columns={[
+                { title: tr("Observation"), dataIndex: 'comment' },
+                { title: tr("Severity"), dataIndex: 'severity', width: 110, render: (v: string) => <Tag bordered={false} className={`tag tag--${v === 'BLOCKING' ? 'danger' : 'warning'}`}>{humanize(v)}</Tag> },
+                { title: tr("Evidence"), width: 130, render: (_, o: NonNullable<RecordItem['observations']>[number]) => (
+                  <Button type="link" onClick={() => { setDoc(o.document_id); setPage(o.page_number || 1); setTab('documents') }}>{tr("Page  ")}{o.page_number ?? '—'}</Button>) },
+                { title: tr("Resolution"), render: (_, o: NonNullable<RecordItem['observations']>[number]) =>
+                  o.resolved_at ? o.resolution : can('observe') ? <Button type="link" onClick={() => openAction(`observations/${o.id}/resolve`)}>{tr("Resolve")}</Button> : 'Awaiting officer' }]} />
             </Panel>
           </div>) },
-        { key: 'verification', label: 'Verification', children: <VerificationTab api={api} id={id} version={item.version} canRequestBank={can('request_bank')} /> },
-        { key: 'lineage', label: 'Renewal history', children: (
+        { key: 'verification', label: tr("Verification"), children: <VerificationTab api={api} id={id} version={item.version} canRequestBank={can('request_bank')} /> },
+        { key: 'lineage', label: tr("Renewal history"), children: (
           <Panel>
             <SummaryList items={(['predecessor', 'successor'] as const).map((key) => ({
               label: key === 'predecessor' ? 'Renews' : 'Renewed by',
               value: item.lineage?.[key] ? <Button type="link" onClick={() => onOpen(item.lineage![key]!.id)}>{item.lineage[key]!.reference}</Button> : 'None',
             }))} />
-            <p className="muted">The original deposit stays current until its renewal is accepted.</p>
+            <p className="muted">{tr("The original deposit stays current until its renewal is accepted.")}</p>
           </Panel>) },
-        { key: 'history', label: 'History', children: (
+        { key: 'history', label: tr("History"), children: (
           <Panel><Timeline items={item.history?.map((e) => ({ key: e.id, children: (
             <><strong>{humanize(e.action)}</strong>{e.reason && <div>{e.reason}</div>}<small className="muted">{formatDateTime(e.at)}</small></>) }))} /></Panel>) },
       ]} />
-      <Modal open={!!action} title={modalTitle} footer={null} destroyOnHidden width={formAction ? 720 : 520}
+      <Modal open={!!action} title={<div className="localized-modal-title"><span>{tr(modalTitle)}</span><LanguageToggle /></div>} footer={null} destroyOnHidden width={formAction ? 720 : 520}
              onCancel={() => { setAction(''); setSuggestions(undefined); setFile(undefined) }}>
         {error && <Alert type="error" showIcon role="alert" message={error} style={{ marginBottom: 16 }}
-                         action={<Button size="small" onClick={() => { changed(); void query.refetch() }}>Reload record</Button>} />}
+                         action={<Button size="small" onClick={() => { changed(); void query.refetch() }}>{tr("Reload record")}</Button>} />}
         {formAction ? <RecordForm api={api} record={item} renewal={action === 'renew'} suggestions={action === 'edit' ? suggestions : undefined}
                                   onCancel={() => { setAction(''); setSuggestions(undefined) }} onSaved={(saved) => { changed(); onOpen(saved.id) }} />
           : <Form layout="vertical" onFinish={mutate}>
-            {['accept', 'changes', 'correct'].includes(action) && <Form.Item name="reason" label="Reason" rules={[{ required: true }]}><Input.TextArea rows={3} maxLength={2000} /></Form.Item>}
-            {action === 'correct' && <><Form.Item name="amount" label="Corrected amount (INR)"><Input inputMode="decimal" /></Form.Item><Form.Item name="bank" label="Corrected bank"><Input /></Form.Item></>}
+            {['accept', 'changes', 'correct'].includes(action) && <Form.Item name="reason" label={tr("Reason")} rules={[{ required: true }]}><Input.TextArea rows={3} maxLength={2000} /></Form.Item>}
+            {action === 'correct' && <><Form.Item name="amount" label={tr("Corrected amount (INR)")}><Input inputMode="decimal" /></Form.Item><Form.Item name="bank" label={tr("Corrected bank")}><Input /></Form.Item></>}
             {action === 'observations' && <>
-              <Alert type="info" showIcon style={{ marginBottom: 16 }} message={`Document ${selected ?? 'not selected'}, page ${page}`}
-                     description="To point at other evidence, choose the document and page in the Documents tab first." />
-              <Form.Item name="severity" label="Severity" rules={[{ required: true }]}><Select options={[{ value: 'WARNING', label: 'Warning' }, { value: 'BLOCKING', label: 'Blocking' }]} /></Form.Item>
-              <Form.Item name="comment" label="Observation" rules={[{ required: true }]}><Input.TextArea rows={3} maxLength={2000} /></Form.Item></>}
-            {action.endsWith('/resolve') && <Form.Item name="resolution" label="How was it resolved?" rules={[{ required: true }]}><Input.TextArea rows={3} maxLength={2000} /></Form.Item>}
+              <Alert type="info" showIcon style={{ marginBottom: 16 }} message={tr("Document {0}, page {1}", {"0": (selected ?? 'not selected'), "1": (page)})}
+                     description={tr("To point at other evidence, choose the document and page in the Documents tab first.")} />
+              <Form.Item name="severity" label={tr("Severity")} rules={[{ required: true }]}><Select options={[{ value: 'WARNING', label: tr("Warning") }, { value: 'BLOCKING', label: tr("Blocking") }]} /></Form.Item>
+              <Form.Item name="comment" label={tr("Observation")} rules={[{ required: true }]}><Input.TextArea rows={3} maxLength={2000} /></Form.Item></>}
+            {action.endsWith('/resolve') && <Form.Item name="resolution" label={tr("How was it resolved?")} rules={[{ required: true }]}><Input.TextArea rows={3} maxLength={2000} /></Form.Item>}
             {(action === 'documents' || action === 'release documents') && <>
-              {action === 'release documents' && <p className="muted">Release application documents are added to the accepted record. Its deposit details do not change.</p>}
-              <Form.Item name="kind" label="Document category" rules={[{ required: true }]}><Select options={kindOptions(action === 'documents' ? DOCUMENT_KINDS : RELEASE_KINDS)} /></Form.Item>
-              <Upload maxCount={1} beforeUpload={(f) => { setFile(f); return false }} onRemove={() => setFile(undefined)} accept=".pdf"><Button>Select PDF</Button></Upload></>}
-            {action === 'submit' && <p>Submit this record and its supporting document for officer review?</p>}
-            <Button type="primary" htmlType="submit" loading={busy} style={{ marginTop: 16 }}>Record action</Button>
+              {action === 'release documents' && <p className="muted">{tr("Release application documents are added to the accepted record. Its deposit details do not change.")}</p>}
+              <Form.Item name="kind" label={tr("Document category")} rules={[{ required: true }]}><Select options={kindOptions(action === 'documents' ? DOCUMENT_KINDS : RELEASE_KINDS)} /></Form.Item>
+              <Upload maxCount={1} beforeUpload={(f) => { setFile(f); return false }} onRemove={() => setFile(undefined)} accept=".pdf"><Button>{tr("Select PDF")}</Button></Upload></>}
+            {action === 'submit' && <p>{tr("Submit this record and its supporting document for officer review?")}</p>}
+            <Button type="primary" htmlType="submit" loading={busy} style={{ marginTop: 16 }}>{tr("Record action")}</Button>
           </Form>}
       </Modal>
     </div>

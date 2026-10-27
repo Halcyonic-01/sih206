@@ -27,6 +27,16 @@ class ExtractionTests(PortalTestCase):
 
     @override_settings(AI_ENABLED=True)
     @patch.dict(os.environ, {'GEMINI_API_KEY': 'synthetic-test-key'})
+    def test_local_ocr_runs_do_not_consume_extraction_quota(self):
+        item = self.draft()
+        for _ in range(12):
+            AiRun.objects.create(actor=self.a, document=item.documents.get(), operation='LOCAL_OCR', status='FAILED')
+        with patch('ai.services.call_model', return_value=self.output(amount='500000.25')) as provider:
+            self.assertEqual(extract(self.a, item.documents.get(), consent=True, synthetic=True)['status'], 'success')
+        provider.assert_called_once()
+
+    @override_settings(AI_ENABLED=True)
+    @patch.dict(os.environ, {'GEMINI_API_KEY': 'synthetic-test-key'})
     def test_suggestions_and_mismatches_cannot_mutate_records(self):
         item = self.draft()
         before = (item.amount_paise, item.status, item.verification_level, item.version, item.audit_events.count())

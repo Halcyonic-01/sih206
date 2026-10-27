@@ -1,3 +1,4 @@
+import { localizedLabels } from '@/i18n';
 import type { Role } from '@/api/client'
 
 export interface CurrentUser {
@@ -11,10 +12,10 @@ export interface CurrentUser {
   unit: 'PGRC' | 'VIGILANCE' | 'GRANTS' | null
 }
 
-export const ROLE_LABELS: Record<Role, string> = {
+export const ROLE_LABELS: Record<Role, string> = localizedLabels({
   institution: 'Institution',
   officer: 'Dealing officer',
   authority: 'Authority',
   clearance: 'Clearance unit',
   auditor: 'Auditor',
-}
+})

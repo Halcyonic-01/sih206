@@ -1,4 +1,5 @@
 /** Human wording and colour tone for the codes the API returns. Unknown codes fall back to a readable form. */
+import { t, localizedLabels } from '@/i18n';
 export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger'
 
 export interface Labelled { label: string; tone: Tone }
@@ -7,7 +8,8 @@ const titleCase = (code: string) => code.toLowerCase().replaceAll('_', ' ').repl
 
 function lookup(table: Record<string, Labelled>, code: string | null | undefined): Labelled {
   if (!code) return { label: '—', tone: 'neutral' }
-  return table[code] ?? { label: titleCase(code), tone: 'neutral' }
+  const value = table[code] ?? { label: titleCase(code), tone: 'neutral' as const };
+  return {...value, label: t(code === 'OPEN' ? 'Open status' : value.label)};
 }
 
 const STATUS: Record<string, Labelled> = {
@@ -55,19 +57,19 @@ export const verificationLabel = (code: string | null | undefined) => lookup(VER
 
 export const MODE_LABELS: Record<string, string> = { FDR: 'FDR', RTGS: 'RTGS', RPGF: 'RPGF' }
 
-export const CATEGORY_LABELS: Record<string, string> = {
+export const CATEGORY_LABELS: Record<string, string> = localizedLabels({
   all: 'All records', active: 'Active', expiring: 'Expiring', matured: 'Matured', renewed: 'Renewed',
   released: 'Released', pending: 'Pending',
-}
+})
 
-export const CATEGORY_HINTS: Record<string, string> = {
+export const CATEGORY_HINTS: Record<string, string> = localizedLabels({
   active: 'Accepted and not renewed or released. Includes matured records awaiting action.',
   expiring: 'Maturing within the reminder window.',
   matured: 'Maturity date reached, with no successor accepted.',
   renewed: 'Replaced by an accepted renewal.',
   released: 'Release completed.',
   pending: 'Submitted or waiting for corrections.',
-}
+})
 
 const INTERVENTION: Record<string, string> = {
   maturity_follow_up: 'Matured: assess renewal or release',
@@ -75,7 +77,7 @@ const INTERVENTION: Record<string, string> = {
   ageing_correction: 'Corrections overdue',
   discrepancy: 'Verification discrepancy',
 }
-export const interventionLabel = (code: string) => INTERVENTION[code] ?? titleCase(code)
+export const interventionLabel = (code: string) => t(INTERVENTION[code] ?? titleCase(code))
 
 const FINDINGS: Record<string, string> = {
   ISSUER_UNKNOWN: 'Issuing bank not recognised',
@@ -89,15 +91,15 @@ const FINDINGS: Record<string, string> = {
   TERM_GAP: 'Coverage ends before the obligation term',
   PROOF_OVERDUE: 'Deposit proof overdue',
 }
-export const findingLabel = (code: string) => FINDINGS[code] ?? titleCase(code)
+export const findingLabel = (code: string) => t(FINDINGS[code] ?? titleCase(code))
 
-export const RELEASE_PATH_LABELS: Record<string, string> = {
+export const RELEASE_PATH_LABELS: Record<string, string> = localizedLabels({
   TERM_COMPLETE: 'Term complete',
   PROGRESSIVE_CLOSURE: 'Progressive closure',
   MERGER: 'Merger',
   CONVERSION_TO_UNIVERSITY: 'Conversion to university',
   CLOSURE_BY_AICTE: 'Closure by AICTE',
-}
+})
 
 /** "DRAFT_CREATED" -> "Draft created". Used where the API sends a code and no label exists. */
-export const humanize = titleCase
+export const humanize = (code: string) => t(titleCase(code))

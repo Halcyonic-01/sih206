@@ -18,7 +18,7 @@ from portal.permissions import (clearance_unit, institution_for, require_authori
 from portal.services import WorkflowError
 from portal.services import _compare_and_update, event, snapshot as instrument_snapshot
 from obligations.calculations import penalty_proposal
-from obligations.models import ClearanceTask, DepositObligation, IssuedLetter, MasterAudit, PenaltyAssessment, ReleaseCase
+from obligations.models import ClearanceEvidence, ClearanceTask, DepositObligation, IssuedLetter, MasterAudit, PenaltyAssessment, ReleaseCase
 from obligations.release_prerequisites import evaluate_prerequisites, PrerequisiteInputError, SECTIONS, TOP
 from obligations.rules import rule_snapshot
 from obligations.services import DependencyUnavailable, expected_version, reason_text
@@ -77,7 +77,11 @@ def record(case, actor, action, reason):
 def case_snapshot(case):
     return {'case_version': case.version, 'release_status': str(case.release.status),
         'rule_sha256': case.rule_sha256, 'penalty_review_complete': case.penalty_review_complete,
-        'clearances': list(case.clearances.order_by('unit').values('unit','status','decided_by_id','reason','evidence_ref')),
+        'clearances': [dict(unit=t.unit, status=t.status, decided_by_id=t.decided_by_id,
+            reason=t.reason, evidence_ref=t.evidence_ref, evidence_id=t.evidence_id,
+            evidence_sha256=t.evidence.sha256 if t.evidence_id else None,
+            decided_at=t.decided_at.isoformat() if t.decided_at else None)
+            for t in case.clearances.select_related('evidence').order_by('unit')],
         'penalties': list(case.penalties.order_by('pk').values('id','kind','base_paise','amount_paise','status','decided_by_id','reason')),
         'letters': [{'serial': l.serial, 'sha256': l.sha256,
             'revoked_at': l.revoked_at.isoformat() if l.revoked_at else None}
@@ -137,7 +141,8 @@ def assessment(actor, case, operation='ASSESS', *, reason=None, completion=None)
     facts['obligation']['institution_id'] = case.institution_id
     facts['obligation']['term_end'] = case.obligation.term_end.isoformat() if case.obligation.term_end else None
     facts['clearances'] = {t.unit: {'status': t.status, 'actor_id': t.decided_by_id,
-        'reason': t.reason or None, 'evidence_ref': t.evidence_ref or None} for t in case.clearances.all()}
+        'reason': t.reason or None, 'evidence_ref': (t.evidence_ref or None) if t.evidence_id else None}
+        for t in case.clearances.all()}
     facts['penalty_review'] = {'status': 'COMPLETE' if case.penalty_review_complete else None,
         'assessments': [{'kind': p.kind, 'base_paise': p.base_paise, 'rate_bps': p.rate_bps,
         'amount_paise': p.amount_paise, 'status': p.status, 'actor_id': p.decided_by_id,
@@ -236,24 +241,71 @@ def clearance_allowed(actor, task):
     return True
 
 
+def clearance_evidence_readable(actor, task):
+    return role(actor) in {'officer', 'authority'} or clearance_allowed(actor, task)
+
+
+def clearance_editable(case, task):
+    # Legacy pending decisions can be re-attested with a real PDF. Completed
+    # history is never changed; a previously evidenced decision cannot be edited.
+    return case.release.status == 'PENDING' and (task.status == 'OPEN' or task.evidence_id is None)
+
+
 @transaction.atomic
-def decide_clearance(actor, case_id, unit, version, status, reason, evidence_ref):
+def upload_clearance_evidence(actor, case_id, unit, version, upload):
+    from portal.uploads import validate_pdf_upload
+    from django.utils.text import get_valid_filename
+    case = get_case(actor, case_id)
+    check_version(case, version)
+    task = get_object_or_404(ClearanceTask, case=case, unit=unit)
+    if not clearance_allowed(actor, task):
+        raise PermissionDenied('Assigned clearance unit required.')
+    if not clearance_editable(case, task):
+        raise WorkflowError('This clearance cannot accept new evidence.')
+    if task.evidence_items.count() >= 10:
+        raise ValidationError('Evidence upload limit reached for this task.')
+    if not upload:
+        raise ValidationError('One supporting PDF is required.')
+    validate_pdf_upload(upload)
+    content = upload.read(settings.MAX_UPLOAD_BYTES + 1)
+    if len(content) != upload.size or len(content) > settings.MAX_UPLOAD_BYTES:
+        raise ValidationError('PDF size changed during validation.')
+    name = get_valid_filename(upload.name.replace('\\', '/').split('/')[-1])[:255]
+    bump(case, version)
+    item = ClearanceEvidence.objects.create(task=task, original_name=name, pdf=content,
+        size_bytes=len(content), page_count=upload.validated_page_count,
+        sha256=hashlib.sha256(content).hexdigest(), uploaded_by=actor)
+    # Explicit event, distinct from clearance decisions (and without a notification).
+    record(case, actor, 'EVIDENCE_UPLOADED', f'Clearance {unit}: evidence {item.pk}; SHA256 {item.sha256}')
+    return case, item
+
+
+@transaction.atomic
+def decide_clearance(actor, case_id, unit, version, status, reason, evidence_ref, evidence_id=None):
     case = get_case(actor, case_id)
     check_version(case, version)
     task = get_object_or_404(ClearanceTask, case=case, unit=unit)
     if not clearance_allowed(actor, task):
         raise PermissionDenied('Clearance-unit permission required.')
-    if case.release.status != 'PENDING' or task.status != 'OPEN':
-        raise WorkflowError('Only an open task on a pending case can be decided.')
+    if not clearance_editable(case, task):
+        raise WorkflowError('Only an open or reference-only pending clearance can be decided.')
+    if task.status != 'OPEN' and status != task.status:
+        raise WorkflowError('Legacy evidence attestation must preserve the original decision status.')
     if type(status) is not str or status not in {'CLEARED','OBJECTION','HOLD'} or type(evidence_ref) is not str or not evidence_ref.strip() or len(evidence_ref) > 200:
         raise ValidationError('A decision and scoped reviewed evidence reference are required.')
     # Evidence ownership/review must be verified by the same trusted source adapter.
     verifier = getattr(settings, 'SAKSHAM_CLEARANCE_EVIDENCE', None)
     if not callable(verifier) or not verifier(actor, task, evidence_ref):
         raise DependencyUnavailable('Scoped clearance evidence validation unavailable.')
+    if type(evidence_id) is not int or evidence_id < 1:
+        raise ValidationError('Select a reviewed supporting PDF.')
+    evidence = get_object_or_404(ClearanceEvidence, pk=evidence_id, task=task)
+    if hashlib.sha256(bytes(evidence.pdf)).hexdigest() != evidence.sha256:
+        raise DependencyUnavailable('Clearance evidence integrity check failed.')
     reason = reason_text(reason)
     bump(case, version)
     task.status, task.decided_by, task.reason, task.evidence_ref = status, actor, reason, evidence_ref
+    task.evidence, task.decided_at = evidence, timezone.now()
     task.full_clean(); task.save()
     record(case, actor, 'CLEARANCE_' + status, reason)
     return case

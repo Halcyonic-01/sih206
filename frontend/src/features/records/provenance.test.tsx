@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { act } from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { setLanguage } from '@/i18n'
 import { RecordDetail } from './RecordDetail'
 import type { Api } from './types'
 
@@ -29,6 +31,20 @@ function renderDetail(body: unknown) {
 }
 
 describe('field provenance on the details tab', () => {
+  afterEach(() => act(() => setLanguage('en')))
+
+  it('retains provenance, simulated warnings and original record data when toggled to Hindi', async () => {
+    const { container } = renderDetail(detail)
+    await screen.findByText('Confirmed (simulated)')
+    act(() => setLanguage('hi'))
+    expect(screen.getByText('पुष्ट (अनुकरणित)')).toBeInTheDocument()
+    expect(screen.getByText(/बैंक की प्रामाणिकता की पुष्टि नहीं/)).toBeInTheDocument()
+    expect(screen.getByText('Trust and AICTE')).toBeInTheDocument()
+    expect(screen.getByText('Demo Bank')).toBeInTheDocument()
+    expect(container.textContent).toContain('FDR-7')
+    act(() => setLanguage('en'))
+    expect(screen.getByText('Confirmed (simulated)')).toBeInTheDocument()
+  })
   it('labels each value in words and marks simulated confirmation as simulated', async () => {
     const { container } = renderDetail(detail)
     expect(await screen.findByText('Confirmed (simulated)')).toBeInTheDocument()
