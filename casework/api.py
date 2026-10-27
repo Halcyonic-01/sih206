@@ -18,6 +18,9 @@ from portal.permissions import role
 from access import mfa
 from access.logging import log_access
 from access.models import AccessLog
+from django.utils import timezone
+from notifications.rules import load_config
+from portal.queue_ageing import clearance_wait
 from . import governance, services, signing
 from . import ai_summary
 
@@ -263,7 +266,10 @@ class ClearanceEvidenceDownload(OwnedView):
 class ClearanceQueue(OwnedView):
     def get(self, request):
         tasks = ClearanceTask.objects.filter(case__in=services.scoped_cases(request.user)).select_related('case__release')
+        today = timezone.localdate()
+        config = load_config(today)
         visible = [{'case_id': t.case_id, 'version': t.case.version, 'due_date': t.due_date,
+            'waiting': clearance_wait(t, today, config) if t.status == 'OPEN' else None,
             **clearance_json(request.user, t.case, t)}
             for t in tasks.order_by('pk') if services.clearance_allowed(request.user, t)]
         number, size = pagination(request)

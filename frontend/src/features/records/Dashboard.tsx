@@ -7,6 +7,7 @@ import { LoadingState } from '@/components/states'
 import { formatPaise } from '@/lib/format'
 import { CATEGORY_HINTS, CATEGORY_LABELS, interventionLabel } from '@/lib/labels'
 import dayjs from 'dayjs'
+import { MaturityCalendar } from './MaturityCalendar'
 import { OpenActions } from './OpenActions'
 import type { Api, DashboardData } from './types'
 
@@ -42,6 +43,8 @@ export function DashboardPage({ api, onOpen, onCategory }: { api: Api; onOpen: (
           { title: tr("Issue"), dataIndex: 'kind', render: (kind: string) => interventionLabel(kind) },
           { title: tr("Next step"), dataIndex: 'next_action' }]} />
       </Panel>
+
+      {data.maturity_calendar !== undefined && <MaturityCalendar days={data.maturity_calendar} asOf={data.as_of} onOpen={onOpen} />}
 
       {data.alerts !== undefined && <OpenActions api={api} alerts={data.alerts} onOpen={onOpen} />}
 

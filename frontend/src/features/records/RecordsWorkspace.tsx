@@ -10,6 +10,7 @@ import { StatusTag, VerificationTag } from '@/components/StatusTag'
 import { formatDate, formatInr } from '@/lib/format'
 import { CATEGORY_LABELS } from '@/lib/labels'
 import { RecordDetail } from './RecordDetail'
+import { WaitingBadge } from './WaitingBadge'
 import { RecordForm } from './RecordForm'
 import type { Api, Page, RecordItem, Role } from './types'
 
@@ -25,7 +26,7 @@ function RecordCards({ rows, onOpen }: { rows: RecordItem[]; onOpen: (id: number
         <li key={row.id} className="record-card">
           <div className="record-card__top">
             <button type="button" className="record-card__ref" onClick={() => onOpen(row.id)}>{row.reference}</button>
-            <StatusTag value={row.status} />
+            <span><StatusTag value={row.status} /><WaitingBadge waiting={row.waiting} /></span>
           </div>
           <dl className="record-card__meta">
             <div><dt>{tr("Institution")}</dt><dd>{row.institution.name}</dd></div>
@@ -122,7 +123,7 @@ export function RecordsWorkspace({ api, role, globalQuery, initialRecordId, init
               { title: tr("Type"), dataIndex: 'mode', width: 90 },
               { title: tr("Amount"), dataIndex: 'amount', align: 'right', render: (value: string) => formatInr(value) },
               { title: tr("Maturity"), dataIndex: 'maturity_date', render: (value: string) => formatDate(value) },
-              { title: tr("Status"), dataIndex: 'status', render: (value: string) => <StatusTag value={value} /> },
+              { title: tr("Status"), dataIndex: 'status', render: (value: string, row) => <span><StatusTag value={value} /><WaitingBadge waiting={row.waiting} /></span> },
               { title: tr("Verification"), dataIndex: 'verification_level', render: (value: string) => <VerificationTag value={value} /> }]} />
         </Panel>
       ) : (

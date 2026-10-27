@@ -47,7 +47,7 @@ ACTION = obj({'version': INTEGER, 'instrument_version': INTEGER, 'reason': TEXT,
     'refund_reference': TEXT, 'document': FILE, 'kind': TEXT, 'base_paise': INTEGER, 'confirm_id': INTEGER},
     required=['version'])
 CLEARANCE_INPUT = obj({'version': INTEGER, 'status': TEXT, 'reason': TEXT, 'evidence_ref': TEXT, 'evidence_id': INTEGER})
-QUEUE = page(obj({'case_id': INTEGER, 'version': INTEGER, 'due_date': nullable(DATE), **CLEARANCE['properties']}))
+QUEUE = page(obj({'case_id': INTEGER, 'version': INTEGER, 'due_date': nullable(DATE), 'waiting': nullable(JSON), **CLEARANCE['properties']}))
 PUBLIC = obj({'serial': TEXT, 'issue_date': DATE, 'institution_name': TEXT, 'kind': TEXT, 'status': TEXT,
     'signature': obj({'checked': BOOLEAN, 'valid': BOOLEAN, 'matches_record': BOOLEAN, 'kid': nullable(TEXT), 'key_kind': nullable(TEXT)})},
     required=['serial', 'issue_date', 'institution_name', 'kind', 'status'])

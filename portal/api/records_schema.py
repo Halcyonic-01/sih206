@@ -9,7 +9,7 @@ from .schema_types import (TEXT, INTEGER, BOOLEAN, DATE, DATETIME, JSON, array, 
 
 INSTITUTION = obj({'id': INTEGER, 'code': TEXT, 'name': TEXT})
 BRIEF = obj({
-    'id': INTEGER, 'reference': TEXT, 'bank': TEXT, 'institution': INSTITUTION,
+    'waiting': nullable(JSON), 'id': INTEGER, 'reference': TEXT, 'bank': TEXT, 'institution': INSTITUTION,
     'amount': TEXT, 'issue_date': DATE, 'maturity_date': DATE, 'mode': TEXT,
     'status': TEXT, 'version': INTEGER, 'verification_level': TEXT,
     'released': BOOLEAN, 'superseded': BOOLEAN,
@@ -39,7 +39,7 @@ COVERAGE = obj({'obligation_id': INTEGER, 'institution_id': INTEGER, 'institutio
     'policy_label': TEXT}, required=['obligation_id', 'known', 'required_paise', 'held_paise', 'shortfall_paise'])
 DASHBOARD = obj({'as_of': DATE, 'demo_date': BOOLEAN, 'counts': {'type': 'object', 'additionalProperties': INTEGER},
     'interventions': array(obj({'id': INTEGER, 'reference': TEXT, 'kind': TEXT, 'next_action': TEXT})),
-    'alerts': array(JSON),
+    'alerts': array(JSON), 'maturity_calendar': array(JSON),
     'shortfalls': array(COVERAGE), 'coverage': array(COVERAGE), 'coverage_available': BOOLEAN,
     'maturity_chart': array(obj({'month': TEXT, 'count': INTEGER}))})
 FILTERS = [OpenApiParameter(name, str, description=description) for name, description in (

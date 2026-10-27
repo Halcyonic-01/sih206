@@ -63,6 +63,17 @@ dashboard (`GET /api/alerts/`, scoped like records, including an officer's regio
   `escalation-matrix` RuleSet) goes one level up once: the region's head (or its officers) and the authority are notified
   (`alert_escalated`).
 
+## Queue ageing and the maturity calendar
+
+Read-only views over the same thresholds (`portal/queue_ageing.py`, no tables):
+
+* Records waiting for review (`status=SUBMITTED`) carry `waiting` in the list API, and open clearance tasks carry it in
+  `/api/clearance-tasks`: working days since the latest submission (or case opening), the limit from the escalation matrix
+  (`sla.submission_working_days`, `sla.clearance_working_days[0]`) and a band: `ok`, `soon` from half the limit, `overdue` past it.
+  The badge says it in words ("Waiting 9 working days · overdue").
+* The dashboard returns `maturity_calendar` (current accepted deposits maturing in the next 12 months) and shows a month calendar.
+* Median and 90th-percentile turnaround were already in the process KPIs.
+
 ## Open dependencies
 
 * **S5 `casework.ClearanceTask`**: `open_clearance_tasks()` in `notifications/rules.py` (marked `TODO(S5)`) assumes
