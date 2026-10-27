@@ -55,7 +55,8 @@ def validate_pdf_upload(upload):
         raise ValidationError('PDF inspection is unavailable or returned an invalid result.') from None
     finally:
         upload.seek(0)
-    return upload
+    from .scanning import scan_upload
+    return scan_upload(upload)  # malware scan after the structure checks; records upload.scan_status
 
 
 class DocumentIntegrityError(Exception):

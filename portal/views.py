@@ -17,6 +17,7 @@ from .forms import (InstrumentForm, ObservationForm, RenewalForm, ResolutionForm
                     ReleaseRequestForm, ReleaseDecisionForm, ReleaseCompletionForm)
 from .models import Document, Instrument, ReleaseRequest
 from .permissions import institution_for, require_authority, require_officer, role, scoped_instruments
+from .scanning import downloadable
 from .uploads import DocumentIntegrityError, open_verified, record_integrity_failure
 from .validation import CHECKS_VERSION, run_checks
 from .exports import register_csv
@@ -316,6 +317,9 @@ def observation_resolve(request, pk, observation_pk):
 def document_download(request, pk):
     document = get_object_or_404(Document.objects.filter(
         instrument__in=scoped_instruments(request.user)), pk=pk)
+    if not downloadable(document):
+        return HttpResponse('This document is quarantined or has not been scanned, so it cannot be downloaded.',
+                            status=409, content_type='text/plain; charset=utf-8')
     try:
         stored = open_verified(document)
     except FileNotFoundError:

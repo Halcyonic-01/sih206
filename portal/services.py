@@ -8,6 +8,7 @@ from django.utils import timezone
 from .models import AuditEvent, Document, Instrument, ReleaseRequest, ReviewObservation
 from .permissions import institution_for, require_officer
 from .validation import checks_snapshot, run_checks, check_document_present
+from .scanning import scan_fields
 from .uploads import validate_pdf_upload
 
 
@@ -150,6 +151,7 @@ def save_draft(actor, cleaned, instrument_id=None, predecessor_id=None):
                 document = Document(instrument=instrument, uploaded_by=actor,
                                     original_name=upload.name[:255], size_bytes=upload.size,
                                     sha256=digest.hexdigest(), page_count=upload.validated_page_count,
+                                    **scan_fields(upload),
                                     kind={'FDR': Document.Kind.FDR, 'RTGS': Document.Kind.PAYMENT_PROOF,
                                           'RPGF': Document.Kind.RPGF_PROOF}[instrument.mode])
                 document.file.save(upload.name, upload, save=False)

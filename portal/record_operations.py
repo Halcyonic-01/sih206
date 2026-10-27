@@ -7,6 +7,7 @@ from django.db import transaction
 from . import services
 from .models import Document, Instrument
 from .permissions import require_officer, scoped_instruments
+from .scanning import scan_fields
 from .uploads import validate_pdf_upload
 
 # APH 6.46 application documents an institution adds to an accepted holding before it requests release.
@@ -69,7 +70,7 @@ def upload_document(actor, pk, version, upload, kind):
             upload.seek(0)
             document = Document(instrument=item, kind=kind, uploaded_by=actor,
                 original_name=upload.name[:255], size_bytes=upload.size,
-                sha256=digest.hexdigest(), page_count=upload.validated_page_count)
+                sha256=digest.hexdigest(), page_count=upload.validated_page_count, **scan_fields(upload))
             document.file.save(upload.name, upload, save=False)
             stored_file = document.file
             document.save()

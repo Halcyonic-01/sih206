@@ -131,6 +131,9 @@ def extract(actor, document, *, consent=False, synthetic=False):
             raise ValueError('RATE_LIMIT')
         if document.size_bytes > 10 * 1024 * 1024 or document.page_count is None or document.page_count > 30:
             raise ValueError('DOCUMENT_LIMIT')
+        from portal.scanning import downloadable
+        if not downloadable(document):
+            raise ValueError('DOCUMENT_NOT_SCANNED')
         with document.file.open('rb') as source:
             content = source.read(10 * 1024 * 1024 + 1)
         if len(content) > 10 * 1024 * 1024 or hashlib.sha256(content).hexdigest() != document.sha256:

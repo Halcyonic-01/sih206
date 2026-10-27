@@ -15,7 +15,7 @@ BRIEF = obj({
     'released': BOOLEAN, 'superseded': BOOLEAN,
 })
 DOCUMENT = obj({'id': INTEGER, 'name': TEXT, 'kind': TEXT, 'page_count': nullable(INTEGER),
-                'sha256': TEXT, 'uploaded_at': DATETIME, 'download_url': TEXT})
+                'sha256': TEXT, 'uploaded_at': DATETIME, 'download_url': TEXT, 'scan_status': TEXT})
 OBSERVATION = obj({'id': INTEGER, 'document_id': INTEGER, 'page_number': nullable(INTEGER),
     'severity': TEXT, 'comment': TEXT, 'reviewer_id': INTEGER, 'created_at': DATETIME,
     'resolution': TEXT, 'resolved_by_id': nullable(INTEGER), 'resolved_at': nullable(DATETIME)})

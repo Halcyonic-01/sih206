@@ -14,6 +14,9 @@ services:
       DJANGO_SECURE_COOKIES: ${DJANGO_SECURE_COOKIES:-false}
       DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-}
       AUDIT_CHAIN_KEY: ${AUDIT_CHAIN_KEY:-}
+      CLAMAV_HOST: ${CLAMAV_HOST:-}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+      SCAN_REQUIRED: ${SCAN_REQUIRED:-false}
       DOCUMENT_ENCRYPTION_KEY: ${DOCUMENT_ENCRYPTION_KEY:-}
       PORTAL_BASE_URL: ${PORTAL_BASE_URL:-http://localhost:8010}
       SEED_DEMO: ${SEED_DEMO:-true}
@@ -65,6 +68,20 @@ services:
       - portal-data:/app/data
     restart: unless-stopped
 
+  # Optional malware scanner:  docker compose --profile scan up --build   with CLAMAV_HOST=clamav in .env
+  # (add SCAN_REQUIRED=true to refuse uploads whenever it is down). The first start downloads signatures, which takes minutes.
+  clamav:
+    image: clamav/clamav:stable
+    profiles: ["scan"]
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 60s
+      retries: 5
+      start_period: 300s
+    volumes:
+      - clamav-db:/var/lib/clamav
+    restart: unless-stopped
+
   mailpit:
     image: axllent/mailpit:latest
     profiles: ["mail"]
@@ -73,3 +90,4 @@ services:
 
 volumes:
   portal-data:
+  clamav-db:

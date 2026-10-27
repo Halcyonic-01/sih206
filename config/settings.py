@@ -93,6 +93,13 @@ if not REMINDER_DAYS or any(day < 1 for day in REMINDER_DAYS):
     raise ImproperlyConfigured('REMINDER_DAYS must contain positive integer day thresholds.')
 USE_I18N = True
 USE_TZ = True
+# Malware scan of uploads through ClamAV's clamd (portal/scanning.py). SCAN_REQUIRED=true refuses uploads when the scanner is down.
+CLAMAV_HOST = os.environ.get('CLAMAV_HOST', '').strip()
+CLAMAV_PORT = int(os.environ.get('CLAMAV_PORT', '3310') or 3310)
+CLAMAV_TIMEOUT = float(os.environ.get('CLAMAV_TIMEOUT', '15') or 15)
+SCAN_REQUIRED = env_bool('SCAN_REQUIRED', False)
+if SCAN_REQUIRED and not CLAMAV_HOST:
+    raise ImproperlyConfigured('SCAN_REQUIRED=true needs CLAMAV_HOST (and CLAMAV_PORT) to point at a clamd service.')
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # No MEDIA_URL route: all document reads go through an ownership-checked view.
