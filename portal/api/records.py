@@ -23,7 +23,7 @@ from portal.exports import register_csv
 from portal.models import Document, Instrument
 from portal.notification_hook import notify_record
 from portal.permissions import institution_for, role, scoped_instruments
-from portal import auditor_downloads
+from portal import auditor_downloads, retention
 from portal.queue_ageing import submission_waits
 from portal.scanning import downloadable
 from portal.uploads import DocumentIntegrityError, open_verified, record_integrity_failure
@@ -64,7 +64,12 @@ def actions(user, item):
     own = role(user) == 'institution' and item.institution_id == institution_for(user).pk
     editable = own and item.status in ['DRAFT', 'CHANGES_REQUESTED']
     reviewable = role(user) == 'officer' and item.created_by_id != user.pk and item.status == 'SUBMITTED'
-    return {'can_edit': editable, 'can_submit': editable, 'can_upload': editable,
+    authority = role(user) == 'authority'
+    held = retention.state(item) if authority else {}
+    return {'can_archive': authority and held['archival_due'] and not held['legal_hold'],
+            'can_hold': authority and not held['legal_hold'] and not held['archived'],
+            'can_lift_hold': authority and held['legal_hold'],
+            'can_edit': editable, 'can_submit': editable, 'can_upload': editable,
             'can_request_bank': role(user) == 'officer' and item.created_by_id != user.pk
                                 and item.status in ('SUBMITTED', 'ACCEPTED') and not item.released_at and not item.superseded_at,
             'can_review': reviewable, 'can_observe': reviewable, 'can_correct': reviewable,
@@ -113,6 +118,7 @@ def detail(user, item):
                   'at': e.created_at, 'before': e.before, 'after': e.after} for e in item.audit_events.all()],
         findings=[f.as_dict() for f in run_checks(item)],
         field_provenance=field_provenance(item),
+        retention=retention.state(item),
         lineage={'predecessor': visible.filter(pk=item.predecessor_id).values('id', 'reference').first(),
                  'successor': visible.filter(predecessor=item).values('id', 'reference').first(),
                  'link': link_reason(item)},

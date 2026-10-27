@@ -37,3 +37,13 @@ Data lives under ignored `data/`: SQLite, protected PDF files, local demo creden
 `deadlines.py` powers dashboard, register filters, CSV and `due_actions`. Only accepted, non-superseded, non-released instruments enter current monitoring. CLI reports are for a trusted operator. Browser evaluation-date overrides are DEBUG-only and explicitly labeled; detail pages use the actual business date. There is no scheduler or notification delivery.
 
 Operational tools build checksummed source/wheel ZIPs, install without a package index, seed synthetic workflows, exercise authenticated HTTP and evaluate a fixed synthetic contract in memory. Python 3.12 remains an external prerequisite. The deployment boundary is localhost, Django's development server and synthetic data; production hosting is not configured.
+
+## Retention, archival and legal hold (P3-1)
+
+`portal/retention.py` with the model `audit.RecordRetention`. A record is *settled* when it is released or superseded by a renewal and
+*archival due* `RETENTION_YEARS` (default 10) later. The authority archives a due record (`POST /api/instruments/{id}/archive/` with a
+reason): from then on `services._compare_and_update` refuses every change (409 "archived and frozen"). The authority can place and lift a
+legal hold (`POST` / `DELETE /api/instruments/{id}/legal-hold/`), which blocks archiving. All three are audit events in the hash chain
+(`ARCHIVED`, `LEGAL_HOLD_SET`, `LEGAL_HOLD_LIFTED`). `GET /api/retention/due/` lists what is due in the caller's scope and
+`manage.py archive_due_records` lists them, or with `--archive --as-user <authority> --reason ...` archives them. Documents stay
+readable; nothing is deleted. The detail page shows a Retention panel for settled records.

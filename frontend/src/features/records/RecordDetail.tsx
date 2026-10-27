@@ -15,6 +15,7 @@ import { PdfViewer } from './PdfViewer'
 import { ProvenanceTag } from './ProvenanceTag'
 import { RecordForm } from './RecordForm'
 import { RENEWAL_REASONS } from './renewal'
+import { RetentionPanel } from './RetentionPanel'
 import { VerificationTab } from './Verification'
 import type { Api, RecordItem } from './types'
 
@@ -131,6 +132,7 @@ export function RecordDetail({ api, id, onBack, onOpen, readinessAction, readine
                 { label: 'UTR', value: tagged(item.utr, 'utr') }, { label: tr('Lien'), value: tagged(item.lien_marked == null ? tr('Not stated') : item.lien_marked ? tr('Marked') : tr('Not marked'), 'lien_marked') },
                 { label: tr('Obligation'), value: item.obligation_id ? `#${item.obligation_id}` : tr('Not linked') }]} />
             </Panel>
+            {item.retention && <div style={{ gridColumn: '1 / -1' }}><RetentionPanel api={api} id={item.id} retention={item.retention} actions={item.actions ?? {}} /></div>}
             {item.field_provenance && (
               <p className="muted" style={{ gridColumn: '1 / -1', margin: 0 }}>
                 <strong>{tr('Declared')}</strong>: {tr('Entered by the institution.')} <strong>{tr('Document reviewed')}</strong>: {tr('An officer accepted the record for tracking.')}

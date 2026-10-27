@@ -15,6 +15,7 @@ export type RecordItem = {
   documents?: {id: number; name: string; kind: string; page_count: number | null; sha256: string; scan_status?: 'PENDING' | 'CLEAN' | 'REJECTED'}[];
   observations?: {id: number; document_id: number; page_number: number | null; severity: string;
     comment: string; resolution: string; resolved_at: string | null}[];
+  retention?: Retention;
   field_provenance?: Record<string, FieldProvenance>;
   findings?: {code: string; severity: string; explanation: string}[];
   history?: {id: number; action: string; reason: string; at: string}[];
@@ -23,6 +24,8 @@ export type RecordItem = {
 export type Page = {count: number; page: number; page_size: number; results: RecordItem[]};
 export type Waiting = {working_days: number; calendar_days: number; limit: number; band: 'ok' | 'soon' | 'overdue'; since: string};
 export type MaturityDay = {date: string; count: number; records: {id: number; reference: string}[]};
+export type Retention = {settled_on: string | null; archival_due_on: string | null; archival_due: boolean; archived: boolean;
+  archived_at: string | null; legal_hold: boolean; hold_reason: string; retention_years: number};
 export type OpenAlert = {id: number; rule: string; reference: string; summary: string; url: string; instrument_id: number | null;
   status: 'OPEN' | 'ACKNOWLEDGED'; opened_on: string; acknowledged_by: string | null; acknowledged_at: string | null; note: string;
   escalation_level: number; can_acknowledge: boolean};
