@@ -28,6 +28,8 @@ function source(overrides: Record<string, () => Response | Promise<Response>> = 
     if (overrides[url]) return overrides[url]();
     if (url === '/api/auth/me/' || url === '/api/auth/login/') return json(user);
     if (url === '/api/institutions/1') return json(institution);
+    if (url === '/api/institutions/1/readiness') return json({institution_id: 1, completed: 0, applicable: 0,
+      percent: null, status: 'NO_OBLIGATIONS', as_of: '2026-10-27', source_fingerprint: 'test', obligations: []});
     if (url.startsWith('/api/institutions?')) return json(page([institution]));
     if (url === '/api/institutions/1/programme-approvals?page=1') return json(page([]));
     if (url === '/api/institutions/1/obligations?page=1') return json(page([obligation]));

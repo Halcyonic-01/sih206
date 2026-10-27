@@ -1,3 +1,4 @@
+from datetime import timedelta
 from io import StringIO
 
 from django.core.management import call_command
@@ -102,7 +103,9 @@ class TamperDetectionTests(ChainTestCase):
         self.assertEqual(self.broken()[1], [(self.events[0].pk, 'event_modified')])
         AuditEvent.objects.filter(pk=self.events[0].pk).update(actor=self.officer)
         self.assertTrue(verify_chain().ok)
-        AuditEvent.objects.filter(pk=self.events[3].pk).update(created_at=self.events[0].created_at)
+        # Events created within one clock tick can have identical timestamps.
+        changed_at = self.events[3].created_at + timedelta(seconds=1)
+        AuditEvent.objects.filter(pk=self.events[3].pk).update(created_at=changed_at)
         self.assertEqual(self.broken()[1], [(self.events[3].pk, 'event_modified')])
 
     def test_deleting_a_seal_breaks_the_chain(self):

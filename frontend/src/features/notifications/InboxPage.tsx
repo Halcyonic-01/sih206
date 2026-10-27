@@ -5,11 +5,13 @@ import { PageHeader } from '@/components/PageHeader'
 import { EmptyState, LoadingState, QueryError } from '@/components/states'
 import { useMarkAllRead, useMarkRead, useNotifications, useUnreadCount } from './api'
 import { NotificationItem } from './NotificationItem'
+import WeeklyDigest from './WeeklyDigest'
 
 export default function InboxPage() {
   useLanguage();
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
   const [page, setPage] = useState(1)
+  const [showDigest, setShowDigest] = useState(false)
   const list = useNotifications({ unread: filter === 'unread', page, pageSize: 20 })
   const unread = useUnreadCount()
   const markRead = useMarkRead()
@@ -20,6 +22,8 @@ export default function InboxPage() {
       <PageHeader title={tr("Notifications")} subtitle={tr("Reminders, review results and alerts for your account.")}
                   extra={<Button onClick={() => markAll.mutate()} disabled={!unread.data || markAll.isPending}>
                     {tr("Mark all as read")}</Button>} />
+      <Button style={{marginBottom: 16}} onClick={() => setShowDigest(!showDigest)}>{tr('Weekly email digest')}</Button>
+      {showDigest && <WeeklyDigest />}
       <Card>
         <Segmented style={{ marginBottom: 16 }} value={filter} options={[
           { label: tr("All"), value: 'all' }, { label: tr("Unread{0}", {"0": (unread.data ? ` (${unread.data})` : '')}), value: 'unread' },

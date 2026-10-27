@@ -20,6 +20,8 @@ function RecordsPage() {
   const [query] = useSearchParams()
   const { id } = useParams()
   return <RecordsWorkspace key={id || 'list'} api={recordsApi} role={user!.role as Role}
+    readinessAction={query.get('readiness') || undefined} readinessKind={query.get('kind') || undefined}
+    readinessObligation={/^[1-9]\d*$/.test(query.get('obligation') || '') ? query.get('obligation')! : undefined}
     globalQuery={query.get('q') || ''} initialCategory={query.get('category') || 'all'} initialRecordId={id ? Number(id) : undefined} />
 }
 

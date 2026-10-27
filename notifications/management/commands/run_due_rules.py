@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 
 from notifications.rules import RULES, run_rules
 from portal.deadlines import parse_as_of
@@ -34,3 +35,12 @@ class Command(BaseCommand):
             for error in result.errors:
                 self.stderr.write(f'ERROR {error}')
             raise CommandError(f'{len(result.errors)} rule group(s) failed; the others completed.')
+        # Only an ordinary current-scope scheduler run may dispatch optional weekly mail.
+        # Historical replays and filtered operations must never mail every portal user.
+        if (getattr(settings, 'WEEKLY_DIGEST_ENABLED', False) and not options['as_of']
+                and not options['institution'] and not options['only']):
+            from notifications.digest_dispatch import dispatch
+            weekly = dispatch(dry_run=options['dry_run'])
+            self.stdout.write(f'Weekly digest: {weekly}')
+            if weekly.get('failed'):
+                raise CommandError('Some weekly digest sources failed; inspect safe logs and retry.')

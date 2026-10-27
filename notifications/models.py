@@ -78,3 +78,14 @@ class DeliveryAttempt(models.Model):
 
     class Meta:
         ordering = ['at', 'pk']
+
+
+class DigestPreference(models.Model):
+    """Only controls optional weekly digests; individual workflow notices remain enabled."""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                related_name='digest_preference')
+    enabled = models.BooleanField(default=True)
+    version = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=models.Q(version__gte=1), name='digest_preference_version')]

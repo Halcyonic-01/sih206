@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import {MemoryRouter} from 'react-router-dom'
+import {RecordDetail} from './RecordDetail'
 import { DashboardPage } from './Dashboard'
 import { RecordsWorkspace } from './RecordsWorkspace'
 import type { Api } from './types'
@@ -25,6 +27,31 @@ function api(responses: Record<string, unknown>): Api {
 const wrap = (node: React.ReactNode) => (
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{node}</QueryClientProvider>
 )
+
+describe('readiness action entry points', () => {
+  const detail = {...record, actions: {can_upload: true, can_submit: true}, documents: [], observations: [], findings: [], history: [], lineage: {}};
+  it('opens the permitted upload form with the exact category without writing', async () => {
+    const source = api({'/api/instruments/7/': detail});
+    render(wrap(<MemoryRouter><RecordDetail api={source} id={7} onBack={() => {}} onOpen={() => {}}
+      readinessAction="upload" readinessKind="AFFIDAVIT_3" /></MemoryRouter>));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', {name: 'Document category'})).toBeInTheDocument();
+    expect(screen.getByText('Affidavit 3')).toBeInTheDocument();
+    expect(vi.mocked(source.request).mock.calls.every(call => !call[1]?.method)).toBe(true);
+  });
+  it('cannot open an upload dialog when the server denies upload', async () => {
+    render(wrap(<MemoryRouter><RecordDetail api={api({'/api/instruments/7/': {...detail, actions: {}}})} id={7}
+      onBack={() => {}} onOpen={() => {}} readinessAction="upload" readinessKind="AFFIDAVIT_3" /></MemoryRouter>));
+    await screen.findByRole('heading', {name: 'FDR-7'});
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+  it('opens the new-deposit form with the chosen obligation', async () => {
+    render(wrap(<RecordsWorkspace api={api({'/api/instruments/?': {count: 0, results: []}})} role="institution"
+      readinessAction="new" readinessObligation="12" />));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('spinbutton', {name: 'Obligation ID (optional)'})).toHaveValue('12');
+  });
+});
 
 describe('records list', () => {
   it('shows each deposit as a card on a phone, with money, status and verification in words', async () => {
