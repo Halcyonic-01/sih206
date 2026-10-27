@@ -13,6 +13,7 @@ from portal import services as records
 from portal.models import Instrument, ReviewObservation
 from portal.notification_hook import notify_record
 from portal.permissions import require_officer, role, scoped_instruments
+from . import statement_formats
 from .models import StatementImport, StatementLine, VerificationEvidence
 
 
@@ -25,29 +26,13 @@ def record_review(actor, item, reason):
 
 
 def parse_statement(content):
-    if len(content) > 1024 * 1024:
-        raise ValidationError('Statement CSV must be at most 1 MB.')
-    try:
-        reader = csv.DictReader(StringIO(content.decode('utf-8-sig')), strict=True)
-        if reader.fieldnames != ['utr', 'amount', 'value_date']:
-            raise ValueError('headers')
-        rows = []
-        for number, row in enumerate(reader, 1):
-            if number > 1000 or None in row or any(v is None for v in row.values()):
-                raise ValueError('rows')
-            amount = Decimal(row['amount'])
-            if not amount.is_finite() or amount <= 0 or amount.as_tuple().exponent < -2 or amount > Decimal('999999999999.99'):
-                raise ValueError('amount')
-            utr = row['utr'].strip().upper()
-            day = date.fromisoformat(row['value_date'])
-            if not utr or len(utr) > 100 or day.isoformat() != row['value_date']:
-                raise ValueError('values')
-            rows.append({'number': number, 'utr': utr, 'amount_paise': int(amount * 100), 'value_date': day})
-        if not rows:
-            raise ValueError('empty')
-        return rows
-    except (UnicodeError, ValueError, InvalidOperation, csv.Error):
-        raise ValidationError('Use UTF-8 CSV headers utr,amount,value_date and positive two-decimal amounts.') from None
+    """Rows of a statement in any supported format (CSV, MT940, CAMT.053); see statement_formats.py."""
+    return statement_formats.parse(content).rows
+
+
+def describe_statement(content):
+    """Format name plus the quarantined (malformed) and ignored (not a receipt) entries, for the preview."""
+    return statement_formats.parse(content).summary()
 
 
 def plan_matches(actor, content):
@@ -57,7 +42,12 @@ def plan_matches(actor, content):
     visible = scoped_instruments(actor).filter(mode='RTGS', superseded_at__isnull=True, released_at__isnull=True)
     planned = []
     for row in rows:
-        candidates = list(visible.filter(utr__iexact=row['utr'])[:2])
+        candidates = []
+        for reference in [row['utr'], *row.get('alt_utrs', [])]:  # the line's main reference first, then its other references
+            candidates = list(visible.filter(utr__iexact=reference)[:2])
+            if candidates:
+                row = row | {'utr': reference}
+                break
         item = candidates[0] if len(candidates) == 1 else None
         if duplicates[row['utr']] > 1 or len(candidates) > 1:
             result = 'AMBIGUOUS'
@@ -68,6 +58,7 @@ def plan_matches(actor, content):
             result = 'DISCREPANCY'
         else:
             result = 'SIMULATED_MATCH'
+        row = {key: value for key, value in row.items() if key != 'alt_utrs'}
         planned.append(row | {'instrument_id': item.pk if item else None,
                                'version': item.version if item else None, 'result': result})
     return planned

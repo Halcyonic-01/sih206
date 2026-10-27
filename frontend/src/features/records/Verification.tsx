@@ -13,7 +13,8 @@ import type {Api} from './types';
 type EvidenceData = {level: string; notice: string; checks: {code: string; explanation: string}[];
   evidence: {id: number; method: string; result: string; source: string; created_at: string; instrument_version: number}[]};
 type StatementRow = {number: number; utr: string; amount_paise: number; value_date: string; result: string; instrument_id: number | null};
-type Preview = {simulated: boolean; rows: StatementRow[]; versions: Record<string, number>};
+type Entry = {where: string; reason: string};
+type Preview = {simulated: boolean; rows: StatementRow[]; versions: Record<string, number>; format?: string; rejected?: Entry[]; ignored?: Entry[]};
 
 export function VerificationTab({api, id, version, canRequestBank}: {api: Api; id: number; version: number; canRequestBank: boolean}) {
   useLanguage();
@@ -94,12 +95,22 @@ export function ReconciliationPage({api}: {api: Api}) {
           <label className="field-label" htmlFor="stmt-source">{tr("Source label (for example the statement date)")}</label>
           <Input id="stmt-source" value={source} maxLength={200} onChange={e => {setSource(e.target.value); setPreview(undefined);}}/>
         </div>
-        <Upload maxCount={1} accept=".csv,text/csv" beforeUpload={f => {setFile(f); setPreview(undefined); setRows([]); return false;}}
-          onRemove={() => {setFile(undefined); setPreview(undefined); setRows([]);}}><Button>{tr("Select CSV file")}</Button></Upload>
+        <Upload maxCount={1} accept=".csv,.txt,.sta,.mt940,.xml,text/csv,text/plain,text/xml,application/xml" beforeUpload={f => {setFile(f); setPreview(undefined); setRows([]); return false;}}
+          onRemove={() => {setFile(undefined); setPreview(undefined); setRows([]);}}><Button>Select statement file (CSV, MT940 or CAMT.053)</Button></Upload>
         <div className="cluster"><Button disabled={!file || !source.trim()} loading={busy} onClick={() => void run(false)}>{tr("Preview matches")}</Button>
           <Button type="primary" disabled={!preview} loading={busy} onClick={() => void run(true)}>{tr("Record previewed batch")}</Button></div>
       </div>
     </Panel>
+    <p className="muted">MT940 and CAMT.053 bank statements are read as well as this CSV layout; only credits are used.</p>
+    {preview?.format && preview.format !== 'CSV' && (
+      <Alert type={preview.rejected?.length ? 'warning' : 'info'} showIcon
+        message={`${preview.format === 'MT940' ? 'SWIFT MT940' : 'ISO 20022 CAMT.053'} statement read: ${preview.rows.length} receipt(s)`}
+        description={<>
+          {!!preview.ignored?.length && <p>{preview.ignored.length} entr{preview.ignored.length === 1 ? 'y was' : 'ies were'} not receipts (debits or reversals) and {preview.ignored.length === 1 ? 'is' : 'are'} not used.</p>}
+          {!!preview.rejected?.length && <><p>Malformed entries were set aside and are not imported:</p>
+            <ul>{preview.rejected.map((entry) => <li key={entry.where}>{entry.where}: {entry.reason}</li>)}</ul></>}
+        </>} />
+    )}
     {error && <Alert type="error" showIcon role="alert" message={error}/>}{saved && <Alert type="success" showIcon message={saved}/>}
     <Panel title={rows.length ? tr("2. Preview: {0} of {1} lines match", {"0": (matched), "1": (rows.length)}) : tr("2. Preview")} flush>
       <Table rowKey="number" size="middle" scroll={{x: 640}} dataSource={rows} locale={{emptyText: <Empty description={tr("Choose a statement and preview its matches.")}/>}} columns={[

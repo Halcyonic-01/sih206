@@ -11,7 +11,8 @@ LINE = obj({'number': INTEGER, 'utr': TEXT, 'amount_paise': INTEGER, 'value_date
 STATEMENT_INPUT = obj({'document': FILE, 'source': TEXT,
     'commit': {'type': 'string', 'enum': ['true', 'false'], 'description': 'Only literal true commits; otherwise preview.'},
     'versions': {'type': 'string', 'description': 'JSON object mapping matched instrument IDs to preview versions.'}}, required=['document'])
-STATEMENT_RESULT = {'oneOf': [obj({'simulated': BOOLEAN, 'rows': array(LINE),
+STATEMENT_RESULT = {'oneOf': [obj({'simulated': BOOLEAN, 'rows': array(LINE), 'format': TEXT,
+    'rejected': array(obj({'where': TEXT, 'reason': TEXT})), 'ignored': array(obj({'where': TEXT, 'reason': TEXT})),
     'versions': {'type': 'object', 'additionalProperties': INTEGER}}),
     obj({'id': INTEGER, 'existing': BOOLEAN, 'simulated': BOOLEAN, 'rows': array(LINE)})]}
 BANK_REQUEST = obj({'id': {'type': 'string', 'format': 'uuid'}, 'instrument_version': INTEGER,

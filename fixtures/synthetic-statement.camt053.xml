@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02">
+  <BkToCstmrStmt>
+    <GrpHdr><MsgId>SYNTHETIC-CAMT-1</MsgId></GrpHdr>
+    <Stmt>
+      <Id>SIMULATED</Id>
+      <Ntry>
+        <Amt Ccy="INR">500000.25</Amt><CdtDbtInd>CRDT</CdtDbtInd><BookgDt><Dt>2026-10-24</Dt></BookgDt><ValDt><Dt>2026-10-24</Dt></ValDt>
+        <NtryDtls><TxDtls><Refs><EndToEndId>NOTPROVIDED</EndToEndId><TxId>YASH-SYNTHETIC-MATCH</TxId></Refs></TxDtls></NtryDtls>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="INR">400000.00</Amt><CdtDbtInd>CRDT</CdtDbtInd><ValDt><Dt>2026-10-24</Dt></ValDt>
+        <NtryDtls><TxDtls><Refs><EndToEndId>YASH-SYNTHETIC-MISMATCH</EndToEndId></Refs></TxDtls></NtryDtls>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="INR">1000.00</Amt><CdtDbtInd>DBIT</CdtDbtInd><ValDt><Dt>2026-10-24</Dt></ValDt>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="USD">10.00</Amt><CdtDbtInd>CRDT</CdtDbtInd><ValDt><Dt>2026-10-24</Dt></ValDt>
+        <NtryDtls><TxDtls><Refs><TxId>USD0001</TxId></Refs></TxDtls></NtryDtls>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>
