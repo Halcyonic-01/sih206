@@ -150,5 +150,35 @@ class GovernanceFlowTests(PortalTestCase):
         self.assertEqual(quote['net_paise'], quote['held_paise'])
         self.assertEqual(quote['interest'], 'NOT_COMPUTED')
 
+    def test_an_issued_letter_carries_a_signed_qr_that_the_public_page_checks(self):
+        from unittest.mock import patch
+        from urllib.parse import parse_qs, urlparse
+        import casework.services as casework_services
+        real = casework_services.render_letter
+        seen = {}
+
+        def capture(**kwargs):
+            seen.update(kwargs)
+            return real(**kwargs)
+        case = self.sign(self.authority, self.ready(self.case()))
+        with patch.object(casework_services, 'render_letter', capture):
+            services.issue(self.authority, case.pk, case.version, 'Issue')
+        url = urlparse(seen['verification_url'])
+        query = parse_qs(url.query)
+        token = url.path.rsplit('/', 1)[1]
+        record = services.public_record(token, query['p'][0], query['s'][0])
+        self.assertTrue(record['signature']['valid'])
+        self.assertTrue(record['signature']['matches_record'])
+        self.assertNotIn('signature', services.public_record(token))                 # an unsigned link still shows the record
+        tampered = services.public_record(token, query['p'][0], 'A' * 86)
+        self.assertFalse(tampered['signature']['valid'])
+
+    def test_letters_are_refused_without_a_signing_key_outside_debug(self):
+        from obligations.services import DependencyUnavailable
+        case = self.sign(self.authority, self.ready(self.case()))
+        with override_settings(LETTER_SIGNING_KEY='', DEBUG=False, TESTING=False):
+            with self.assertRaisesMessage(DependencyUnavailable, 'LETTER_SIGNING_KEY'):
+                services.issue(self.authority, case.pk, case.version, 'Issue')
+
 
 del CaseworkTests  # imported only for its fixtures; keep the loader from running its tests a second time here

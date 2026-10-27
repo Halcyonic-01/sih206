@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from portal.api.schema_types import PAGINATION, FILE, responses
 from ai.schema import SUMMARY, VERSION
 from . import schema as docs
@@ -18,7 +18,7 @@ from portal.permissions import role
 from access import mfa
 from access.logging import log_access
 from access.models import AccessLog
-from . import governance, services
+from . import governance, services, signing
 from . import ai_summary
 
 
@@ -284,13 +284,27 @@ class LetterDownload(OwnedView):
         return response
 
 
-@extend_schema_view(get=extend_schema(auth=[], responses=responses(docs.PUBLIC)))
+@extend_schema_view(get=extend_schema(auth=[], parameters=[OpenApiParameter('p', str, description='Signed payload from the letter QR'),
+    OpenApiParameter('s', str, description='Signature from the letter QR')], responses=responses(docs.PUBLIC)))
 class PublicVerify(OwnedView):
     authentication_classes = []
     permission_classes = []
 
     def get(self, request, token):
-        result = services.public_record(token)
+        result = services.public_record(token, request.query_params.get('p'), request.query_params.get('s'))
         if result is None:
             raise Http404
         return Response(result)
+
+
+@extend_schema_view(get=extend_schema(auth=[], responses=responses(docs.LETTER_KEY)))
+class LetterKey(OwnedView):
+    """The public half of the letter-signing key, so a printed letter's QR can be checked without the portal."""
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        try:
+            return Response(signing.public_key_info() | {'payload': 'canonical JSON of the QR "p" value', 'signature': 'Ed25519 over the decoded "p" bytes'})
+        except signing.SigningUnavailable:
+            raise Http404

@@ -20,5 +20,6 @@ urlpatterns = [
     path('releases/<int:pk>/clearances/<str:unit>', api.Clearance.as_view(), name='release-clearance'),
     path('releases/<int:pk>/<str:action>', api.CaseAction.as_view(), name='release-case-action'),
     path('clearance-tasks', api.ClearanceQueue.as_view(), name='release-clearance-queue'),
+    path('public/letter-key', api.LetterKey.as_view(), name='release-letter-key'),
     path('public/verify/<str:token>', api.PublicVerify.as_view(), name='release-public-verify'),
 ]

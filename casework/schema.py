@@ -48,4 +48,7 @@ ACTION = obj({'version': INTEGER, 'instrument_version': INTEGER, 'reason': TEXT,
     required=['version'])
 CLEARANCE_INPUT = obj({'version': INTEGER, 'status': TEXT, 'reason': TEXT, 'evidence_ref': TEXT, 'evidence_id': INTEGER})
 QUEUE = page(obj({'case_id': INTEGER, 'version': INTEGER, 'due_date': nullable(DATE), **CLEARANCE['properties']}))
-PUBLIC = obj({'serial': TEXT, 'issue_date': DATE, 'institution_name': TEXT, 'kind': TEXT, 'status': TEXT})
+PUBLIC = obj({'serial': TEXT, 'issue_date': DATE, 'institution_name': TEXT, 'kind': TEXT, 'status': TEXT,
+    'signature': obj({'checked': BOOLEAN, 'valid': BOOLEAN, 'matches_record': BOOLEAN, 'kid': nullable(TEXT), 'key_kind': nullable(TEXT)})},
+    required=['serial', 'issue_date', 'institution_name', 'kind', 'status'])
+LETTER_KEY = obj({'algorithm': TEXT, 'public_key': TEXT, 'kid': TEXT, 'key_kind': TEXT, 'payload': TEXT, 'signature': TEXT})

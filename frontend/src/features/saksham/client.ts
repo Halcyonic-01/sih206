@@ -69,12 +69,16 @@ export interface ClearanceEvidence {id: number; name: string; page_count: number
   uploaded_by: string; uploaded_at: string; download_path: string}
 export interface Clearance {unit: string; status: string; reason: string; evidence_ref: string; can_decide: boolean;
   evidence?: ClearanceEvidence | null; evidence_state?: string; reviewer?: string | null; decided_at?: string | null}
-export interface PublicRecord {serial: string; issue_date: string; institution_name: string; kind: string; status: 'ISSUED'|'REVOKED'}
+export interface LetterSignature {checked: boolean; valid: boolean; matches_record: boolean; kid: string | null; key_kind: string | null}
+export interface PublicRecord {serial: string; issue_date: string; institution_name: string; kind: string; status: 'ISSUED'|'REVOKED'; signature?: LetterSignature}
 export function publicRecord(value: unknown): PublicRecord {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Unavailable');
   const record = value as Record<string, unknown>;
   const keys = ['serial','issue_date','institution_name','kind','status'];
-  if (Object.keys(record).length !== keys.length || keys.some(k => typeof record[k] !== 'string')) throw new Error('Unavailable');
+  const extra = Object.keys(record).filter(k => !keys.includes(k));
+  if (extra.some(k => k !== 'signature') || keys.some(k => typeof record[k] !== 'string')) throw new Error('Unavailable');
+  const sig = record.signature as Record<string, unknown> | undefined;
+  if (sig !== undefined && (typeof sig !== 'object' || sig === null || typeof sig.checked !== 'boolean' || typeof sig.valid !== 'boolean' || typeof sig.matches_record !== 'boolean')) throw new Error('Unavailable');
   if (!['ISSUED','REVOKED'].includes(record.status as string) || !['NOC','SANCTION_ORDER'].includes(record.kind as string)) throw new Error('Unavailable');
   return record as unknown as PublicRecord;
 }

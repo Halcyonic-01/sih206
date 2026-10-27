@@ -22,7 +22,7 @@ from obligations.models import ClearanceEvidence, ClearanceTask, DepositObligati
 from obligations.release_prerequisites import evaluate_prerequisites, PrerequisiteInputError, SECTIONS, TOP
 from obligations.rules import rule_snapshot
 from obligations.services import DependencyUnavailable, expected_version, reason_text
-from . import governance
+from . import governance, signing
 from .refund import quote as quote_refund
 from .letters import render_letter
 from .facts import assemble as assemble_facts
@@ -413,6 +413,10 @@ def issue(actor, case_id, version, reason):
     parsed = urlparse(base)
     if parsed.scheme not in {'https','http'} or not parsed.netloc or parsed.query or parsed.fragment or parsed.username or parsed.password:
         raise DependencyUnavailable('Public verification base URL is not configured.')
+    try:
+        signing.public_key_info()
+    except signing.SigningUnavailable as error:
+        raise DependencyUnavailable(str(error)) from None
     bump(case, version)
     instrument = case.release.instrument
     before = instrument_snapshot(instrument)
@@ -420,8 +424,12 @@ def issue(actor, case_id, version, reason):
     token = secrets.token_urlsafe(32)
     serial = 'SYNTH-' + uuid4().hex.upper()
     kind = result['proposed_letter_kind']
+    issued = timezone.localdate().isoformat()
+    signed_p, signed_s = signing.sign(signing.build_payload(serial=serial, kind=kind, case_id=case.pk,
+        institution=case.institution.name, instrument_reference=instrument.reference,
+        amount_paise=instrument.amount_paise, issued=issued))
     pdf = render_letter(serial=serial, kind=kind, institution_name=case.institution.name,
-        issue_date=timezone.localdate().isoformat(), verification_url=base.rstrip('/') + '/verify/' + token,
+        issue_date=issued, verification_url=f'{base.rstrip("/")}/verify/{token}?p={signed_p}&s={signed_s}',
         refund=refund_quote(case))
     letter = IssuedLetter.objects.create(case=case, serial=serial, kind=kind, issued_by=actor,
         institution_name=case.institution.name,
@@ -497,13 +505,22 @@ def revoke(actor, case_id, version, reason):
     return case
 
 
-def public_record(token):
+def public_record(token, signed_payload=None, signature=None):
     if type(token) is not str or not 20 <= len(token) <= 100 or not all(c.isascii() and (c.isalnum() or c in '-_') for c in token):
         return None
     letter = IssuedLetter.objects.select_related('case__institution').filter(
         token_sha256=hashlib.sha256(token.encode()).hexdigest()).first()
     if letter is None:
         return None
-    return {'serial': letter.serial, 'issue_date': timezone.localtime(letter.issued_at).date().isoformat(),
+    record = {'serial': letter.serial, 'issue_date': timezone.localtime(letter.issued_at).date().isoformat(),
         'institution_name': letter.institution_name, 'kind': letter.kind,
         'status': 'REVOKED' if letter.revoked_at else 'ISSUED'}
+    if signed_payload and signature:
+        try:
+            server_facts = signing.build_payload(serial=letter.serial, kind=letter.kind, case_id=letter.case_id,
+                institution=letter.institution_name, instrument_reference=letter.case.release.instrument.reference,
+                amount_paise=letter.case.release.instrument.amount_paise, issued=record['issue_date'])
+            record['signature'] = signing.check(signed_payload, signature, server_facts)
+        except signing.SigningUnavailable:
+            record['signature'] = {'checked': False, 'valid': False, 'matches_record': False, 'kid': None, 'key_kind': None}
+    return record

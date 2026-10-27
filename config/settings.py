@@ -72,7 +72,8 @@ TEMPLATES = [{
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 (BASE_DIR / 'data').mkdir(exist_ok=True)
-DATABASES = {'default': database_config(BASE_DIR, testing=sys.argv[1:2] == ['test'])}
+TESTING = sys.argv[1:2] == ['test']
+DATABASES = {'default': database_config(BASE_DIR, testing=TESTING)}
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -107,6 +108,11 @@ MFA_STEP_UP_SECONDS = env_int('MFA_STEP_UP_SECONDS', 600, minimum=60)
 MFA_ISSUER = os.environ.get('MFA_ISSUER', 'Pramaan').strip() or 'Pramaan'
 # Release governance (casework/governance.py): the person who authorised a release may not also record its completion.
 RELEASE_REQUIRE_DIFFERENT_COMPLETER = env_bool('RELEASE_REQUIRE_DIFFERENT_COMPLETER', False)
+# Ed25519 key that signs the facts in a letter's QR code (casework/signing.py). Outside DEBUG letters are not issued without it.
+LETTER_SIGNING_KEY = os.environ.get('LETTER_SIGNING_KEY', '').strip()
+if LETTER_SIGNING_KEY:
+    from .documentkey import parse_key as _parse_letter_key
+    _parse_letter_key(LETTER_SIGNING_KEY)
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # No MEDIA_URL route: all document reads go through an ownership-checked view.

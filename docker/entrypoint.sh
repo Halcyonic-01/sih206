@@ -24,6 +24,16 @@ if [ -z "${DOCUMENT_ENCRYPTION_KEY:-}" ]; then
   export DOCUMENT_ENCRYPTION_KEY
 fi
 
+# Letter-signing key (Ed25519, signs the facts in each letter's QR). Same caveat: set LETTER_SIGNING_KEY from a secret store in real use.
+if [ -z "${LETTER_SIGNING_KEY:-}" ]; then
+  if [ ! -s data/.letter_key ]; then
+    python -c "from config.documentkey import generate_key; print(generate_key())" > data/.letter_key
+    chmod 600 data/.letter_key
+  fi
+  LETTER_SIGNING_KEY="$(cat data/.letter_key)"
+  export LETTER_SIGNING_KEY
+fi
+
 python manage.py migrate --noinput
 python manage.py seal_audit_chain
 # Encrypt documents stored before encryption was on (idempotent); a problem is reported but does not stop start-up.
