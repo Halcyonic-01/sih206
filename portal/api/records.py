@@ -23,6 +23,7 @@ from portal.exports import register_csv
 from portal.models import Document, Instrument
 from portal.notification_hook import notify_record
 from portal.permissions import institution_for, role, scoped_instruments
+from portal import auditor_downloads
 from portal.queue_ageing import submission_waits
 from portal.scanning import downloadable
 from portal.uploads import DocumentIntegrityError, open_verified, record_integrity_failure
@@ -237,6 +238,7 @@ class CorrectRecord(RecordEndpoint):
 class Download(RecordEndpoint):
     def get(self, request, pk):
         document = get_object_or_404(Document.objects.filter(instrument__in=scoped_instruments(request.user)), pk=pk)
+        reason = auditor_downloads.reason_for(request)   # auditors must state why; everyone else gets None
         if not downloadable(document):
             quarantined = document.scan_status == 'REJECTED'
             return Response({'detail': 'This document was quarantined by the malware scan.' if quarantined else
@@ -253,7 +255,8 @@ class Download(RecordEndpoint):
                        detail=f'instrument={document.instrument_id} refused=integrity')
             return Response({'detail': 'This document failed its integrity check and cannot be downloaded. '
                                        'The officers have been told.', 'code': 'document_integrity_failed'}, status=409)
-        log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document, detail=f'instrument={document.instrument_id}')
+        log_access(request, AccessLog.DOCUMENT_DOWNLOAD, document, detail=auditor_downloads.log_detail(document, reason))
+        auditor_downloads.announce(document, request.user, reason)
         response = FileResponse(file, content_type='application/pdf', as_attachment=True,
                                 filename=document.original_name)
         response['Cache-Control'] = 'no-store'

@@ -166,3 +166,11 @@ Multipart uploads are fingerprinted by content type and length rather than read 
 records older than 24 hours (the Docker scheduler and `run_portal.py` run it every few minutes). The React client sends one key per
 user intent: the same write repeated within two minutes (a double click, a retry after a network error or 5xx) reuses its key, and a
 final answer from the server starts a new one.
+
+## Auditor downloads need a reason (P2-10)
+
+An auditor can read document metadata and SHA-256 hashes freely, but `GET /api/documents/{id}/download/` (and the legacy download)
+answers 403 `download_reason_required` unless a reason of 10 to 300 characters is given as `?reason=...` or the `X-Download-Reason`
+header. The reason is written to the access log (`auditor reason: ...`). With `AUDITOR_DOWNLOAD_NOTIFY=true` the dealing officers are
+also notified (once per document, auditor and reason). Other roles are unchanged. The React audit screens do not link to files, so
+this is enforced at the API.
