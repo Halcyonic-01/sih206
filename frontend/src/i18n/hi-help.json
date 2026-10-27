@@ -84,5 +84,7 @@
   "Digest dispatch enabled":"सारांश भेजना चालू है",
   "Digest dispatch is disabled on this server":"इस सर्वर पर सारांश भेजना बंद है",
   "Preview my digest":"मेरे सारांश का पूर्वावलोकन",
-  "Digest unavailable: no eligible email or preference is disabled.":"सारांश उपलब्ध नहीं: मान्य ईमेल नहीं है या आपकी प्राथमिकता बंद है।"
+  "Digest unavailable: no eligible email or preference is disabled.":"सारांश उपलब्ध नहीं: मान्य ईमेल नहीं है या आपकी प्राथमिकता बंद है।",
+  "Enter your code":"अपना कोड दर्ज करें",
+  "Open your authenticator app and enter the 6-digit code for this portal.":"अपना ऑथेंटिकेटर ऐप खोलें और इस पोर्टल के लिए 6 अंकों का कोड दर्ज करें।"
 }
