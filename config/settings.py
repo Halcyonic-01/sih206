@@ -12,7 +12,10 @@ from .staticrules import immutable_assets, static_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Optional local .env (git-ignored). Variables already set in the real environment take precedence.
-load_env_file(BASE_DIR / '.env')
+# The test runner never reads .env: a developer's local feature switches (MFA, scanning, encryption...) must not change test results.
+TESTING = sys.argv[1:2] == ['test']
+if not TESTING:
+    load_env_file(BASE_DIR / '.env')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
 if not SECRET_KEY:
@@ -73,7 +76,6 @@ TEMPLATES = [{
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 (BASE_DIR / 'data').mkdir(exist_ok=True)
-TESTING = sys.argv[1:2] == ['test']
 DATABASES = {'default': database_config(BASE_DIR, testing=TESTING)}
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
