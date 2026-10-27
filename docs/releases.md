@@ -142,3 +142,12 @@ the penalties a human has **confirmed**, and the net amount to be returned. Prop
 the net never goes below zero (and a warning is shown if confirmed penalties exceed the amount held). **Interest is not
 computed** until a rule for it is approved, and the quote says so. No payment is made by the portal; for RTGS deposits the
 recorded refund reference entered at completion appears on the quote. (`casework/refund.py`)
+
+## Signed QR on letters
+
+The QR on an issued letter opens `/verify/<token>?p=<payload>&s=<signature>`. `p` is the canonical JSON of the letter's key
+facts (serial, kind, case, institution, instrument reference, amount held, issue date, key id) and `s` an Ed25519 signature
+over those bytes (`casework/signing.py`). The verify page checks the signature **and** compares the signed facts with the
+server's record, and says plainly when either fails. Anyone can check a printed letter offline with the public key from
+`GET /api/public/letter-key`. Outside DEBUG, `LETTER_SIGNING_KEY` is required to issue a letter (there is no built-in key);
+in DEBUG a development key is used and labelled DEVELOPMENT. This is a portal signature, not a DSC-signed PDF.

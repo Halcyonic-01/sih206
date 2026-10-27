@@ -304,7 +304,9 @@ function ClearanceDecision({task, client, reload}: {task: Task; client: Transpor
 
 export function PublicVerification({client, token}: {client: Transport; token: string}) {
   useLanguage();
-  const remote = useRemote<unknown>(client, `public/verify/${encodeURIComponent(token)}`, token);
+  const signed = new URLSearchParams(window.location.search);
+  const query = signed.get('p') && signed.get('s') ? `?p=${encodeURIComponent(signed.get('p')!)}&s=${encodeURIComponent(signed.get('s')!)}` : '';
+  const remote = useRemote<unknown>(client, `public/verify/${encodeURIComponent(token)}${query}`, token);
   if (remote.error) {
     const status = (remote.error as Failure)?.status;
     return <section><h1>{tr("Verify letter")}</h1>
@@ -321,6 +323,13 @@ export function PublicVerification({client, token}: {client: Transport; token: s
     <Notice />
     <SummaryList items={[{label: tr("Serial"), value: record.serial}, {label: tr("Issue date"), value: formatDate(record.issue_date)},
       {label: tr("Institution"), value: record.institution_name}, {label: tr("Kind"), value: record.kind === 'NOC' ? 'No Objection Certificate' : 'Sanction order'}]} />
+    {record.signature && (
+      <Alert showIcon style={{margin: '12px 0'}} type={record.signature.valid && record.signature.matches_record ? 'success' : 'error'}
+        message={record.signature.valid && record.signature.matches_record ? 'The QR signature is valid and matches this record.'
+          : record.signature.valid ? 'The QR signature is valid but its facts differ from this record. Do not rely on the printed letter.'
+          : 'The QR signature could not be verified. Do not rely on the printed letter.'}
+        description={record.signature.key_kind === 'DEVELOPMENT' ? 'Signed with a development key (demo only).' : `Key ${record.signature.kid ?? ''}`} />
+    )}
     <p className="muted">{tr("This confirms that the letter was issued by the portal. It is not a bank confirmation or a digital signature.")}</p>
   </section>;
 }

@@ -257,6 +257,7 @@ The local demo runs with no `.env` at all.
 | `BUSINESS_TIMEZONE` | `Asia/Kolkata` | Timezone for dates and deadlines. |
 | `CLAMAV_HOST`, `CLAMAV_PORT` | empty, `3310` | A ClamAV `clamd` service. When set, every uploaded PDF is scanned and an infected one is refused. |
 | `SCAN_REQUIRED` | `false` | When `true` (needs `CLAMAV_HOST`), uploads are refused while the scanner is down, and documents that were never scanned cannot be downloaded or sent to OCR or AI. `manage.py scan_documents` scans older documents and quarantines infected ones. |
+| `LETTER_SIGNING_KEY` | empty | Ed25519 key (32 random bytes, URL-safe base64) that signs the facts in a letter's QR code. **Letters are not issued without it outside DEBUG.** Public key at `/api/public/letter-key`. |
 | `DOCUMENT_ENCRYPTION_KEY` | empty | Master key (32 random bytes, URL-safe base64) for AES-256-GCM encryption of stored PDFs. **Required when `DJANGO_DEBUG=false`.** Generate with `python -c "from config.documentkey import generate_key; print(generate_key())"`. Empty in local DEBUG keeps files in plain form. |
 | `DOCUMENT_ENCRYPTION_OLD_KEYS` | empty | Previous master keys, comma-separated, still accepted while `manage.py encrypt_documents` moves files to the current key. |
 | `DOCUMENT_ALLOW_PLAINTEXT` | `true` | Whether files stored before encryption was on may still be read. Set `false` once `encrypt_documents` has run. |

@@ -135,6 +135,19 @@ def prod_document_key():
     return path.read_text().strip()
 
 
+def prod_letter_key():
+    """Stable letter-signing key for production-like local runs, kept in git-ignored data/."""
+    path = ROOT / 'data' / '.letter_key'
+    path.parent.mkdir(exist_ok=True)
+    if not path.exists():
+        path.write_text(new_document_key())  # 32 random bytes, URL-safe base64: the same format
+        try:
+            path.chmod(0o600)
+        except OSError:
+            pass
+    return path.read_text().strip()
+
+
 def django_env(prod):
     env = os.environ.copy()
     env['PYTHONUNBUFFERED'] = '1'
@@ -142,6 +155,7 @@ def django_env(prod):
         env['DJANGO_DEBUG'] = 'false'
         # The .env key first, so `manage.py` commands run by hand sign links with the same key as the server.
         env.setdefault('DJANGO_SECRET_KEY', dotenv_settings().get('DJANGO_SECRET_KEY') or prod_secret())
+        env.setdefault('LETTER_SIGNING_KEY', dotenv_settings().get('LETTER_SIGNING_KEY') or prod_letter_key())
         env.setdefault('DOCUMENT_ENCRYPTION_KEY', dotenv_settings().get('DOCUMENT_ENCRYPTION_KEY') or prod_document_key())
     return env
 
