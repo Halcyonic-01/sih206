@@ -72,7 +72,14 @@ def dashboard(user, params):
         key = day.strftime('%Y-%m')
         buckets[key] = buckets.get(key, 0) + 1
     from notifications.alerts import open_alerts
+    calendar = {}
+    for item in records.filter(status='ACCEPTED', superseded_at__isnull=True, released_at__isnull=True,
+                               maturity_date__gte=as_of, maturity_date__lt=as_of + timedelta(days=366)).order_by('maturity_date', 'pk')[:2000]:
+        day = calendar.setdefault(item.maturity_date.isoformat(), {'date': item.maturity_date.isoformat(), 'count': 0, 'records': []})
+        day['count'] += 1
+        if len(day['records']) < 6:
+            day['records'].append({'id': item.pk, 'reference': item.reference})
     return {'as_of': as_of, 'demo_date': bool(params.get('as_of')), 'counts': counts,
-            'interventions': rows, 'alerts': open_alerts(user), 'shortfalls': shortfalls, 'coverage': coverage_rows,
+            'interventions': rows, 'alerts': open_alerts(user), 'maturity_calendar': list(calendar.values()), 'shortfalls': shortfalls, 'coverage': coverage_rows,
             'coverage_available': bool(coverage_rows) and all(item['known'] for item in coverage_rows),
             'maturity_chart': [{'month': key, 'count': count} for key, count in sorted(buckets.items())]}

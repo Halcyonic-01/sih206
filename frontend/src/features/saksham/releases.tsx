@@ -9,6 +9,7 @@ import { formatDate, formatDateTime } from '@/lib/format';
 import { humanize, RELEASE_PATH_LABELS } from '@/lib/labels';
 import {api, Case, Clearance, ClearanceEvidence, Page, PublicRecord, publicRecord, Transport, money, paise, Failure} from './client';
 import {ClearancePdf} from './ClearanceEvidence';
+import {WaitingBadge} from '../records/WaitingBadge';
 import {ErrorBox, Loading, Notice, Readiness, useRemote} from './shared';
 
 export interface ReleaseInputs {
@@ -230,7 +231,8 @@ function CaseBody({client, identityKey, caseId}: {client: Transport; identityKey
   </section>;
 }
 
-interface Task extends Clearance {case_id: number; version: number; due_date: string | null}
+interface Task extends Clearance {case_id: number; version: number; due_date: string | null;
+  waiting?: {working_days: number; calendar_days: number; limit: number; band: 'ok' | 'soon' | 'overdue'; since: string} | null}
 export function ClearanceQueue({client, identityKey, onSelect}: {client: Transport; identityKey: string; onSelect: (id: number) => void}) {
   useLanguage();
   return <QueueBody key={identityKey} client={client} identityKey={identityKey} onSelect={onSelect} />;
@@ -249,7 +251,7 @@ function QueueBody({client, identityKey, onSelect}: {client: Transport; identity
     {remote.data?.results.length === 0 && <p>{tr("No assigned clearance work. This does not mean all cases are cleared.")}</p>}
     <ul className="record-list">{remote.data?.results.map(t => <li key={`${t.case_id}:${t.unit}`} className="record-card">
       <div className="record-card__top"><button type="button" className="record-card__ref" onClick={() => onSelect(t.case_id)}>{tr("Case  ")}{t.case_id}</button><StatusTag value={t.status} /></div>
-      <dl className="record-card__meta"><div><dt>{tr("Unit")}</dt><dd>{t.unit}</dd></div><div><dt>{tr("Due")}</dt><dd>{t.due_date ? formatDate(t.due_date) : tr("Unavailable")}</dd></div></dl>
+      <dl className="record-card__meta"><div><dt>{tr("Unit")}</dt><dd>{t.unit}</dd></div><div><dt>{tr("Due")}</dt><dd>{t.due_date ? formatDate(t.due_date) : tr("Unavailable")}</dd></div>{t.waiting && <div><dt>Waiting</dt><dd><WaitingBadge waiting={t.waiting} /></dd></div>}</dl>
       {t.can_decide ? <ClearanceDecision key={`${t.case_id}:${t.version}`} task={t} client={client} reload={remote.reload} /> :
         t.evidence ? <ClearancePdf evidence={t.evidence} /> : <p>{tr("Reference only — no linked PDF.")}</p>}
     </li>)}</ul>

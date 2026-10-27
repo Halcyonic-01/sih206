@@ -23,6 +23,7 @@ from portal.exports import register_csv
 from portal.models import Document, Instrument
 from portal.notification_hook import notify_record
 from portal.permissions import institution_for, role, scoped_instruments
+from portal.queue_ageing import submission_waits
 from portal.scanning import downloadable
 from portal.uploads import DocumentIntegrityError, open_verified, record_integrity_failure
 from portal.validation import run_checks
@@ -78,8 +79,8 @@ def release_case_id(user, item):
     return scoped_cases(user).filter(release__instrument=item).order_by('-pk').values_list('pk', flat=True).first()
 
 
-def brief(item):
-    return {'id': item.pk, 'reference': item.reference, 'bank': item.bank,
+def brief(item, wait=None):
+    return {'waiting': wait, 'id': item.pk, 'reference': item.reference, 'bank': item.bank,
         'institution': {'id': item.institution_id, 'code': item.institution.code, 'name': item.institution.name},
         'amount': str(item.amount), 'issue_date': item.issue_date, 'maturity_date': item.maturity_date,
         'mode': item.mode, 'status': item.status, 'version': item.version,
@@ -118,8 +119,10 @@ class Records(RecordEndpoint):
         if page < 1 or not 1 <= size <= 100:
             raise ValueError('Page must be positive and page_size between 1 and 100.')
         count = records.count()
+        rows = list(records[(page-1)*size:page*size])
+        waits = submission_waits(rows, business_today())
         return Response({'count': count, 'page': page, 'page_size': size,
-            'results': [brief(item) for item in records[(page-1)*size:page*size]]})
+            'results': [brief(item, waits.get(item.pk)) for item in rows]})
 
     def post(self, request):
         institution = institution_for(request.user)
