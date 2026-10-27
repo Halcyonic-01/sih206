@@ -20,7 +20,11 @@ export type RecordItem = {
   lineage?: {predecessor: {id: number; reference: string} | null; successor: {id: number; reference: string} | null};
 };
 export type Page = {count: number; page: number; page_size: number; results: RecordItem[]};
+export type OpenAlert = {id: number; rule: string; reference: string; summary: string; url: string; instrument_id: number | null;
+  status: 'OPEN' | 'ACKNOWLEDGED'; opened_on: string; acknowledged_by: string | null; acknowledged_at: string | null; note: string;
+  escalation_level: number; can_acknowledge: boolean};
 export type DashboardData = {as_of: string; counts: Record<string, number>; coverage_available: boolean;
   coverage?: {obligation_id: number; institution: string; required_paise: number | null; held_paise: number; shortfall_paise: number | null; term_gap: boolean; policy_label?: string}[];
   interventions: {id: number; reference: string; kind: string; next_action: string}[];
+  alerts?: OpenAlert[];
   maturity_chart: {month: string; count: number}[]};

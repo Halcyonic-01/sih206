@@ -39,6 +39,7 @@ COVERAGE = obj({'obligation_id': INTEGER, 'institution_id': INTEGER, 'institutio
     'policy_label': TEXT}, required=['obligation_id', 'known', 'required_paise', 'held_paise', 'shortfall_paise'])
 DASHBOARD = obj({'as_of': DATE, 'demo_date': BOOLEAN, 'counts': {'type': 'object', 'additionalProperties': INTEGER},
     'interventions': array(obj({'id': INTEGER, 'reference': TEXT, 'kind': TEXT, 'next_action': TEXT})),
+    'alerts': array(JSON),
     'shortfalls': array(COVERAGE), 'coverage': array(COVERAGE), 'coverage_available': BOOLEAN,
     'maturity_chart': array(obj({'month': TEXT, 'count': INTEGER}))})
 FILTERS = [OpenApiParameter(name, str, description=description) for name, description in (

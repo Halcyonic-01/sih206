@@ -71,7 +71,8 @@ def dashboard(user, params):
     for day in months:
         key = day.strftime('%Y-%m')
         buckets[key] = buckets.get(key, 0) + 1
+    from notifications.alerts import open_alerts
     return {'as_of': as_of, 'demo_date': bool(params.get('as_of')), 'counts': counts,
-            'interventions': rows, 'shortfalls': shortfalls, 'coverage': coverage_rows,
+            'interventions': rows, 'alerts': open_alerts(user), 'shortfalls': shortfalls, 'coverage': coverage_rows,
             'coverage_available': bool(coverage_rows) and all(item['known'] for item in coverage_rows),
             'maturity_chart': [{'month': key, 'count': count} for key, count in sorted(buckets.items())]}

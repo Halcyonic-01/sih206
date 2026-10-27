@@ -49,6 +49,10 @@ TEMPLATES = {
     'penalty_proposed': Template(
         'Penalty proposed on FDR {reference}',
         'A penalty assessment is waiting for a decision on FDR {reference}.', 'warning'),
+    'alert_escalated': Template(
+        'Not acknowledged for {days} days: {reference}',
+        'An action on {reference} ({rule}) has been open for {days} days with nobody taking charge. Please look at it or '
+        'acknowledge it in the portal.', 'critical'),
     'release_second_signature': Template(
         'Second signature needed on FDR {reference}',
         'A first authority signature was recorded on the release of FDR {reference}. A different authority user must give '

@@ -17,6 +17,7 @@ from django.conf import settings
 from django.db.models import Q
 
 from obligations.models import DepositObligation, RuleSet
+from .models import AlertAction
 from portal.models import AuditEvent, Instrument
 from . import recipients as who
 from .service import notify
@@ -39,6 +40,8 @@ DEFAULTS = {
         'clearance_working_days': [7, 14],
     },
     'holidays': [],
+    # An alert nobody has acknowledged after this many days is escalated one level (P2-3).
+    'alert_escalation_days': 7,
 }
 
 
@@ -82,6 +85,7 @@ class Result:
     skipped: int = 0
     lines: list = field(default_factory=list)
     errors: list = field(default_factory=list)
+    alert_keys: set = field(default_factory=set)
 
     def add(self, rule, label, recipients, created):
         self.created += len(created)
@@ -107,12 +111,73 @@ def _recipients(*groups):
     return ordered
 
 
-def _dispatch(result, dry_run, rule, label, recipients, template, context, key):
+# Rules that ask someone to act. Each keeps one AlertAction per notification key until the condition clears.
+ALERT_RULES = {
+    'maturity': ('renewal-overdue', 'penalty-review'),
+    'proof': ('proof-due',),
+    'sla': ('sla-submission', 'sla-correction', 'sla-clearance'),
+}
+
+
+def _dispatch(result, dry_run, rule, label, recipients, template, context, key, target=None, as_of=None):
     if dry_run:
         result.lines.append(f'{rule}: {label} -> {len(recipients)} recipient(s) [dry run: {key}]')
         return
     created = notify(recipients, template, context, key)
     result.add(rule, label, recipients, created)
+    if target is not None:
+        result.alert_keys.add(key)
+        open_alert(rule, key, label, context, target, as_of or date.today())
+
+
+def open_alert(rule, key, label, context, target, as_of):
+    """Create the action for this key, or reopen it if the same condition returned after being resolved."""
+    values = {'rule': rule, 'reference': str(context.get('reference') or '')[:200], 'summary': label[:300],
+              'url': str(context.get('url') or '')[:300], 'opened_on': as_of,
+              'instrument_id': target.get('instrument_id'), 'institution_id': target.get('institution_id')}
+    alert, created = AlertAction.objects.get_or_create(key=key, defaults=values)
+    if not created and alert.status == AlertAction.Status.RESOLVED:
+        alert.status, alert.resolved_at, alert.resolved_reason = AlertAction.Status.OPEN, None, ''
+        alert.acknowledged_by = alert.acknowledged_at = None
+        alert.note, alert.escalation_level, alert.escalated_at, alert.opened_on = '', 0, None, as_of
+        alert.save()
+    elif not created and alert.summary != values['summary']:
+        AlertAction.objects.filter(pk=alert.pk).update(summary=values['summary'])
+    return alert
+
+
+def resolve_cleared(group, result, institution=None):
+    """The group ran to the end: an open action whose key did not fire this time has cleared by itself."""
+    stale = AlertAction.objects.filter(rule__in=ALERT_RULES[group]).exclude(status=AlertAction.Status.RESOLVED)
+    stale = stale.exclude(key__in=result.alert_keys)
+    if institution:
+        stale = stale.filter(Q(institution=institution) | Q(instrument__institution=institution))
+    from django.utils import timezone
+    count = stale.update(status=AlertAction.Status.RESOLVED, resolved_at=timezone.now(),
+                         resolved_reason='Condition cleared (renewal, release, proof received or case closed)')
+    if count:
+        result.lines.append(f'alerts: {count} {group} action(s) resolved because the condition cleared')
+
+
+def escalate_alerts(as_of, config, result, dry_run):
+    """An action nobody acknowledged within `alert_escalation_days` goes one level up (regional head and authority)."""
+    limit = timedelta(days=int(config['alert_escalation_days']))
+    waiting = AlertAction.objects.filter(status=AlertAction.Status.OPEN, escalation_level=0,
+                                         opened_on__lte=as_of - limit).select_related('instrument', 'institution')
+    for alert in waiting:
+        institution = alert.institution or (alert.instrument.institution if alert.instrument_id else None)
+        recipients = _recipients(who.regional_heads(institution) if institution else who.officers(), who.authorities())
+        label = f'{alert.reference or alert.rule}: not acknowledged for {(as_of - alert.opened_on).days} days'
+        if dry_run:
+            result.lines.append(f'alert-escalation: {label} -> {len(recipients)} recipient(s) [dry run: alert:{alert.pk}]')
+            continue
+        created = notify(recipients, 'alert_escalated',
+                         {'reference': alert.reference, 'rule': alert.rule, 'days': (as_of - alert.opened_on).days, 'url': alert.url},
+                         f'alert:{alert.pk}:escalated:1')
+        from django.utils import timezone
+        alert.escalation_level, alert.escalated_at = 1, timezone.now()
+        alert.save(update_fields=['escalation_level', 'escalated_at'])
+        result.add('alert-escalation', label, recipients, created)
 
 
 def _ends_after_obligation(instrument):
@@ -147,11 +212,13 @@ def maturity_rules(as_of, config, result, dry_run, institution=None):
                       _recipients(who.institution_contacts(instrument.institution), who.officers(instrument.institution),
                                   who.regional_heads(instrument.institution), who.authorities()),
                       'renewal_overdue', {**context, 'days': overdue_days},
-                      f'instrument:{instrument.pk}:renewal-overdue:{instrument.maturity_date}')
+                      f'instrument:{instrument.pk}:renewal-overdue:{instrument.maturity_date}',
+                      target={'instrument_id': instrument.pk}, as_of=as_of)
         if overdue_days >= config['penalty_review_after_days']:
             _dispatch(result, dry_run, 'penalty-review', f'{ref} {overdue_days} day(s) past maturity',
                       _recipients(who.officers(instrument.institution)), 'penalty_review_due', {**context, 'days': overdue_days},
-                      f'instrument:{instrument.pk}:penalty-review:{instrument.maturity_date}')
+                      f'instrument:{instrument.pk}:penalty-review:{instrument.maturity_date}',
+                      target={'instrument_id': instrument.pk}, as_of=as_of)
 
 
 def has_active_release(instrument):
@@ -180,7 +247,8 @@ def proof_rules(as_of, config, result, dry_run, institution=None):
                   'proof_due_reminder',
                   {'institution': obligation.institution.name, 'day': threshold,
                    'band': config['proof_penalty_label'], 'url': f'/institutions/{obligation.institution_id}'},
-                  f'obligation:{obligation.pk}:proof-due:day{threshold}:{obligation.intimation_date}')
+                  f'obligation:{obligation.pk}:proof-due:day{threshold}:{obligation.intimation_date}',
+                  target={'institution_id': obligation.institution_id}, as_of=as_of)
 
 
 def _latest_event_date(instrument, action):
@@ -203,7 +271,8 @@ def sla_rules(as_of, config, result, dry_run, institution=None, clearance_provid
                       _recipients(who.authorities()), 'sla_submission_pending',
                       {'reference': instrument.reference, 'days': waited, 'limit': limit,
                        'url': f'/records/{instrument.pk}'},
-                      f'instrument:{instrument.pk}:sla-submission:{since}')
+                      f'instrument:{instrument.pk}:sla-submission:{since}',
+                      target={'instrument_id': instrument.pk}, as_of=as_of)
 
     first, second = sla['correction_days']
     for instrument in records.filter(status=Instrument.Status.CHANGES_REQUESTED):
@@ -215,7 +284,8 @@ def sla_rules(as_of, config, result, dry_run, institution=None, clearance_provid
                           _recipients(group), 'sla_correction_pending',
                           {'reference': instrument.reference, 'days': waited, 'limit': limit,
                            'url': f'/records/{instrument.pk}'},
-                          f'instrument:{instrument.pk}:sla-correction:{limit}:{since}')
+                          f'instrument:{instrument.pk}:sla-correction:{limit}:{since}',
+                          target={'instrument_id': instrument.pk}, as_of=as_of)
 
     provider = clearance_provider or open_clearance_tasks
     unit_days, head_days = sla['clearance_working_days']
@@ -227,7 +297,8 @@ def sla_rules(as_of, config, result, dry_run, institution=None, clearance_provid
                           _recipients(group), 'sla_clearance_pending',
                           {'reference': task['reference'], 'unit': task['unit'], 'days': waited, 'limit': limit,
                            'url': f'/releases/{task["case_id"]}'},
-                          f'clearance:{task["id"]}:sla:{limit}:{task["opened_on"]}')
+                          f'clearance:{task["id"]}:sla:{limit}:{task["opened_on"]}',
+                          target={'instrument_id': task.get('instrument_id')}, as_of=as_of)
 
 
 def add_working_days(start, days, holidays=()):
@@ -245,12 +316,13 @@ def open_clearance_tasks(as_of):
     """Open clearance tasks of pending release cases (S5) as dicts {id, unit, opened_on, reference, case_id}."""
     from obligations.models import ClearanceTask
     return [{'id': task.pk, 'unit': task.unit, 'opened_on': business_date(task.case.created_at),
-             'reference': task.case.release.instrument.reference, 'case_id': task.case_id}
+             'reference': task.case.release.instrument.reference, 'case_id': task.case_id,
+             'instrument_id': task.case.release.instrument_id}
             for task in ClearanceTask.objects.filter(status='OPEN', case__release__status='PENDING')
             .select_related('case__release__instrument').order_by('pk')]
 
 
-RULES = ('maturity', 'proof', 'sla')
+RULES = ('maturity', 'proof', 'sla', 'alerts')
 
 
 def run_rules(as_of, *, dry_run=False, institution=None, only=None, clearance_provider=None):
@@ -267,6 +339,10 @@ def run_rules(as_of, *, dry_run=False, institution=None, only=None, clearance_pr
                 proof_rules(as_of, config, result, dry_run, institution)
             elif name == 'sla':
                 sla_rules(as_of, config, result, dry_run, institution, clearance_provider)
+            elif name == 'alerts':
+                escalate_alerts(as_of, config, result, dry_run)
+            if name in ALERT_RULES and not dry_run:
+                resolve_cleared(name, result, institution)
         except Exception as exc:
             logger.exception('Rule group %s failed', name)
             result.errors.append(f'{name}: {type(exc).__name__}: {exc}')

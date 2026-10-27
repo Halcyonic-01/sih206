@@ -48,6 +48,21 @@ Defaults live in `notifications/rules.py`. The newest `RuleSet` with code `escal
 Working days are Monday to Friday minus `holidays` (no gazetted-holiday calendar is built in).
 The values are a proposal for AICTE to confirm, not validated regulatory timelines.
 
+## Open actions: acknowledge, auto-clear, escalate
+
+The actionable rules (`renewal-overdue`, `penalty-review`, `proof-due`, `sla-submission`, `sla-correction`, `sla-clearance`) also
+keep **one `AlertAction` per notification key**. It is created when the rule first fires and shown as an *Open action* on the
+dashboard (`GET /api/alerts/`, scoped like records, including an officer's region).
+
+* **Clears itself.** When a rule group finishes and a key did not fire this time, its action is resolved ("condition cleared"):
+  the record was renewed or released, proof arrived, the case closed. A group that failed, a dry run or a `--institution`
+  run never resolves anything it did not evaluate. If the same condition returns, the action reopens.
+* **Acknowledge.** An officer or the authority takes charge with a note (`POST /api/alerts/{id}/acknowledge/`, logged in the
+  access log). The dashboard shows who.
+* **Escalates.** An action still `OPEN` (not acknowledged) after `alert_escalation_days` (default 7, settable in the
+  `escalation-matrix` RuleSet) goes one level up once: the region's head (or its officers) and the authority are notified
+  (`alert_escalated`).
+
 ## Open dependencies
 
 * **S5 `casework.ClearanceTask`**: `open_clearance_tasks()` in `notifications/rules.py` (marked `TODO(S5)`) assumes
