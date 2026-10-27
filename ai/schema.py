@@ -6,7 +6,7 @@ VERSION = obj({'version': INTEGER})
 FIELD = obj({'value': nullable(TEXT), 'page': nullable(INTEGER)})
 EXTRACTION = obj({'run_id': INTEGER, 'status': TEXT, 'advisory': BOOLEAN, 'label': TEXT,
     'fields': {'type': 'object', 'additionalProperties': FIELD}, 'findings': array(JSON),
-    'pages': array(JSON), 'detail': TEXT, 'code': TEXT},
+    'pages': array(JSON), 'detail': TEXT, 'code': TEXT, 'amount_in_words': nullable(TEXT)},
     required=['status', 'advisory', 'label', 'fields', 'findings'])
 SUMMARY = obj({'run_id': INTEGER, 'status': TEXT, 'cached': BOOLEAN, 'advisory': BOOLEAN,
     'label': TEXT, 'detail': TEXT, 'summary': TEXT,
