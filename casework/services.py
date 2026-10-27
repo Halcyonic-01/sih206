@@ -23,6 +23,7 @@ from obligations.release_prerequisites import evaluate_prerequisites, Prerequisi
 from obligations.rules import rule_snapshot
 from obligations.services import DependencyUnavailable, expected_version, reason_text
 from . import governance
+from .refund import quote as quote_refund
 from .letters import render_letter
 from .facts import assemble as assemble_facts
 
@@ -175,6 +176,10 @@ def require_gate(result, outcome):
         if result['outcome'] == 'CONTEXT_UNAVAILABLE':
             raise DependencyUnavailable('Release assessment context unavailable.')
         raise WorkflowError('Prerequisites do not permit this action: ' + result['outcome'])
+
+
+def refund_quote(case):
+    return quote_refund(case.release.instrument.amount_paise, list(case.penalties.all()))
 
 
 def require_unchanged_basis(case):
@@ -416,7 +421,8 @@ def issue(actor, case_id, version, reason):
     serial = 'SYNTH-' + uuid4().hex.upper()
     kind = result['proposed_letter_kind']
     pdf = render_letter(serial=serial, kind=kind, institution_name=case.institution.name,
-        issue_date=timezone.localdate().isoformat(), verification_url=base.rstrip('/') + '/verify/' + token)
+        issue_date=timezone.localdate().isoformat(), verification_url=base.rstrip('/') + '/verify/' + token,
+        refund=refund_quote(case))
     letter = IssuedLetter.objects.create(case=case, serial=serial, kind=kind, issued_by=actor,
         institution_name=case.institution.name,
         pdf=pdf, sha256=hashlib.sha256(pdf).hexdigest(), token_sha256=hashlib.sha256(token.encode()).hexdigest())

@@ -165,6 +165,18 @@ function CaseBody({client, identityKey, caseId}: {client: Transport; identityKey
           {item.actions.can_review_penalties && p.status === 'PROPOSED' && <button disabled={busy || !reason.trim()} onClick={() => mutate('penalties', {confirm_id: p.id})}>{tr("Confirm reviewed proposal")}</button>}</li>)}</ul>}
         <p className="muted">{tr("Officer review complete:  ")}{item.penalty_review_complete ? tr("Yes") : tr("No")}{tr(". Confirming a penalty does not prove payment or authorise a deduction.")}</p>
       </Panel>
+      {item.refund && (
+        <Panel title="Refund quote">
+          <SummaryList items={[
+            {label: 'Amount held', value: money(item.refund.held_paise)},
+            {label: 'Penalties confirmed', value: money(item.refund.confirmed_penalties_paise)},
+            ...(item.refund.proposed_penalties_paise ? [{label: 'Penalties proposed (not deducted yet)', value: money(item.refund.proposed_penalties_paise)}] : []),
+            {label: 'Net amount to be returned', value: <strong>{money(item.refund.net_paise)}</strong>},
+            ...(item.refund.reference ? [{label: 'Recorded refund reference', value: item.refund.reference}] : [])]} />
+          {item.refund.penalties_exceed_held && <Alert type="warning" showIcon style={{marginTop: 8}} message="Confirmed penalties exceed the amount held; the net is shown as zero. Review before authorising." />}
+          <p className="muted">{item.refund.note}</p>
+        </Panel>
+      )}
       <Panel title={tr("Decision and actions")}>
         {item.approval && item.approval.required_signatures > 1 && item.status === 'PENDING' && (
           <Alert type={item.approval.signature_voided ? 'warning' : 'info'} showIcon style={{marginBottom: 12}}
