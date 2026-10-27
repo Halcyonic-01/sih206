@@ -209,7 +209,7 @@ def prepare_database(env, force_seed, prod):
     steps = []
     if force_seed or not CREDENTIALS.exists():
         steps += [('seed_demo', '--generate-password'), ('seed_demo', '--authority-only', '--generate-password'),
-                  ('seed_scenarios',)]
+                  ('seed_second_authority', '--generate-password'), ('seed_scenarios',)]
     if force_seed or not STAFF_CREDENTIALS.exists():
         steps.append(('seed_staff', '--generate-password'))
     if force_seed or not REVIEW_MANIFEST.exists():
